@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tableau de bord — Anthony</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f4f0;padding:1rem;color:#1a1a1a;font-size:16px}
+.header{padding:.75rem 0;border-bottom:1px solid #ddd;margin-bottom:1rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.title{font-size:18px;font-weight:600}
+.subtitle{font-size:12px;color:#888;margin-top:2px}
+.date-lbl{font-size:12px;color:#aaa;padding-top:4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+.stat{background:#fff;border-radius:8px;padding:.65rem;text-align:center;border:1px solid #e5e5e5}
+.stat-n{font-size:20px;font-weight:600}
+.stat-l{font-size:11px;color:#888;margin-top:2px}
+.tabs{display:flex;border-bottom:1px solid #ddd;margin-bottom:1rem}
+.tab{font-size:14px;padding:8px 16px;border:none;background:transparent;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+.tab.active{color:#1a1a1a;border-bottom:2px solid #1a1a1a;font-weight:500}
+.pane{display:none}.pane.active{display:block}
+.toolbar{display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;align-items:center}
+.fb{font-size:12px;padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#666;cursor:pointer;font-family:inherit}
+.fb.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-save{font-size:13px;padding:6px 14px;border:1px solid #2a7a4f;border-radius:6px;background:#e8f5ee;color:#2a7a4f;cursor:pointer;font-weight:500;margin-left:auto;font-family:inherit;white-space:nowrap}
+.add-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.add-row input{font-size:15px;padding:9px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;flex:1;min-width:0;font-family:inherit}
+.add-row select{font-size:13px;padding:9px 8px;border:1px solid #ccc;border-radius:8px;background:#fff;font-family:inherit}
+.add-btn{padding:9px 16px;font-size:14px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit}
+.task-list{display:flex;flex-direction:column;gap:8px}
+.task{display:flex;align-items:flex-start;gap:10px;padding:12px;background:#fff;border:1px solid #e5e5e5;border-radius:10px}
+.task.done{opacity:.45}.task.done .task-text{text-decoration:line-through}
+.task.editing{border-color:#378add}
+.dh{color:#bbb;cursor:grab;font-size:18px;padding-top:1px;user-select:none;flex-shrink:0;line-height:1.2}
+.chk{width:22px;height:22px;border:1.5px solid #bbb;border-radius:5px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;font-size:14px;color:#fff}
+.chk.checked{background:#2a7a4f;border-color:#2a7a4f}
+.task-body{flex:1;min-width:0}
+.task-text{font-size:14px;color:#1a1a1a;line-height:1.45}
+.task-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:11px;padding:2px 8px;border-radius:5px;font-weight:500}
+.b-urgence{background:#fde8e8;color:#9b2020}
+.b-mairie{background:#e3eef9;color:#1a5a96}
+.b-perso{background:#fef0da;color:#7a4a0a}
+.b-immo{background:#e8f3e0;color:#336010}
+.b-long{background:#eeecfe;color:#3c2e96}
+.ctx{font-size:11px;color:#bbb}
+.task-actions{display:flex;gap:4px;flex-shrink:0}
+.btn-icon{font-size:16px;color:#bbb;cursor:pointer;padding:4px 8px;border-radius:6px;border:none;background:transparent;font-family:inherit;line-height:1}
+.btn-del:active{background:#fde8e8;color:#9b2020}
+.edit-form{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.edit-form input,.edit-form select{font-size:15px;padding:9px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;width:100%;font-family:inherit}
+.edit-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-confirm{padding:8px 16px;font-size:14px;border:1px solid #378add;border-radius:8px;background:#e6f1fb;color:#185fa5;cursor:pointer;font-weight:500;font-family:inherit}
+.btn-cancel{padding:8px 16px;font-size:14px;border:1px solid #ccc;border-radius:8px;background:transparent;color:#888;cursor:pointer;font-family:inherit}
+.empty{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+.sortable-ghost{opacity:.25;background:#f0f0f0}
+.status{font-size:12px;text-align:right;margin-top:8px;min-height:18px}
+.contact-grid{display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:1rem}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.av-blue{background:#deeaf8;color:#1a5a96}
+.av-teal{background:#d8f0e8;color:#0f6e56}
+.card-name{font-size:15px;font-weight:600}
+.card-role{font-size:12px;color:#888}
+.card-fields{font-size:13px;border-top:1px solid #eee;padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.cf{display:flex;gap:8px}
+.cl{color:#aaa;flex:0 0 52px;font-size:11px;padding-top:1px}
+.cv{color:#1a1a1a;word-break:break-all}
+a{color:#1a5a96;text-decoration:none}
+.key-box{margin-top:10px;padding:10px;background:#f5f4f0;border-radius:8px;font-size:13px}
+.key-lbl{color:#888;margin-bottom:4px;font-size:11px}
+.key-name{font-weight:600;margin-bottom:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="title">Tableau de bord — Anthony</div>
+    <div class="subtitle">Javrezac · 1er adjoint · Pompier · Formateur</div>
+  </div>
+  <div class="date-lbl" id="dlbl"></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total</div></div>
+  <div class="stat"><div class="stat-n" id="s-urgent">0</div><div class="stat-l">Urgences</div></div>
+  <div class="stat"><div class="stat-n" id="s-done">0</div><div class="stat-l">Faites</div></div>
+  <div class="stat"><div class="stat-n" id="s-remain">0</div><div class="stat-l">Restantes</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('actions',this)">Actions</button>
+  <button class="tab" onclick="switchTab('contacts',this)">Contacts clés</button>
+</div>
+
+<div id="pane-actions" class="pane active">
+  <div class="toolbar" id="filters">
+    <button class="fb active" data-f="all">Toutes</button>
+    <button class="fb" data-f="urgence">Urgences</button>
+    <button class="fb" data-f="mairie">Mairie</button>
+    <button class="fb" data-f="perso">Perso</button>
+    <button class="fb" data-f="long">Long terme</button>
+    <button class="fb" data-f="todo">À faire</button>
+    <button class="btn-save" id="btn-save" onclick="saveNow()">💾 Enregistrer</button>
+  </div>
+  <div class="add-row">
+    <input type="text" id="new-task" placeholder="Nouvelle action..." />
+    <select id="new-cat">
+      <option value="mairie">Mairie</option>
+      <option value="urgence">Urgence</option>
+      <option value="perso">Perso</option>
+      <option value="immo">Immo</option>
+      <option value="long">Long terme</option>
+    </select>
+    <button class="add-btn" onclick="addTask()">+ Ajouter</button>
+  </div>
+  <div class="task-list" id="task-list"></div>
+  <div class="status" id="status"></div>
+</div>
+
+<div id="pane-contacts" class="pane">
+  <div class="contact-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="av av-blue">EPTB</div>
+        <div><div class="card-name">EPTB Charente</div><div class="card-role">Établissement public territorial du bassin</div></div>
+      </div>
+      <div class="card-fields">
+        <div class="cf"><span class="cl">Adresse</span><span class="cv">5 rue Chante-Caille, ZI des Charriers — 17100 Saintes</span></div>
+        <div class="cf"><span class="cl">Tél.</span><span class="cv"><a href="tel:0546740002">05 46 74 00 02</a></span></div>
+        <div class="cf"><span class="cl">Email</span><span class="cv"><a href="mailto:eptb-charente@fleuve-charente.net">eptb-charente@fleuve-charente.net</a></span></div>
+        <div class="cf"><span class="cl">Site</span><span class="cv"><a href="https://www.fleuve-charente.net">fleuve-charente.net</a></span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="av av-teal">SYM</div>
+        <div><div class="card-name">SYMBA</div><div class="card-role">Syndicat mixte du bassin de l'Antenne</div></div>
+      </div>
+      <div class="card-fields">
+        <div class="cf"><span class="cl">Adresse</span><span class="cv">4 place du Château d'Eau — 17160 Matha</span></div>
+        <div class="cf"><span class="cl">Tél.</span><span class="cv"><a href="tel:0546586264">05 46 58 62 64</a></span></div>
+        <div class="cf"><span class="cl">Email</span><span class="cv"><a href="mailto:symba@symba.fr">symba@symba.fr</a></span></div>
+        <div class="cf"><span class="cl">Site</span><span class="cv"><a href="https://www.symba.fr">symba.fr</a></span></div>
+      </div>
+      <div class="key-box">
+        <div class="key-lbl">Contact clé</div>
+        <div class="key-name">Alice Perron — Directrice</div>
+        <div><a href="mailto:alice.perron@symba.fr">alice.perron@symba.fr</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+const CATS={urgence:{label:'Urgence',cls:'b-urgence'},mairie:{label:'Mairie',cls:'b-mairie'},perso:{label:'Perso',cls:'b-perso'},immo:{label:'Immo',cls:'b-immo'},long:{label:'Long terme',cls:'b-long'}};
+const KEY='anthony-tasks-v1';
+const DEFAULT=[
+  {id:1,text:'Contacter la banque pour bloquer "use.ai"',cat:'urgence',done:false,ctx:'Depuis chez toi, en semaine'},
+  {id:2,text:'Finaliser le dossier subventions aux associations',cat:'mairie',done:false,ctx:'Échange avec le maire · Accès dossiers mairie'},
+  {id:3,text:'Réaliser les entretiens des agents techniques',cat:'mairie',done:false,ctx:'En semaine'},
+  {id:4,text:'Répondre au SDEG — Pont Faumet',cat:'perso',done:false,ctx:'En semaine'},
+  {id:5,text:'Contacter l\'EPTB Charente et le SYMBA — dossier inondations',cat:'mairie',done:false,ctx:'EPTB : 05 46 74 00 02 · SYMBA : Alice Perron 05 46 58 62 64'},
+  {id:6,text:'Structurer la réunion publique sur les inondations',cat:'mairie',done:false,ctx:'Faisable le dimanche'},
+  {id:7,text:'Trouver des animateurs pour la cellule communication',cat:'mairie',done:false,ctx:'Référent : Céline Rayer'},
+  {id:8,text:'Projet jeux enfants / ados — relancer devis Proludic, Récréa France, Manutan',cat:'mairie',done:false,ctx:'Référent : Céline Garry'},
+  {id:9,text:'Préparer positionnement pour l\'élection communautaire',cat:'perso',done:false,ctx:'Faisable le dimanche'},
+  {id:10,text:'Emmener mon dossier compta chez RYDGE',cat:'perso',done:false,ctx:'En semaine'},
+  {id:11,text:'Mettre en place la cagnotte Leetchi pour Josy',cat:'perso',done:false,ctx:''},
+  {id:12,text:'Passer aux impôts — exonération taxe d\'habitation',cat:'perso',done:false,ctx:'En semaine'},
+  {id:13,text:'Lancer les premières réflexions sur le 14 juillet',cat:'mairie',done:false,ctx:'Référent : Yves Robertière'},
+  {id:14,text:'Réécriture règlement RH de la mairie',cat:'mairie',done:false,ctx:'Faisable le dimanche'},
+  {id:15,text:'Étudier réfection publicité murale Hennessy — entrée Javrezac',cat:'mairie',done:false,ctx:''},
+  {id:16,text:'Contacter acteurs contre la désertification médicale',cat:'long',done:false,ctx:'Long terme'}
+];
+let tasks=[],nextId=17,filter='all',editingId=null,sortable=null;
+
+function setStatus(msg,color){
+  const el=document.getElementById('status');
+  el.textContent=msg;el.style.color=color||'#2a7a4f';
+  if(color!=='#c0392b')setTimeout(()=>el.textContent='',3000);
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const d=JSON.parse(raw);tasks=d.tasks||JSON.parse(JSON.stringify(DEFAULT));nextId=d.nextId||17;setStatus('Données restaurées ✓');}
+    else{tasks=JSON.parse(JSON.stringify(DEFAULT));setStatus('Liste par défaut chargée','#888');}
+  }catch(e){tasks=JSON.parse(JSON.stringify(DEFAULT));}
+  render();
+}
+function saveNow(){
+  const btn=document.getElementById('btn-save');
+  try{
+    localStorage.setItem(KEY,JSON.stringify({tasks,nextId}));
+    setStatus('Enregistré ✓');btn.textContent='✓ Enregistré';
+    setTimeout(()=>btn.textContent='💾 Enregistrer',2000);
+  }catch(e){setStatus('Échec : '+e.message,'#c0392b');}
+}
+document.getElementById('dlbl').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+function switchTab(name,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');btn.classList.add('active');
+}
+function render(){
+  const list=document.getElementById('task-list');
+  if(sortable){try{sortable.destroy();}catch(e){}}
+  let f=tasks;
+  if(filter==='todo')f=tasks.filter(t=>!t.done);
+  else if(filter!=='all')f=tasks.filter(t=>t.cat===filter);
+  if(!f.length){list.innerHTML='<div class="empty">Aucune action dans cette catégorie.</div>';stats();return;}
+  list.innerHTML=f.map((t,i)=>{
+    const ed=editingId===t.id;
+    return `<div class="task${t.done?' done':''}${ed?' editing':''}" data-id="${t.id}">
+      <span class="dh">⠿</span>
+      <div class="chk${t.done?' checked':''}" onclick="tog(${t.id})">${t.done?'✓':''}</div>
+      <div class="task-body">
+        ${ed?`<div class="edit-form">
+          <input type="text" id="et-${t.id}" value="${t.text.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" />
+          <div class="edit-row">
+            <input type="text" id="ec-${t.id}" value="${(t.ctx||'').replace(/"/g,'&quot;')}" placeholder="Contexte (optionnel)" style="flex:1"/>
+            <select id="ek-${t.id}">${Object.keys(CATS).map(k=>`<option value="${k}"${t.cat===k?' selected':''}>${CATS[k].label}</option>`).join('')}</select>
+          </div>
+          <div class="edit-row">
+            <button class="btn-confirm" onclick="saveEdit(${t.id})">Enregistrer</button>
+            <button class="btn-cancel" onclick="cancelEdit()">Annuler</button>
+          </div>
+        </div>`:`
+          <div class="task-text">${i+1}. ${t.text}</div>
+          <div class="task-meta">
+            <span class="badge ${CATS[t.cat].cls}">${CATS[t.cat].label}</span>
+            ${t.ctx?`<span class="ctx">${t.ctx}</span>`:''}
+          </div>`}
+      </div>
+      <div class="task-actions">
+        ${!ed?`<button class="btn-icon" onclick="startEdit(${t.id})">✎</button>`:''}
+        <button class="btn-icon btn-del" onclick="del(${t.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  stats();
+  sortable=Sortable.create(list,{animation:150,handle:'.dh',ghostClass:'sortable-ghost',onEnd(){
+    const ids=[...list.querySelectorAll('.task')].map(el=>+el.dataset.id);
+    const reordered=ids.map(id=>tasks.find(t=>t.id===id)).filter(Boolean);
+    const rest=tasks.filter(t=>!reordered.find(r=>r.id===t.id));
+    tasks=[...reordered,...rest];
+    setStatus('Ordre modifié — clique sur 💾 pour enregistrer','#e67e22');
+  }});
+}
+function stats(){
+  document.getElementById('s-total').textContent=tasks.length;
+  document.getElementById('s-done').textContent=tasks.filter(t=>t.done).length;
+  document.getElementById('s-urgent').textContent=tasks.filter(t=>t.cat==='urgence'&&!t.done).length;
+  document.getElementById('s-remain').textContent=tasks.filter(t=>!t.done).length;
+}
+function tog(id){const t=tasks.find(t=>t.id===id);if(t){t.done=!t.done;render();}}
+function del(id){if(!confirm('Supprimer ?'))return;tasks=tasks.filter(t=>t.id!==id);if(editingId===id)editingId=null;render();}
+function startEdit(id){editingId=id;render();setTimeout(()=>{const i=document.getElementById('et-'+id);if(i)i.focus();},80);}
+function saveEdit(id){
+  const t=tasks.find(t=>t.id===id);if(!t)return;
+  const txt=document.getElementById('et-'+id);
+  const cat=document.getElementById('ek-'+id);
+  const ctx=document.getElementById('ec-'+id);
+  if(txt&&txt.value.trim())t.text=txt.value.trim();
+  if(cat)t.cat=cat.value;
+  if(ctx)t.ctx=ctx.value.trim();
+  editingId=null;render();
+}
+function cancelEdit(){editingId=null;render();}
+function addTask(){
+  const inp=document.getElementById('new-task');
+  const cat=document.getElementById('new-cat').value;
+  const text=inp.value.trim();
+  if(!text)return;
+  tasks.push({id:nextId++,text,cat,done:false,ctx:''});
+  inp.value='';render();
+}
+document.getElementById('new-task').addEventListener('keydown',e=>{if(e.key==='Enter')addTask()});
+document.getElementById('filters').addEventListener('click',e=>{
+  const btn=e.target.closest('.fb');if(!btn)return;
+  filter=btn.dataset.f;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');render();
+});
+load();
+</script>
+</body>
+</html>
