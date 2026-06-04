@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0e1116">
+<title>Constructeur message opérationnel — SAP + Routier</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --line:#2b3340;
+    --txt:#e8edf2; --muted:#8b97a6; --accent:#e6492d; --accent2:#ff6a4d;
+    --ok:#27ae60; --warn:#f0a92b; --warnbg:#3a2e12; --okbg:#10301f;
+    --radius:12px; --tap:52px;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);
+    font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+  body{padding:max(env(safe-area-inset-top),10px) 12px calc(env(safe-area-inset-bottom) + 24px)}
+  h1{font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;margin:0;font-weight:800}
+  .sub{color:var(--muted);font-size:.78rem;letter-spacing:.03em}
+  header{display:flex;align-items:center;gap:12px;padding:8px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .badge{flex:0 0 auto;width:42px;height:42px;border-radius:10px;background:var(--accent);
+    display:grid;place-items:center;font-weight:900;font-size:1.2rem;color:#fff;box-shadow:0 0 0 1px #00000040 inset}
+  .cfg{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .cfg .field{flex:1 1 130px;min-width:120px}
+  label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 4px 2px}
+  input,select,textarea{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+    border-radius:10px;padding:11px 12px;font-size:1rem;font-family:var(--sans);min-height:var(--tap)}
+  textarea{min-height:auto}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 22px,calc(100% - 12px) 22px;background-size:6px 6px;background-repeat:no-repeat}
+  .types{display:flex;gap:6px;margin-bottom:10px}
+  .types button{flex:1;min-height:44px;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+    border-radius:10px;font-weight:700;font-size:.82rem}
+  .types button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .types button:disabled{opacity:.4}
+  .row{display:flex;gap:8px;margin-bottom:14px}
+  .seg{display:flex;flex:1;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;min-height:46px;background:var(--panel);color:var(--muted);border:0;font-weight:700;font-size:.82rem;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--panel2);color:var(--txt);box-shadow:inset 0 -3px 0 var(--accent)}
+  .seg button.hide{display:none}
+  .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .section h2{margin:0 0 12px;font-size:.92rem;display:flex;align-items:center;gap:10px}
+  .num{flex:0 0 auto;width:26px;height:26px;border-radius:7px;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-weight:900;font-size:.85rem}
+  .hint{color:var(--muted);font-size:.76rem;margin:-6px 0 10px 2px}
+  .bilan-line{display:grid;grid-template-columns:60px 1fr 1fr 40px;gap:6px;align-items:center;margin-bottom:8px}
+  .bilan-line .del{min-height:44px;background:transparent;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:1.1rem}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel2);color:var(--muted);font-size:.86rem;min-height:42px;display:flex;align-items:center}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .addbtn{margin-top:4px;background:transparent;border:1px dashed var(--line);color:var(--accent2);
+    border-radius:10px;min-height:44px;width:100%;font-weight:700}
+  /* cartes victimes routier */
+  .rcard{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--panel2)}
+  .rcard-h{font-size:.74rem;font-weight:800;color:var(--accent2);text-transform:uppercase;letter-spacing:.05em;
+    margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .rcard-h .del{min-height:30px;width:34px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:1rem}
+  .rgrid{display:grid;grid-template-columns:1fr 78px 1fr;gap:6px}
+  .rgrid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+  .out-wrap{background:#0a0d12;border:1px solid var(--accent);border-radius:var(--radius);padding:12px;margin-bottom:10px}
+  .out-wrap .lbl{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .out-wrap .lbl span{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-weight:800}
+  #output{width:100%;background:transparent;border:0;color:var(--txt);font-family:var(--mono);
+    font-size:1.12rem;line-height:1.5;min-height:200px;resize:vertical;white-space:pre-wrap}
+  #output:focus{outline:none}
+  .mini{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:6px 10px;font-size:.72rem;font-weight:700;min-height:34px}
+  #warnings:empty{display:none}
+  #warnings{margin-bottom:12px}
+  .w{display:flex;gap:9px;padding:10px 12px;border-radius:10px;margin-bottom:7px;font-size:.86rem;align-items:flex-start}
+  .w.amber{background:var(--warnbg);border:1px solid var(--warn);color:#f4cf8a}
+  .w.ok{background:var(--okbg);border:1px solid var(--ok);color:#8be0ac}
+  .w b{color:#fff}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .btn{flex:1 1 auto;min-height:var(--tap);border-radius:11px;border:1px solid var(--line);
+    background:var(--panel);color:var(--txt);font-weight:800;font-size:.92rem;padding:0 14px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  #gnav{display:none;gap:8px;margin-bottom:16px}
+  #gnav.on{display:flex}
+  #gnav button{flex:1;min-height:var(--tap);border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-weight:800}
+  #gnav .step{flex:0 0 auto;display:grid;place-items:center;color:var(--muted);font-size:.8rem;min-width:54px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px}
+  summary{padding:14px;font-weight:800;font-size:.9rem;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--accent2);font-weight:900}
+  details[open] summary::after{content:"–"}
+  .lex{padding:0 14px 14px}
+  .lex h3{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);margin:14px 0 6px}
+  .lex dl{margin:0}
+  .lex dt{font-weight:700;font-size:.9rem}
+  .lex dd{margin:0 0 9px;color:var(--muted);font-size:.84rem}
+  .hist-item{padding:10px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-family:var(--mono);font-size:.78rem;color:var(--muted);white-space:pre-wrap}
+  .hist-item .t{color:var(--accent2);font-family:var(--sans);font-weight:700;font-size:.72rem;margin-bottom:4px}
+  .foot{color:var(--muted);font-size:.72rem;text-align:center;padding:10px;line-height:1.6}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--ok);color:#04230f;font-weight:800;padding:12px 18px;border-radius:999px;
+    transition:.25s;pointer-events:none;z-index:50;font-size:.9rem;max-width:90vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hide{display:none!important}
+  .lbl-inline{margin:2px 2px 6px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">18</div>
+  <div>
+    <h1>Constructeur message opérationnel</h1>
+    <div class="sub">Hors ligne · SDIS 16 · SAP + Secours routier</div>
+  </div>
+</header>
+
+<div class="cfg">
+  <div class="field"><label>Indicatif engin</label><input id="cfgIndicatif" placeholder="ex. VSAV 1" autocomplete="off"></div>
+  <div class="field"><label>Destinataire</label><input id="cfgCodis" value="CODIS 16" autocomplete="off"></div>
+  <div class="field"><label>Commune</label><input id="cfgCommune" placeholder="ex. Cognac" autocomplete="off"></div>
+</div>
+
+<!-- Type d'intervention -->
+<div class="types" id="typeTabs">
+  <button class="on" data-type="SAP">SAP</button>
+  <button data-type="ROUTIER">Routier</button>
+  <button disabled title="à venir">Échelle</button>
+  <button disabled title="à venir">Diverses</button>
+</div>
+
+<!-- Type de message + mode -->
+<div class="row">
+  <div class="seg" id="msgType">
+    <button class="on" data-msg="ambiance">Ambiance</button>
+    <button data-msg="cr">Compte rendu</button>
+    <button data-msg="transport" id="btnTransport">Transport</button>
+  </div>
+</div>
+<div class="row">
+  <div class="seg" id="mode">
+    <button class="on" data-mode="rapide">Mode rapide</button>
+    <button data-mode="guide">Mode guidé</button>
+  </div>
+</div>
+
+<!-- ====== FORMULAIRE SAP : AMBIANCE / CR ====== -->
+<div id="formSAP">
+  <div class="section" data-step="0">
+    <h2><span class="num">1</span> Je demande</h2>
+    <div class="hint">La décision avant la description. Pas de besoin = « renforts néant ».</div>
+    <div class="chips" id="renfortChips"></div>
+  </div>
+  <div class="section" data-step="1">
+    <h2><span class="num">2</span> Je suis</h2>
+    <div class="hint">Localisation exacte.</div>
+    <label>Adresse / point de l'opération</label>
+    <input id="adresse" placeholder="ex. 12 rue de Gatechien" autocomplete="off">
+  </div>
+  <div class="section" data-step="2">
+    <h2><span class="num">3</span> Je vois</h2>
+    <div class="hint">Description opérationnelle + bilan ventilé.</div>
+    <label>Description de l'événement</label>
+    <input id="description" placeholder="ex. un homme victime d'un malaise sur la voie publique, inconscient" autocomplete="off">
+    <div class="hint" style="margin-top:6px">Structure : <b>nature</b> + <b>sujet</b> + <b>lieu / contexte</b> + <b>élément aggravant</b>.</div>
+    <label style="margin-top:12px">Bilan humain</label>
+    <div id="bilanLines"></div>
+    <button class="addbtn" id="addBilan">+ ajouter une victime</button>
+  </div>
+  <div class="section" data-step="3">
+    <h2><span class="num">4</span> Je fais</h2>
+    <div class="hint">2 à 3 actions structurantes.</div>
+    <div class="chips" id="actionChips"></div>
+  </div>
+</div>
+
+<!-- ====== FORMULAIRE TRANSPORT (SAP) ====== -->
+<div id="formTransport" class="hide">
+  <div class="section">
+    <h2><span class="num">T</span> Message de transport</h2>
+    <div class="hint">Au moment du départ avec la victime.</div>
+    <div class="bilan-line" style="grid-template-columns:60px 1fr 1fr">
+      <input id="tNb" type="number" min="1" value="1" inputmode="numeric">
+      <select id="tQualif"></select>
+      <select id="tGravite"></select>
+    </div>
+    <label style="margin-top:8px">Destination</label>
+    <input id="tDest" placeholder="ex. CH d'Angoulême" autocomplete="off">
+    <div class="chips" style="margin-top:12px">
+      <div class="chip" id="tMedic" data-on="0">Médicalisé SMUR</div>
+    </div>
+    <label style="margin-top:12px">Disponibilité</label>
+    <select id="tDispo">
+      <option value="je rends compte à mon arrivée">je rends compte à mon arrivée</option>
+      <option value="disponible à l'issue du transport">disponible à l'issue</option>
+      <option value="indisponible jusqu'à nouvel ordre">indisponible jusqu'à nouvel ordre</option>
+    </select>
+  </div>
+</div>
+
+<!-- ====== FORMULAIRE ROUTIER ====== -->
+<div id="formROUTIER" class="hide">
+  <label class="lbl-inline">Engin — oriente le « je demande » et le « je fais »</label>
+  <div class="seg" id="enginSel" style="margin-bottom:14px">
+    <button class="on" data-engin="VSAV">VSAV</button>
+    <button data-engin="VSR">VSR</button>
+  </div>
+  <div class="section" data-step="0">
+    <h2><span class="num">1</span> Je demande</h2>
+    <div class="hint">Désincarcération, médicalisation, forces de l'ordre… ou « renforts néant ».</div>
+    <div class="chips" id="renfortChipsR"></div>
+  </div>
+  <div class="section" data-step="1">
+    <h2><span class="num">2</span> Je suis</h2>
+    <div class="hint">Localisation routière : voie / axe + sens + point de repère.</div>
+    <label>Voie / axe</label>
+    <input id="adresseR" placeholder="ex. RN10, sens Bordeaux-Paris, PR 12" autocomplete="off">
+  </div>
+  <div class="section" data-step="2">
+    <h2><span class="num">3</span> Je vois</h2>
+    <div class="hint">Accident → collision → cinétique → bilan (sexe / âge / état).</div>
+    <label>Véhicule(s) mis en cause</label>
+    <input id="vehicA" placeholder="ex. un véhicule léger" autocomplete="off">
+    <div class="rgrid2" style="margin-top:10px">
+      <select id="collisionSel"></select>
+      <select id="cinetiqueSel"></select>
+    </div>
+    <label style="margin-top:10px">Antagoniste (si collision contre un autre véhicule)</label>
+    <input id="antag" placeholder="ex. un poids lourd" autocomplete="off">
+    <label style="margin-top:12px">Bilan humain</label>
+    <div id="bilanLinesR"></div>
+    <button class="addbtn" id="addBilanR">+ ajouter une victime</button>
+  </div>
+  <div class="section" data-step="3">
+    <h2><span class="num">4</span> Je fais</h2>
+    <div class="hint">Pré-orienté par l'engin. Vocabulaire GDO.</div>
+    <div class="chips" id="actionChipsR"></div>
+  </div>
+</div>
+
+<div id="gnav">
+  <button id="gPrev">‹ Précédent</button>
+  <div class="step" id="gStep">1 / 4</div>
+  <button id="gNext">Suivant ›</button>
+</div>
+
+<div id="warnings"></div>
+
+<div class="out-wrap">
+  <div class="lbl"><span>Message à passer</span>
+    <button class="mini" id="resync">↻ resynchroniser</button>
+  </div>
+  <textarea id="output" spellcheck="false"></textarea>
+</div>
+
+<div class="actions">
+  <button class="btn primary" id="copyBtn">Copier</button>
+  <button class="btn" id="reviewBtn">Préparer révision Claude</button>
+  <button class="btn ghost" id="saveBtn">Archiver</button>
+  <button class="btn ghost" id="resetBtn">Nouveau</button>
+</div>
+
+<details>
+  <summary>Lexique normalisé</summary>
+  <div class="lex" id="lexBody"></div>
+</details>
+
+<details>
+  <summary>Messages archivés</summary>
+  <div class="lex"><div id="histBody"><div class="sub" style="padding:6px 0">Aucun message archivé.</div></div>
+  <button class="btn ghost" id="clearHist" style="width:100%;margin-top:6px">Vider l'historique</button></div>
+</details>
+
+<div class="foot">
+  Outil d'aide — ne se substitue ni à la doctrine ni à votre jugement.<br>
+  Calé sur le GDO et l'OBDSIC du SDIS 16. Fonctionne intégralement hors ligne.
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ===== STOCKAGE ===== */
+const _mem = {};
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return k in _mem ? _mem[k] : null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ _mem[k]=v; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){ delete _mem[k]; } }
+};
+
+/* ===== CONFIG SAP ===== */
+const RENFORTS = [
+  "renforts néant","une médicalisation","un renfort SMUR","un VSAV supplémentaire",
+  "un véhicule infirmier (VLI)","les forces de l'ordre","Enedis","un moyen de relevage spécialisé"
+];
+const QUALIF = [
+  {v:"blessé", l:"blessé (traumatique)"},
+  {v:"malade", l:"malade (médical)"},
+  {v:"brûlé", l:"brûlé"},
+  {v:"intoxiqué", l:"intoxiqué"},
+  {v:"électrisé", l:"électrisé"},
+  {v:"impliqué", l:"impliqué"},
+  {v:"indemne", l:"indemne"},
+  {v:"victime", l:"victime (générique)"},
+  {v:"victime en arrêt cardio-respiratoire", l:"en arrêt cardio-respiratoire (ACR)"},
+  {v:"victime présentant des signes de mort manifeste", l:"signes de mort manifeste"},
+  {v:"décédé", l:"décédé / DCD (constat médecin, ou secouriste si critères)"}
+];
+const GRAVITE = [
+  {v:"", l:"— (sans)"},
+  {v:"UA", l:"UA — urgence absolue"},
+  {v:"UR", l:"UR — urgence relative"},
+  {v:"en détresse vitale", l:"en détresse vitale"}
+];
+const ACTIONS = [
+  {v:"au bilan", l:"Bilan"},
+  {v:"aux gestes de secours", l:"Gestes de secours"},
+  {v:"à la mise sous oxygène", l:"Oxygénothérapie"},
+  {v:"à une réanimation cardio-pulmonaire", l:"RCP"},
+  {v:"à une défibrillation", l:"Défibrillation"},
+  {v:"à l'immobilisation", l:"Immobilisation"},
+  {v:"à la mise en condition", l:"Mise en condition"},
+  {v:"au relevage", l:"Relevage"},
+  {v:"au brancardage", l:"Brancardage"},
+  {v:"à un dégagement d'urgence", l:"Dégagement d'urgence"},
+  {v:"à la médicalisation", l:"Médicalisation"},
+  {v:"à la surveillance", l:"Surveillance"}
+];
+
+/* ===== CONFIG ROUTIER ===== */
+const RENFORTS_R = [
+  "renforts néant","une désincarcération","une médicalisation","un renfort SMUR",
+  "un VSAV supplémentaire","un véhicule infirmier (VLI)","les forces de l'ordre",
+  "un moyen de balisage","une dépollution","Enedis"
+];
+const COLLISIONS = [
+  {v:"frontale", antag:true},
+  {v:"latérale", antag:true},
+  {v:"fronto-latérale", antag:true},
+  {v:"contre un obstacle fixe", antag:false},
+  {v:"en sortie de route", antag:false},
+  {v:"contre un piéton", antag:false},
+  {v:"contre un deux-roues", antag:false}
+];
+const CINETIQUES = ["faible","moyenne","forte"];
+const ETATS_R = [
+  {v:"UA", l:"UA — urgence absolue"},
+  {v:"UR", l:"UR — urgence relative"},
+  {v:"IMP", l:"IMP — impliqué"},
+  {v:"DCD", l:"DCD — décédé"}
+];
+const SEXES = [{v:"masculin",l:"Masculin"},{v:"féminin",l:"Féminin"}];
+const ACTIONS_R = [
+  {id:"site",   l:"Sécurisation du site",     phrase:()=>"à la sécurisation du site"},
+  {id:"vehic",  l:"Sécurisation du véhicule", phrase:()=>"à la sécurisation du véhicule"},
+  {id:"pec",    l:"Prise en charge victime(s)", phrase:n=>"à la prise en charge "+(n>1?"des victimes":"de la victime")},
+  {id:"desinc", l:"Désincarcération",         phrase:n=>"à la désincarcération "+(n>1?"des victimes":"de la victime")}
+];
+const ENGIN_DEFAULTS = {
+  VSAV:{ actions:["pec"], renfort:["une désincarcération","une médicalisation"] },
+  VSR :{ actions:["site","vehic","desinc"], renfort:["une médicalisation"] }
+};
+
+/* ===== LEXIQUE ===== */
+const LEXIQUE = {
+  "Nature de l'atteinte":[
+    ["Blessé","Atteinte d'origine traumatique (choc, chute, plaie, fracture)."],
+    ["Malade","Atteinte d'origine médicale : pathologie ou malaise, sans traumatisme."],
+    ["Brûlé","Atteinte par agent thermique, chimique ou électrique."],
+    ["Intoxiqué","Atteinte par inhalation, ingestion ou contact d'un toxique."],
+    ["Électrisé","A subi le passage du courant (vivant). Électrocuté = décédé du courant."]
+  ],
+  "Statut au regard de l'événement":[
+    ["Victime","Terme générique : toute personne concernée. À préciser dès que possible."],
+    ["Impliqué (IMP)","Non blessé physiquement mais exposé au risque ; prise en charge possible (médico-psy)."],
+    ["Indemne","Présent, sans atteinte ni exposition : aucune prise en charge."],
+    ["Décédé (DCD)","Constaté par un médecin, ou par un secouriste si tête détachée du tronc, rigidité cadavérique ou putréfaction."]
+  ],
+  "Gravité":[
+    ["UA — Urgence absolue","Pronostic vital engagé : risque de mort sans intervention rapide."],
+    ["UR — Urgence relative","Soins nécessaires, pronostic vital non engagé."],
+    ["Détresse vitale","Altération d'une fonction vitale menaçant la vie à court terme."],
+    ["ACR","Arrêt cardio-respiratoire : arrêt des fonctions circulatoire et respiratoire."]
+  ],
+  "Secours routier (GDO)":[
+    ["Cinétique","Faible : carrosserie. Moyenne : + air-bag déclenché. Forte : + cellule de survie atteinte. Indice de gravité indépendant de l'état apparent."],
+    ["Transmission victimes","Jamais la numérotation par emplacement dans le véhicule. Uniquement sexe, âge, état."],
+    ["Je fais (GDO)","Sécurisation du site, sécurisation du véhicule, prise en charge, désincarcération."]
+  ],
+  "Verbes d'action (SAP)":[
+    ["Immobilisation","Maintien d'un segment ou de l'axe tête-cou-tronc (collier, attelle, MID, plan dur)."],
+    ["Mise en condition","Gestes préparant la victime au transport (position, O₂, protection, surveillance)."],
+    ["Relevage","Relever la victime du sol et l'installer sur le dispositif de portage."],
+    ["Dégagement d'urgence","Soustraction immédiate à un danger vital, réel, immédiat et non maîtrisable."]
+  ]
+};
+
+/* ===== ÉTAT ===== */
+let state = {
+  type:"SAP", msg:"ambiance", mode:"rapide", gstep:0,
+  renfort:new Set(["renforts néant"]),
+  actions:new Set(),
+  bilan:[{nb:1,qualif:"malade",gravite:"UA"}],
+  engin:"VSAV",
+  renfortR:new Set(["une désincarcération","une médicalisation"]),
+  actionsR:new Set(["pec"]),
+  collision:"frontale", cinetique:"forte",
+  bilanR:[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}],
+  manualEdit:false
+};
+
+/* ===== HELPERS ===== */
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),1900);}
+function joinFr(arr){ arr=arr.filter(Boolean); if(arr.length<=1) return arr[0]||""; return arr.slice(0,-1).join(", ")+" et "+arr[arr.length-1]; }
+function pluralize(word,n){ if(n<=1) return word; if(/(s|x)$/.test(word.split(" ")[0])) return word; const p=word.split(" "); p[0]=p[0]+"s"; return p.join(" "); }
+function lc(s){ s=(s||"").trim().replace(/\s+/g," "); if(!s) return s; const f=s.split(" ")[0]; return f===f.toUpperCase()? s : s.charAt(0).toLowerCase()+s.slice(1); }
+function cleanDesc(s){ s=(s||"").trim().replace(/\s+/g," ").replace(/[.;,]+$/,""); if(!s) return "[description]"; return lc(s); }
+function esc(s){ return (s||"").replace(/"/g,"&quot;"); }
+
+/* ===== RENDU ===== */
+function renderRenfort(){ $("#renfortChips").innerHTML = RENFORTS.map(r=>`<div class="chip ${state.renfort.has(r)?"on":""}" data-r="${r}">${r}</div>`).join(""); }
+function renderActions(){ $("#actionChips").innerHTML = ACTIONS.map(a=>`<div class="chip ${state.actions.has(a.v)?"on":""}" data-a="${a.v}">${a.l}</div>`).join(""); }
+function bilanSelects(_,list,val){ return list.map(o=>{const v=o.v!==undefined?o.v:o;const l=o.l!==undefined?o.l:o;return `<option value="${esc(v)}" ${v===val?"selected":""}>${l}</option>`}).join(""); }
+function renderBilan(){
+  $("#bilanLines").innerHTML = state.bilan.map((b,i)=>`
+    <div class="bilan-line">
+      <input type="number" min="1" value="${b.nb}" data-bi="${i}" data-bk="nb" inputmode="numeric">
+      <select data-bi="${i}" data-bk="qualif">${bilanSelects(0,QUALIF,b.qualif)}</select>
+      <select data-bi="${i}" data-bk="gravite">${bilanSelects(0,GRAVITE,b.gravite)}</select>
+      <button class="del" data-del="${i}">×</button>
+    </div>`).join("");
+}
+function fillTransportSelects(){ $("#tQualif").innerHTML=bilanSelects(0,QUALIF,"blessé"); $("#tGravite").innerHTML=bilanSelects(0,GRAVITE,"UR"); }
+function renderRenfortR(){ $("#renfortChipsR").innerHTML = RENFORTS_R.map(r=>`<div class="chip ${state.renfortR.has(r)?"on":""}" data-rr="${r}">${r}</div>`).join(""); }
+function renderActionsR(){ $("#actionChipsR").innerHTML = ACTIONS_R.map(a=>`<div class="chip ${state.actionsR.has(a.id)?"on":""}" data-ar="${a.id}">${a.l}</div>`).join(""); }
+function renderBilanR(){
+  $("#bilanLinesR").innerHTML = state.bilanR.map((b,i)=>`
+    <div class="rcard">
+      <div class="rcard-h">Victime ${i+1}${state.bilanR.length>1?`<button class="del" data-delr="${i}">×</button>`:""}</div>
+      <div class="rgrid">
+        <select data-ri="${i}" data-rk="sexe">${bilanSelects(0,SEXES,b.sexe)}</select>
+        <input data-ri="${i}" data-rk="age" value="${esc(b.age)}" placeholder="âge" autocomplete="off">
+        <select data-ri="${i}" data-rk="etat">${bilanSelects(0,ETATS_R,b.etat)}</select>
+      </div>
+      <div class="rgrid2">
+        <input data-ri="${i}" data-rk="vecteur" value="${esc(b.vecteur)}" placeholder="vecteur (SMUR, VSAV…)" autocomplete="off">
+        <input data-ri="${i}" data-rk="ch" value="${esc(b.ch)}" placeholder="destination (CH…)" autocomplete="off">
+      </div>
+    </div>`).join("");
+}
+function fillRoutierSelects(){
+  $("#collisionSel").innerHTML = COLLISIONS.map(c=>`<option value="${c.v}" ${c.v===state.collision?"selected":""}>${c.v.charAt(0).toUpperCase()+c.v.slice(1)}</option>`).join("");
+  $("#cinetiqueSel").innerHTML = CINETIQUES.map(c=>`<option value="${c}" ${c===state.cinetique?"selected":""}>cinétique ${c}</option>`).join("");
+}
+function renderLexique(){ $("#lexBody").innerHTML=Object.entries(LEXIQUE).map(([k,rows])=>`<h3>${k}</h3><dl>${rows.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join("")}</dl>`).join(""); }
+
+/* ===== ASSEMBLAGE ===== */
+function bilanText(){
+  return state.bilan.map(b=>{ const n=Math.max(1,parseInt(b.nb)||1); return n+" "+pluralize(b.qualif,n)+(b.gravite?(" "+b.gravite):""); }).join(", ");
+}
+function buildSAP(){
+  const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
+  const com=$("#cfgCommune").value.trim()||"[commune]", adr=$("#adresse").value.trim()||"[adresse]";
+  const desc=cleanDesc($("#description").value);
+  const renf=joinFr([...state.renfort])||"[renfort]";
+  const acts=joinFr([...state.actions])||"[action]";
+  const titre = state.msg==="cr" ? " — compte rendu" : "";
+  const prov = state.msg==="cr" ? "définitif" : "provisoire";
+  return [
+    `${codis} de ${ind}${titre}`,
+    `Je demande : ${renf}`,
+    `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`,
+    `Nous sommes confrontés à ${desc} ; bilan humain ${prov} : ${bilanText()}`,
+    `Nous procédons ${acts}`
+  ].join("\n");
+}
+function buildTransport(){
+  const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
+  const nb=Math.max(1,parseInt($("#tNb").value)||1), q=pluralize($("#tQualif").value,nb), g=$("#tGravite").value;
+  const dest=$("#tDest").value.trim()||"[destination]";
+  const medic=$("#tMedic").dataset.on==="1"?"médicalisé SMUR":"non médicalisé", dispo=$("#tDispo").value;
+  return [ `${codis} de ${ind}`,`Message de transport`,`Je transporte ${nb} ${q}${g?(" "+g):""} vers ${dest}`,`${medic}`,`${dispo}` ].join("\n");
+}
+function bilanRText(){
+  const n=state.bilanR.length, head=`${n} victime${n>1?"s":""}`;
+  const list=state.bilanR.map(b=>{
+    const a=b.age.trim()? (/^\d+$/.test(b.age.trim())? b.age.trim()+" ans" : b.age.trim()) : "âge à préciser";
+    let s=`${b.sexe}, ${a}, ${b.etat}`;
+    if(b.vecteur.trim()&&b.ch.trim()) s+=`, transportée par ${b.vecteur.trim()} sur ${b.ch.trim()}`;
+    else if(b.vecteur.trim()) s+=`, transportée par ${b.vecteur.trim()}`;
+    return s;
+  }).join(" ; ");
+  return `${head} — ${list}`;
+}
+function buildROUTIER(){
+  const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
+  const com=$("#cfgCommune").value.trim()||"[commune]", adr=$("#adresseR").value.trim()||"[voie / axe]";
+  let vehic=cleanDesc($("#vehicA").value); if(vehic==="[description]") vehic="[véhicule mis en cause]";
+  const col=COLLISIONS.find(c=>c.v===state.collision)||COLLISIONS[0];
+  const antag=lc($("#antag").value), cin=state.cinetique;
+  let collisionPart;
+  if(col.antag) collisionPart=`dans une collision ${col.v} à ${cin} cinétique${antag?(" contre "+antag):""}`;
+  else collisionPart=`${col.v} à ${cin} cinétique`;
+  const renf=joinFr([...state.renfortR])||"[renfort]";
+  const n=state.bilanR.length;
+  const acts=joinFr(ACTIONS_R.filter(a=>state.actionsR.has(a.id)).map(a=>a.phrase(n)))||"[action]";
+  const titre = state.msg==="cr" ? " — compte rendu" : "";
+  const prov = state.msg==="cr" ? "définitif" : "provisoire";
+  return [
+    `${codis} de ${ind}${titre}`,
+    `Je demande : ${renf}`,
+    `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`,
+    `Nous sommes confrontés à un accident de la circulation mettant en cause ${vehic} ${collisionPart}`,
+    `Bilan humain ${prov} : ${bilanRText()}`,
+    `Nous procédons ${acts}`
+  ].join("\n");
+}
+function build(){ if(state.type==="ROUTIER") return buildROUTIER(); return state.msg==="transport"?buildTransport():buildSAP(); }
+
+/* ===== ANALYSE ===== */
+function analyse(){
+  const W=[];
+  if(state.type==="ROUTIER"){
+    if(state.renfortR.size===0) W.push(["amber","<b>Renfort non renseigné.</b>"]);
+    const etats=state.bilanR.map(b=>b.etat);
+    if(etats.includes("UA") && state.renfortR.has("renforts néant") && state.renfortR.size===1)
+      W.push(["amber","Victime UA sans renfort demandé — cohérence à vérifier."]);
+    const col=COLLISIONS.find(c=>c.v===state.collision);
+    if(col&&col.antag&&!$("#antag").value.trim()) W.push(["amber","Collision "+col.v+" : précise l'antagoniste (contre quoi)."]);
+    if(state.actionsR.size===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
+    if(state.bilanR.some(b=>!b.age.trim())) W.push(["amber","Âge manquant sur une victime (sexe / âge / état attendus)."]);
+    if(!$("#adresseR").value.trim()) W.push(["amber","Localisation manquante (voie / axe)."]);
+    if(!$("#vehicA").value.trim()) W.push(["amber","Véhicule mis en cause non renseigné."]);
+    if(W.length===0) W.push(["ok","<b>Message routier cohérent.</b> Phrase GDO, bilan sexe/âge/état, ordre conforme."]);
+    $("#warnings").innerHTML=W.map(([c,t])=>`<div class="w ${c}">${t}</div>`).join(""); return;
+  }
+  if(state.msg!=="transport"){
+    const acts=[...state.actions], grav=state.bilan.map(b=>b.gravite), quals=state.bilan.map(b=>b.qualif);
+    const hasUA = grav.includes("UA") || quals.some(q=>q.includes("arrêt cardio")) || grav.includes("en détresse vitale");
+    const acr = quals.some(q=>q.includes("arrêt cardio"));
+    if(state.renfort.size===0) W.push(["amber","<b>Renfort non renseigné.</b>"]);
+    if(hasUA && state.renfort.has("renforts néant") && state.renfort.size===1) W.push(["amber","<b>Gravité élevée sans renfort demandé.</b> Cohérence à vérifier."]);
+    if(acr && !acts.includes("à une réanimation cardio-pulmonaire")) W.push(["amber","<b>ACR annoncé mais pas de RCP dans le « je fais ».</b>"]);
+    if(quals.includes("blessé") && grav.includes("UA") && !acts.includes("à l'immobilisation") && !acts.includes("à la mise en condition")) W.push(["amber","Blessé UA sans immobilisation ni mise en condition — à confirmer."]);
+    if(acts.length===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
+    if(acts.length>4) W.push(["amber","Plus de 4 actions : risque de message trop long."]);
+    if(!$("#adresse").value.trim()) W.push(["amber","Adresse manquante dans le « je suis »."]);
+    if(W.length===0) W.push(["ok","<b>Message cohérent.</b> Ordre, ventilation et renfort conformes."]);
+  } else {
+    if(!$("#tDest").value.trim()) W.push(["amber","Destination manquante."]);
+    if(W.length===0) W.push(["ok","<b>Message de transport complet.</b>"]);
+  }
+  $("#warnings").innerHTML=W.map(([c,t])=>`<div class="w ${c}">${t}</div>`).join("");
+}
+
+/* ===== RAFRAÎCHISSEMENT ===== */
+function refresh(){ if(!state.manualEdit) $("#output").value=build(); analyse(); }
+
+/* ===== FORMS / MODE ===== */
+function activeFormSel(){ if(state.type==="ROUTIER") return "#formROUTIER"; return state.msg==="transport" ? "#formTransport" : "#formSAP"; }
+function applyMode(){
+  const sel=activeFormSel();
+  const guided = state.mode==="guide" && !(state.type==="SAP" && state.msg==="transport");
+  $("#gnav").classList.toggle("on",guided);
+  const secs=$$(sel+" .section");
+  if(!guided){ secs.forEach(s=>s.classList.remove("hide")); return; }
+  const n=secs.length; if(state.gstep>=n) state.gstep=n-1; if(state.gstep<0) state.gstep=0;
+  secs.forEach((s,i)=>s.classList.toggle("hide", i!==state.gstep));
+  $("#gStep").textContent=(state.gstep+1)+" / "+n;
+  $("#gPrev").disabled=state.gstep===0;
+  $("#gNext").textContent = state.gstep===n-1 ? "Terminer" : "Suivant ›";
+}
+function setMsgButtons(){ $$("#msgType button").forEach(b=>b.classList.toggle("on",b.dataset.msg===state.msg)); }
+function switchForms(){
+  const r = state.type==="ROUTIER";
+  $("#formROUTIER").classList.toggle("hide", !r);
+  $("#formSAP").classList.toggle("hide", r || state.msg==="transport");
+  $("#formTransport").classList.toggle("hide", r || state.msg!=="transport");
+  $("#btnTransport").classList.toggle("hide", r);
+  applyMode();
+}
+
+/* ===== ÉVÉNEMENTS ===== */
+$("#renfortChips").addEventListener("click",e=>{
+  const r=e.target.dataset.r; if(!r)return;
+  if(r==="renforts néant") state.renfort=new Set(["renforts néant"]);
+  else { state.renfort.delete("renforts néant"); state.renfort.has(r)?state.renfort.delete(r):state.renfort.add(r); if(state.renfort.size===0) state.renfort.add("renforts néant"); }
+  state.manualEdit=false; renderRenfort(); refresh();
+});
+$("#actionChips").addEventListener("click",e=>{ const a=e.target.dataset.a; if(!a)return; state.actions.has(a)?state.actions.delete(a):state.actions.add(a); state.manualEdit=false; renderActions(); refresh(); });
+$("#addBilan").addEventListener("click",()=>{ state.bilan.push({nb:1,qualif:"impliqué",gravite:""}); state.manualEdit=false; renderBilan(); refresh(); });
+$("#bilanLines").addEventListener("input",e=>{ const i=e.target.dataset.bi,k=e.target.dataset.bk; if(i===undefined)return; state.bilan[i][k]=e.target.value; state.manualEdit=false; refresh(); });
+$("#bilanLines").addEventListener("click",e=>{ const d=e.target.dataset.del; if(d===undefined)return; if(state.bilan.length>1){ state.bilan.splice(d,1); state.manualEdit=false; renderBilan(); refresh(); } });
+$("#tMedic").addEventListener("click",()=>{ const el=$("#tMedic"); el.dataset.on=el.dataset.on==="1"?"0":"1"; el.classList.toggle("on",el.dataset.on==="1"); state.manualEdit=false; refresh(); });
+
+/* routier */
+$("#enginSel").addEventListener("click",e=>{
+  const g=e.target.dataset.engin; if(!g)return; state.engin=g;
+  const d=ENGIN_DEFAULTS[g]; state.actionsR=new Set(d.actions); state.renfortR=new Set(d.renfort);
+  $$("#enginSel button").forEach(b=>b.classList.toggle("on",b.dataset.engin===g));
+  state.manualEdit=false; renderActionsR(); renderRenfortR(); refresh();
+});
+$("#renfortChipsR").addEventListener("click",e=>{
+  const r=e.target.dataset.rr; if(!r)return;
+  if(r==="renforts néant") state.renfortR=new Set(["renforts néant"]);
+  else { state.renfortR.delete("renforts néant"); state.renfortR.has(r)?state.renfortR.delete(r):state.renfortR.add(r); if(state.renfortR.size===0) state.renfortR.add("renforts néant"); }
+  state.manualEdit=false; renderRenfortR(); refresh();
+});
+$("#actionChipsR").addEventListener("click",e=>{ const a=e.target.dataset.ar; if(!a)return; state.actionsR.has(a)?state.actionsR.delete(a):state.actionsR.add(a); state.manualEdit=false; renderActionsR(); refresh(); });
+$("#addBilanR").addEventListener("click",()=>{ state.bilanR.push({sexe:"masculin",age:"",etat:"UR",vecteur:"",ch:""}); state.manualEdit=false; renderBilanR(); refresh(); });
+$("#bilanLinesR").addEventListener("input",e=>{ const i=e.target.dataset.ri,k=e.target.dataset.rk; if(i===undefined)return; state.bilanR[i][k]=e.target.value; state.manualEdit=false; refresh(); });
+$("#bilanLinesR").addEventListener("change",e=>{ const i=e.target.dataset.ri,k=e.target.dataset.rk; if(i===undefined)return; state.bilanR[i][k]=e.target.value; state.manualEdit=false; refresh(); });
+$("#bilanLinesR").addEventListener("click",e=>{ const d=e.target.dataset.delr; if(d===undefined)return; if(state.bilanR.length>1){ state.bilanR.splice(d,1); state.manualEdit=false; renderBilanR(); refresh(); } });
+$("#collisionSel").addEventListener("change",e=>{ state.collision=e.target.value; state.manualEdit=false; refresh(); });
+$("#cinetiqueSel").addEventListener("change",e=>{ state.cinetique=e.target.value; state.manualEdit=false; refresh(); });
+
+/* champs texte */
+["adresse","description","cfgIndicatif","cfgCodis","cfgCommune","tDest","tNb","tQualif","tGravite","tDispo","adresseR","vehicA","antag"]
+  .forEach(id=>{const el=$("#"+id); if(el) el.addEventListener("input",()=>{state.manualEdit=false;refresh();saveCfg();});});
+function saveCfg(){ store.set("op_cfg",JSON.stringify({ ind:$("#cfgIndicatif").value, codis:$("#cfgCodis").value, com:$("#cfgCommune").value })); }
+
+/* type d'intervention */
+$("#typeTabs").addEventListener("click",e=>{
+  const t=e.target.dataset.type; if(!t)return;
+  state.type=t; state.manualEdit=false; state.gstep=0;
+  if(t==="ROUTIER" && state.msg==="transport"){ state.msg="ambiance"; setMsgButtons(); }
+  $$("#typeTabs button").forEach(b=>b.classList.toggle("on",b.dataset.type===t));
+  switchForms(); refresh();
+});
+/* type de message */
+$("#msgType").addEventListener("click",e=>{ const m=e.target.dataset.msg; if(!m)return; state.msg=m; state.manualEdit=false; state.gstep=0; setMsgButtons(); switchForms(); refresh(); });
+/* mode */
+$("#mode").addEventListener("click",e=>{ const m=e.target.dataset.mode; if(!m)return; state.mode=m; state.gstep=0; $$("#mode button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m)); applyMode(); });
+/* nav guidée */
+$("#gNext").addEventListener("click",()=>{ const n=$$(activeFormSel()+" .section").length; if(state.gstep<n-1){state.gstep++;applyMode();} else { state.mode="rapide"; $$("#mode button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="rapide")); applyMode(); toast("Récapitulatif — vérifie le message"); } });
+$("#gPrev").addEventListener("click",()=>{ if(state.gstep>0){state.gstep--;applyMode();} });
+/* sortie */
+$("#output").addEventListener("input",()=>{state.manualEdit=true;});
+$("#resync").addEventListener("click",()=>{state.manualEdit=false;refresh();toast("Message resynchronisé");});
+$("#copyBtn").addEventListener("click",async()=>{ try{ await navigator.clipboard.writeText($("#output").value); }catch(e){ $("#output").select(); document.execCommand("copy"); } toast("Message copié"); });
+$("#reviewBtn").addEventListener("click",async()=>{
+  const ctx = state.type==="ROUTIER" ? "secours routier (GDO « opération de secours en milieu routier »)" : "secours à personnes";
+  const prompt =
+`Tu es mon appui doctrine (sergent SP, SDIS 16), intervention : ${ctx}. Analyse ce message opérationnel, concis :
+1) ordre des postes ① je demande → ② je suis → ③ je vois → ④ je fais respecté ?
+2) cohérence interne (nature/cinétique ↔ action ↔ renfort) ?
+3) bilan conforme (SAP : nombre+qualif+gravité / routier : sexe+âge+état, jamais l'emplacement) ?
+4) vocabulaire normalisé (pas de « décédé » hors critères de constat) ?
+5) concision et lisibilité radio.
+Propose une version corrigée si nécessaire.
+
+MESSAGE :
+${$("#output").value}`;
+  try{ await navigator.clipboard.writeText(prompt); }catch(e){}
+  toast("Prompt de révision copié — colle-le à Claude");
+});
+$("#saveBtn").addEventListener("click",()=>{ const h=JSON.parse(store.get("op_hist")||"[]"); h.unshift({t:new Date().toLocaleString("fr-FR"),m:$("#output").value}); store.set("op_hist",JSON.stringify(h.slice(0,15))); renderHist(); toast("Message archivé"); });
+$("#clearHist").addEventListener("click",()=>{store.del("op_hist");renderHist();toast("Historique vidé");});
+$("#resetBtn").addEventListener("click",()=>{
+  if(state.type==="ROUTIER"){
+    const d=ENGIN_DEFAULTS[state.engin]; state.renfortR=new Set(d.renfort); state.actionsR=new Set(d.actions);
+    state.bilanR=[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}]; state.collision="frontale"; state.cinetique="forte";
+    $("#adresseR").value=""; $("#vehicA").value=""; $("#antag").value="";
+    fillRoutierSelects(); renderRenfortR(); renderActionsR(); renderBilanR();
+  } else {
+    state.renfort=new Set(["renforts néant"]); state.actions=new Set(); state.bilan=[{nb:1,qualif:"malade",gravite:"UA"}];
+    $("#adresse").value=""; $("#description").value=""; renderRenfort(); renderActions(); renderBilan();
+  }
+  state.manualEdit=false; state.gstep=0; applyMode(); refresh(); toast("Nouveau message");
+});
+function renderHist(){ const h=JSON.parse(store.get("op_hist")||"[]"); $("#histBody").innerHTML = h.length? h.map(x=>`<div class="hist-item"><div class="t">${x.t}</div>${x.m.replace(/</g,"&lt;")}</div>`).join("") : '<div class="sub" style="padding:6px 0">Aucun message archivé.</div>'; }
+
+/* ===== INIT ===== */
+(function init(){
+  const cfg=JSON.parse(store.get("op_cfg")||"{}");
+  $("#cfgIndicatif").value = cfg.ind || "VSAV 1";
+  if(cfg.codis) $("#cfgCodis").value=cfg.codis;
+  $("#cfgCommune").value = cfg.com || "Cognac";
+  renderRenfort(); renderActions(); renderBilan(); fillTransportSelects();
+  renderRenfortR(); renderActionsR(); renderBilanR(); fillRoutierSelects();
+  renderLexique(); renderHist(); setMsgButtons(); switchForms(); refresh();
+})();
+</script>
+</body>
+</html>
