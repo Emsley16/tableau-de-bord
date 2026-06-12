@@ -44,7 +44,6 @@
   .seg button{flex:1;min-height:46px;background:var(--panel);color:var(--muted);border:0;font-weight:700;font-size:.82rem;border-right:1px solid var(--line)}
   .seg button:last-child{border-right:0}
   .seg button.on{background:var(--panel2);color:var(--txt);box-shadow:inset 0 -3px 0 var(--accent)}
-  .seg button.hide{display:none}
   .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
   .section h2{margin:0 0 12px;font-size:.92rem;display:flex;align-items:center;gap:10px}
   .num{flex:0 0 auto;width:26px;height:26px;border-radius:7px;background:var(--accent);color:#fff;
@@ -57,7 +56,7 @@
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .addbtn{margin-top:4px;background:transparent;border:1px dashed var(--line);color:var(--accent2);
     border-radius:10px;min-height:44px;width:100%;font-weight:700}
-  /* cartes victimes routier */
+  .man{margin-top:10px}
   .rcard{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--panel2)}
   .rcard-h{font-size:.74rem;font-weight:800;color:var(--accent2);text-transform:uppercase;letter-spacing:.05em;
     margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
@@ -90,10 +89,6 @@
     background:var(--panel);color:var(--txt);font-weight:800;font-size:.92rem;padding:0 14px}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.ghost{background:transparent;color:var(--muted)}
-  #gnav{display:none;gap:8px;margin-bottom:16px}
-  #gnav.on{display:flex}
-  #gnav button{flex:1;min-height:var(--tap);border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-weight:800}
-  #gnav .step{flex:0 0 auto;display:grid;place-items:center;color:var(--muted);font-size:.8rem;min-width:54px}
   details{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px}
   summary{padding:14px;font-weight:800;font-size:.9rem;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
   summary::-webkit-details-marker{display:none}
@@ -121,7 +116,7 @@
   <div class="badge">18</div>
   <div>
     <h1>Constructeur message opérationnel</h1>
-    <div class="sub">Hors ligne · SDIS 16 · SAP + Secours routier</div>
+    <div class="sub">Hors ligne · SDIS 16 · v3.1 — SAP + Secours routier</div>
   </div>
 </header>
 
@@ -139,35 +134,33 @@
   <button disabled title="à venir">Diverses</button>
 </div>
 
-<!-- Type de message + mode -->
+<!-- Type de message -->
 <div class="row">
   <div class="seg" id="msgType">
     <button class="on" data-msg="ambiance">Ambiance</button>
     <button data-msg="cr">Compte rendu</button>
-    <button data-msg="transport" id="btnTransport">Transport</button>
-  </div>
-</div>
-<div class="row">
-  <div class="seg" id="mode">
-    <button class="on" data-mode="rapide">Mode rapide</button>
-    <button data-mode="guide">Mode guidé</button>
   </div>
 </div>
 
-<!-- ====== FORMULAIRE SAP : AMBIANCE / CR ====== -->
+<!-- ====== FORMULAIRE SAP ====== -->
 <div id="formSAP">
-  <div class="section" data-step="0">
+  <div class="section">
     <h2><span class="num">1</span> Je demande</h2>
-    <div class="hint">La décision avant la description. Pas de besoin = « renforts néant ».</div>
+    <div class="hint">La décision avant la description. Pas de besoin = « moyen suffisant ».</div>
     <div class="chips" id="renfortChips"></div>
+    <div class="man"><label>Autre demande (saisie libre)</label>
+    <input id="renfMan" placeholder="ex. un moyen de levage" autocomplete="off"></div>
   </div>
-  <div class="section" data-step="1">
+  <div class="section">
     <h2><span class="num">2</span> Je suis</h2>
-    <div class="hint">Localisation exacte.</div>
-    <label>Adresse / point de l'opération</label>
-    <input id="adresse" placeholder="ex. 12 rue de Gatechien" autocomplete="off">
+    <div class="hint">« Adresse indiquée » = adresse transmise au départ, confirmée sur place.</div>
+    <div class="chips" style="margin-bottom:10px"><div class="chip" id="adrIndChip">Adresse indiquée</div></div>
+    <div id="adrManuelle">
+      <label>Adresse</label>
+      <input id="adresse" placeholder="ex. 12 rue de Gatechien" autocomplete="off">
+    </div>
   </div>
-  <div class="section" data-step="2">
+  <div class="section">
     <h2><span class="num">3</span> Je vois</h2>
     <div class="hint">Description opérationnelle + bilan ventilé.</div>
     <label>Description de l'événement</label>
@@ -177,34 +170,12 @@
     <div id="bilanLines"></div>
     <button class="addbtn" id="addBilan">+ ajouter une victime</button>
   </div>
-  <div class="section" data-step="3">
-    <h2><span class="num">4</span> Je fais</h2>
-    <div class="hint">2 à 3 actions structurantes.</div>
-    <div class="chips" id="actionChips"></div>
-  </div>
-</div>
-
-<!-- ====== FORMULAIRE TRANSPORT (SAP) ====== -->
-<div id="formTransport" class="hide">
   <div class="section">
-    <h2><span class="num">T</span> Message de transport</h2>
-    <div class="hint">Au moment du départ avec la victime.</div>
-    <div class="bilan-line" style="grid-template-columns:60px 1fr 1fr">
-      <input id="tNb" type="number" min="1" value="1" inputmode="numeric">
-      <select id="tQualif"></select>
-      <select id="tGravite"></select>
-    </div>
-    <label style="margin-top:8px">Destination</label>
-    <input id="tDest" placeholder="ex. CH d'Angoulême" autocomplete="off">
-    <div class="chips" style="margin-top:12px">
-      <div class="chip" id="tMedic" data-on="0">Médicalisé SMUR</div>
-    </div>
-    <label style="margin-top:12px">Disponibilité</label>
-    <select id="tDispo">
-      <option value="je rends compte à mon arrivée">je rends compte à mon arrivée</option>
-      <option value="disponible à l'issue du transport">disponible à l'issue</option>
-      <option value="indisponible jusqu'à nouvel ordre">indisponible jusqu'à nouvel ordre</option>
-    </select>
+    <h2><span class="num">4</span> Je fais</h2>
+    <div class="hint">Formules courtes, prêtes radio.</div>
+    <div class="chips" id="actionChips"></div>
+    <div class="man"><label>Autre action (saisie libre)</label>
+    <input id="faisMan" placeholder="ex. protection thermique de la victime" autocomplete="off"></div>
   </div>
 </div>
 
@@ -215,18 +186,23 @@
     <button class="on" data-engin="VSAV">VSAV</button>
     <button data-engin="VSR">VSR</button>
   </div>
-  <div class="section" data-step="0">
+  <div class="section">
     <h2><span class="num">1</span> Je demande</h2>
-    <div class="hint">Désincarcération, médicalisation, forces de l'ordre… ou « renforts néant ».</div>
+    <div class="hint">Pas de besoin = « moyen suffisant ».</div>
     <div class="chips" id="renfortChipsR"></div>
+    <div class="man"><label>Autre demande (saisie libre)</label>
+    <input id="renfManR" placeholder="ex. une dépollution" autocomplete="off"></div>
   </div>
-  <div class="section" data-step="1">
+  <div class="section">
     <h2><span class="num">2</span> Je suis</h2>
-    <div class="hint">Localisation routière : voie / axe + sens + point de repère.</div>
-    <label>Voie / axe</label>
-    <input id="adresseR" placeholder="ex. RN10, sens Bordeaux-Paris, PR 12" autocomplete="off">
+    <div class="hint">« Adresse indiquée » ou localisation routière : voie / axe + sens + point de repère.</div>
+    <div class="chips" style="margin-bottom:10px"><div class="chip" id="adrIndChipR">Adresse indiquée</div></div>
+    <div id="adrManuelleR">
+      <label>Voie / axe</label>
+      <input id="adresseR" placeholder="ex. RN10, sens Bordeaux-Paris, PR 12" autocomplete="off">
+    </div>
   </div>
-  <div class="section" data-step="2">
+  <div class="section">
     <h2><span class="num">3</span> Je vois</h2>
     <div class="hint">Accident → collision → cinétique → bilan (sexe / âge / état).</div>
     <label>Véhicule(s) mis en cause</label>
@@ -247,17 +223,11 @@
     <div id="bilanLinesR"></div>
     <button class="addbtn" id="addBilanR">+ ajouter une victime</button>
   </div>
-  <div class="section" data-step="3">
+  <div class="section">
     <h2><span class="num">4</span> Je fais</h2>
-    <div class="hint">Pré-orienté par l'engin. Vocabulaire GDO.</div>
+    <div class="hint">Vocabulaire GDO, pré-orienté par l'engin.</div>
     <div class="chips" id="actionChipsR"></div>
   </div>
-</div>
-
-<div id="gnav">
-  <button id="gPrev">‹ Précédent</button>
-  <div class="step" id="gStep">1 / 4</div>
-  <button id="gNext">Suivant ›</button>
 </div>
 
 <div id="warnings"></div>
@@ -289,7 +259,7 @@
 
 <div class="foot">
   Outil d'aide — ne se substitue ni à la doctrine ni à votre jugement.<br>
-  Calé sur le GDO et l'OBDSIC du SDIS 16. Fonctionne intégralement hors ligne.
+  Calé sur le GDO et l'OBDSIC du SDIS 16. Fonctionne intégralement hors ligne. v3
 </div>
 
 <div id="toast"></div>
@@ -305,51 +275,40 @@ const store = {
   del(k){ try{ localStorage.removeItem(k); }catch(e){ delete _mem[k]; } }
 };
 
-/* ===== CONFIG SAP ===== */
+/* ===== RENFORTS (liste unique SAP + SR, ordre imposé) ===== */
+const NO_NEED = "moyen suffisant";
 const RENFORTS = [
-  "renforts néant","une médicalisation","un renfort SMUR","un VSAV supplémentaire",
-  "un véhicule infirmier (VLI)","les forces de l'ordre","Enedis","un moyen de relevage spécialisé"
+  NO_NEED,
+  "SMUR","Forces de l'ordre","Chef de Groupe","Élu",
+  "Équipe SMP","Équipe USARD","Équipe Nautique","Équipe GSA","Équipe RCH","Équipe cynotechnie",
+  "ENEDIS","GRDF","CIL (chef d'incident local)",
+  "VSAV supplémentaire","VPA","VSR","FPT","VTU"
 ];
+
+/* ===== SAP ===== */
 const QUALIF = [
-  {v:"blessé", l:"blessé (traumatique)"},
-  {v:"malade", l:"malade (médical)"},
-  {v:"brûlé", l:"brûlé"},
-  {v:"intoxiqué", l:"intoxiqué"},
-  {v:"électrisé", l:"électrisé"},
-  {v:"impliqué", l:"impliqué"},
-  {v:"indemne", l:"indemne"},
-  {v:"victime", l:"victime (générique)"},
-  {v:"victime en arrêt cardio-respiratoire", l:"en arrêt cardio-respiratoire (ACR)"},
-  {v:"victime présentant des signes de mort manifeste", l:"signes de mort manifeste"},
-  {v:"décédé", l:"décédé / DCD (constat médecin, ou secouriste si critères)"}
+  {v:"victime indemne", pl:"victimes indemnes", l:"Victime indemne"},
+  {v:"blessé", l:"Blessé (traumatisme)"},
+  {v:"malade", l:"Malade (médical)"},
+  {v:"brûlé", l:"Brûlé"},
+  {v:"intoxiqué", l:"Intoxiqué"},
+  {v:"électrisé", l:"Électrisé"},
+  {v:"victime en ACR", pl:"victimes en ACR", l:"En ACR"},
+  {v:"victime présentant des signes de mort manifeste", pl:"victimes présentant des signes de mort manifeste", l:"Signes de mort manifeste"}
 ];
 const GRAVITE = [
   {v:"", l:"— (sans)"},
   {v:"UA", l:"UA — urgence absolue"},
-  {v:"UR", l:"UR — urgence relative"},
-  {v:"en détresse vitale", l:"en détresse vitale"}
+  {v:"UR", l:"UR — urgence relative"}
 ];
 const ACTIONS = [
-  {v:"au bilan", l:"Bilan"},
-  {v:"aux gestes de secours", l:"Gestes de secours"},
-  {v:"à la mise sous oxygène", l:"Oxygénothérapie"},
-  {v:"à une réanimation cardio-pulmonaire", l:"RCP"},
-  {v:"à une défibrillation", l:"Défibrillation"},
-  {v:"à l'immobilisation", l:"Immobilisation"},
-  {v:"à la mise en condition", l:"Mise en condition"},
-  {v:"au relevage", l:"Relevage"},
-  {v:"au brancardage", l:"Brancardage"},
-  {v:"à un dégagement d'urgence", l:"Dégagement d'urgence"},
-  {v:"à la médicalisation", l:"Médicalisation"},
-  {v:"à la surveillance", l:"Surveillance"}
+  {v:"poursuivons reconnaissance", l:"Poursuivons reconnaissance"},
+  {v:"en cours de bilan", l:"En cours de bilan"},
+  {v:"procédons à la RCP", l:"Procédons à la RCP"},
+  {v:"procédons à l'immobilisation", l:"Procédons à l'immobilisation"}
 ];
 
-/* ===== CONFIG ROUTIER ===== */
-const RENFORTS_R = [
-  "renforts néant","une désincarcération","une médicalisation","un renfort SMUR",
-  "un VSAV supplémentaire","un véhicule infirmier (VLI)","les forces de l'ordre",
-  "un moyen de balisage","une dépollution","Enedis"
-];
+/* ===== ROUTIER ===== */
 const COLLISIONS = [
   {v:"frontale", antag:true},
   {v:"latérale", antag:true},
@@ -374,8 +333,8 @@ const ACTIONS_R = [
   {id:"desinc", l:"Désincarcération",         phrase:n=>"à la désincarcération "+(n>1?"des victimes":"de la victime")}
 ];
 const ENGIN_DEFAULTS = {
-  VSAV:{ actions:["pec"], renfort:["une désincarcération","une médicalisation"] },
-  VSR :{ actions:["site","vehic","desinc"], renfort:["une médicalisation"] }
+  VSAV:{ actions:["pec"], renfort:["SMUR","VSR"] },
+  VSR :{ actions:["site","vehic","desinc"], renfort:["SMUR"] }
 };
 /* Pictogrammes SVG ORIGINAUX (pas les schémas © SDIS 59). Hors ligne, inline, légers. */
 const VEHICULES = [
@@ -400,49 +359,41 @@ const VEHICULES = [
 
 /* ===== LEXIQUE ===== */
 const LEXIQUE = {
-  "Nature de l'atteinte":[
+  "Nature de l'atteinte (SAP)":[
     ["Blessé","Atteinte d'origine traumatique (choc, chute, plaie, fracture)."],
     ["Malade","Atteinte d'origine médicale : pathologie ou malaise, sans traumatisme."],
     ["Brûlé","Atteinte par agent thermique, chimique ou électrique."],
     ["Intoxiqué","Atteinte par inhalation, ingestion ou contact d'un toxique."],
-    ["Électrisé","A subi le passage du courant (vivant). Électrocuté = décédé du courant."]
-  ],
-  "Statut au regard de l'événement":[
-    ["Victime","Terme générique : toute personne concernée. À préciser dès que possible."],
-    ["Impliqué (IMP)","Non blessé physiquement mais exposé au risque ; prise en charge possible (médico-psy)."],
-    ["Indemne","Présent, sans atteinte ni exposition : aucune prise en charge."],
-    ["Décédé (DCD)","Constaté par un médecin, ou par un secouriste si tête détachée du tronc, rigidité cadavérique ou putréfaction."]
+    ["Électrisé","A subi le passage du courant (vivant). Électrocuté = décédé du courant."],
+    ["Victime indemne","Présente, sans atteinte : aucune prise en charge."],
+    ["ACR","Arrêt cardio-respiratoire : arrêt des fonctions circulatoire et respiratoire."],
+    ["Signes de mort manifeste","Formulation radio en l'absence de constat. Décédé (DCD) : constaté par un médecin, ou par un secouriste si tête détachée du tronc, rigidité cadavérique ou putréfaction."]
   ],
   "Gravité":[
     ["UA — Urgence absolue","Pronostic vital engagé : risque de mort sans intervention rapide."],
-    ["UR — Urgence relative","Soins nécessaires, pronostic vital non engagé."],
-    ["Détresse vitale","Altération d'une fonction vitale menaçant la vie à court terme."],
-    ["ACR","Arrêt cardio-respiratoire : arrêt des fonctions circulatoire et respiratoire."]
+    ["UR — Urgence relative","Soins nécessaires, pronostic vital non engagé."]
   ],
   "Secours routier (GDO)":[
     ["Cinétique","Faible : carrosserie. Moyenne : + air-bag déclenché. Forte : + cellule de survie atteinte. Indice de gravité indépendant de l'état apparent."],
     ["Transmission victimes","Jamais la numérotation par emplacement dans le véhicule. Uniquement sexe, âge, état."],
+    ["IMP — Impliqué","Non blessé physiquement mais exposé au risque ; prise en charge possible (médico-psy)."],
     ["Je fais (GDO)","Sécurisation du site, sécurisation du véhicule, prise en charge, désincarcération."]
-  ],
-  "Verbes d'action (SAP)":[
-    ["Immobilisation","Maintien d'un segment ou de l'axe tête-cou-tronc (collier, attelle, MID, plan dur)."],
-    ["Mise en condition","Gestes préparant la victime au transport (position, O₂, protection, surveillance)."],
-    ["Relevage","Relever la victime du sol et l'installer sur le dispositif de portage."],
-    ["Dégagement d'urgence","Soustraction immédiate à un danger vital, réel, immédiat et non maîtrisable."]
   ]
 };
 
 /* ===== ÉTAT ===== */
 let state = {
-  type:"SAP", msg:"ambiance", mode:"rapide", gstep:0,
-  renfort:new Set(["renforts néant"]),
+  type:"SAP", msg:"ambiance",
+  renfort:new Set([NO_NEED]),
   actions:new Set(),
   bilan:[{nb:1,qualif:"malade",gravite:"UA"}],
+  adrInd:false,
   engin:"VSAV",
-  renfortR:new Set(["une désincarcération","une médicalisation"]),
-  actionsR:new Set(["pec"]),
+  renfortR:new Set(ENGIN_DEFAULTS.VSAV.renfort),
+  actionsR:new Set(ENGIN_DEFAULTS.VSAV.actions),
   collision:"frontale", cinetique:"forte", vehTarget:"vehic",
   bilanR:[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}],
+  adrIndR:false,
   manualEdit:false
 };
 
@@ -453,12 +404,20 @@ function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("show");cl
 function joinFr(arr){ arr=arr.filter(Boolean); if(arr.length<=1) return arr[0]||""; return arr.slice(0,-1).join(", ")+" et "+arr[arr.length-1]; }
 function pluralize(word,n){ if(n<=1) return word; if(/(s|x)$/.test(word.split(" ")[0])) return word; const p=word.split(" "); p[0]=p[0]+"s"; return p.join(" "); }
 function lc(s){ s=(s||"").trim().replace(/\s+/g," "); if(!s) return s; const f=s.split(" ")[0]; return f===f.toUpperCase()? s : s.charAt(0).toLowerCase()+s.slice(1); }
+function cap(s){ return s? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 function cleanDesc(s){ s=(s||"").trim().replace(/\s+/g," ").replace(/[.;,]+$/,""); if(!s) return "[description]"; return lc(s); }
 function esc(s){ return (s||"").replace(/"/g,"&quot;"); }
+/* Sélection des renforts en ordre canonique + saisie libre */
+function renfortList(set, manId){
+  const out = RENFORTS.filter(r=>set.has(r));
+  const man = $(manId).value.trim();
+  if(man) out.push(lc(man));
+  return out;
+}
 
 /* ===== RENDU ===== */
-function renderRenfort(){ $("#renfortChips").innerHTML = RENFORTS.map(r=>`<div class="chip ${state.renfort.has(r)?"on":""}" data-r="${r}">${r}</div>`).join(""); }
-function renderActions(){ $("#actionChips").innerHTML = ACTIONS.map(a=>`<div class="chip ${state.actions.has(a.v)?"on":""}" data-a="${a.v}">${a.l}</div>`).join(""); }
+function renderRenfort(){ $("#renfortChips").innerHTML = RENFORTS.map(r=>`<div class="chip ${state.renfort.has(r)?"on":""}" data-r="${esc(r)}">${r}</div>`).join(""); }
+function renderActions(){ $("#actionChips").innerHTML = ACTIONS.map(a=>`<div class="chip ${state.actions.has(a.v)?"on":""}" data-a="${esc(a.v)}">${a.l}</div>`).join(""); }
 function bilanSelects(_,list,val){ return list.map(o=>{const v=o.v!==undefined?o.v:o;const l=o.l!==undefined?o.l:o;return `<option value="${esc(v)}" ${v===val?"selected":""}>${l}</option>`}).join(""); }
 function renderBilan(){
   $("#bilanLines").innerHTML = state.bilan.map((b,i)=>`
@@ -469,8 +428,7 @@ function renderBilan(){
       <button class="del" data-del="${i}">×</button>
     </div>`).join("");
 }
-function fillTransportSelects(){ $("#tQualif").innerHTML=bilanSelects(0,QUALIF,"blessé"); $("#tGravite").innerHTML=bilanSelects(0,GRAVITE,"UR"); }
-function renderRenfortR(){ $("#renfortChipsR").innerHTML = RENFORTS_R.map(r=>`<div class="chip ${state.renfortR.has(r)?"on":""}" data-rr="${r}">${r}</div>`).join(""); }
+function renderRenfortR(){ $("#renfortChipsR").innerHTML = RENFORTS.map(r=>`<div class="chip ${state.renfortR.has(r)?"on":""}" data-rr="${esc(r)}">${r}</div>`).join(""); }
 function renderActionsR(){ $("#actionChipsR").innerHTML = ACTIONS_R.map(a=>`<div class="chip ${state.actionsR.has(a.id)?"on":""}" data-ar="${a.id}">${a.l}</div>`).join(""); }
 function renderBilanR(){
   $("#bilanLinesR").innerHTML = state.bilanR.map((b,i)=>`
@@ -493,33 +451,49 @@ function fillRoutierSelects(){
 }
 function renderVehicules(){ $("#vgrid").innerHTML = VEHICULES.map(v=>`<button type="button" class="vtile" data-veh="${v.id}">${v.svg}<span>${v.lab}</span></button>`).join(""); }
 function renderLexique(){ $("#lexBody").innerHTML=Object.entries(LEXIQUE).map(([k,rows])=>`<h3>${k}</h3><dl>${rows.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join("")}</dl>`).join(""); }
+function applyAdr(){
+  $("#adrIndChip").classList.toggle("on",state.adrInd);
+  $("#adrManuelle").classList.toggle("hide",state.adrInd);
+  $("#adrIndChipR").classList.toggle("on",state.adrIndR);
+  $("#adrManuelleR").classList.toggle("hide",state.adrIndR);
+}
 
 /* ===== ASSEMBLAGE ===== */
-function bilanText(){
-  return state.bilan.map(b=>{ const n=Math.max(1,parseInt(b.nb)||1); return n+" "+pluralize(b.qualif,n)+(b.gravite?(" "+b.gravite):""); }).join(", ");
+function qualifText(b){
+  const n=Math.max(1,parseInt(b.nb)||1);
+  const q=QUALIF.find(x=>x.v===b.qualif);
+  const base=(n>1 && q && q.pl)? q.pl : pluralize(b.qualif,n);
+  return n+" "+base+(b.gravite?(" "+b.gravite):"");
+}
+function bilanText(){ return state.bilan.map(qualifText).join(", "); }
+function lieuSAP(){
+  const com=$("#cfgCommune").value.trim()||"[commune]";
+  if(state.adrInd) return `Opération de secours sur la commune de ${com} à l'adresse indiquée`;
+  const adr=$("#adresse").value.trim()||"[adresse]";
+  return `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`;
+}
+function lieuR(){
+  const com=$("#cfgCommune").value.trim()||"[commune]";
+  if(state.adrIndR) return `Opération de secours sur la commune de ${com} à l'adresse indiquée`;
+  const adr=$("#adresseR").value.trim()||"[voie / axe]";
+  return `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`;
 }
 function buildSAP(){
   const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
-  const com=$("#cfgCommune").value.trim()||"[commune]", adr=$("#adresse").value.trim()||"[adresse]";
   const desc=cleanDesc($("#description").value);
-  const renf=joinFr([...state.renfort])||"[renfort]";
-  const acts=joinFr([...state.actions])||"[action]";
+  const renf=joinFr(renfortList(state.renfort,"#renfMan"))||"[demande]";
+  const faisItems = ACTIONS.filter(a=>state.actions.has(a.v)).map(a=>a.v);
+  const man=$("#faisMan").value.trim(); if(man) faisItems.push(lc(man));
+  const fais = cap(faisItems.join(", "))||"[action]";
   const titre = state.msg==="cr" ? " — compte rendu" : "";
   const prov = state.msg==="cr" ? "définitif" : "provisoire";
   return [
     `${codis} de ${ind}${titre}`,
     `Je demande : ${renf}`,
-    `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`,
+    lieuSAP(),
     `Nous sommes confrontés à ${desc} ; bilan humain ${prov} : ${bilanText()}`,
-    `Nous procédons ${acts}`
+    fais
   ].join("\n");
-}
-function buildTransport(){
-  const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
-  const nb=Math.max(1,parseInt($("#tNb").value)||1), q=pluralize($("#tQualif").value,nb), g=$("#tGravite").value;
-  const dest=$("#tDest").value.trim()||"[destination]";
-  const medic=$("#tMedic").dataset.on==="1"?"médicalisé SMUR":"non médicalisé", dispo=$("#tDispo").value;
-  return [ `${codis} de ${ind}`,`Message de transport`,`Je transporte ${nb} ${q}${g?(" "+g):""} vers ${dest}`,`${medic}`,`${dispo}` ].join("\n");
 }
 function bilanRText(){
   const n=state.bilanR.length, head=`${n} victime${n>1?"s":""}`;
@@ -535,14 +509,13 @@ function bilanRText(){
 }
 function buildROUTIER(){
   const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
-  const com=$("#cfgCommune").value.trim()||"[commune]", adr=$("#adresseR").value.trim()||"[voie / axe]";
   let vehic=cleanDesc($("#vehicA").value); if(vehic==="[description]") vehic="[véhicule mis en cause]";
   const col=COLLISIONS.find(c=>c.v===state.collision)||COLLISIONS[0];
   const antag=lc($("#antag").value), cin=state.cinetique;
   let collisionPart;
   if(col.antag) collisionPart=`dans une collision ${col.v} à ${cin} cinétique${antag?(" contre "+antag):""}`;
   else collisionPart=`${col.v} à ${cin} cinétique`;
-  const renf=joinFr([...state.renfortR])||"[renfort]";
+  const renf=joinFr(renfortList(state.renfortR,"#renfManR"))||"[demande]";
   const n=state.bilanR.length;
   const acts=joinFr(ACTIONS_R.filter(a=>state.actionsR.has(a.id)).map(a=>a.phrase(n)))||"[action]";
   const titre = state.msg==="cr" ? " — compte rendu" : "";
@@ -550,89 +523,70 @@ function buildROUTIER(){
   return [
     `${codis} de ${ind}${titre}`,
     `Je demande : ${renf}`,
-    `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`,
+    lieuR(),
     `Nous sommes confrontés à un accident de la circulation mettant en cause ${vehic} ${collisionPart}`,
     `Bilan humain ${prov} : ${bilanRText()}`,
     `Nous procédons ${acts}`
   ].join("\n");
 }
-function build(){ if(state.type==="ROUTIER") return buildROUTIER(); return state.msg==="transport"?buildTransport():buildSAP(); }
+function build(){ return state.type==="ROUTIER" ? buildROUTIER() : buildSAP(); }
 
 /* ===== ANALYSE ===== */
 function analyse(){
   const W=[];
   if(state.type==="ROUTIER"){
-    if(state.renfortR.size===0) W.push(["amber","<b>Renfort non renseigné.</b>"]);
+    const renfCount = renfortList(state.renfortR,"#renfManR").length;
+    if(renfCount===0) W.push(["amber","<b>Demande non renseignée.</b> Précise un moyen ou « moyen suffisant »."]);
     const etats=state.bilanR.map(b=>b.etat);
-    if(etats.includes("UA") && state.renfortR.has("renforts néant") && state.renfortR.size===1)
-      W.push(["amber","Victime UA sans renfort demandé — cohérence à vérifier."]);
+    if(etats.includes("UA") && state.renfortR.has(NO_NEED) && renfCount===1)
+      W.push(["amber","Victime UA avec « moyen suffisant » seul — cohérence à vérifier."]);
     const col=COLLISIONS.find(c=>c.v===state.collision);
     if(col&&col.antag&&!$("#antag").value.trim()) W.push(["amber","Collision "+col.v+" : précise l'antagoniste (contre quoi)."]);
     if(state.actionsR.size===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
     if(state.bilanR.some(b=>!b.age.trim())) W.push(["amber","Âge manquant sur une victime (sexe / âge / état attendus)."]);
-    if(!$("#adresseR").value.trim()) W.push(["amber","Localisation manquante (voie / axe)."]);
+    if(!state.adrIndR && !$("#adresseR").value.trim()) W.push(["amber","Localisation manquante (voie / axe), ou coche « adresse indiquée »."]);
     if(!$("#vehicA").value.trim()) W.push(["amber","Véhicule mis en cause non renseigné."]);
     if(W.length===0) W.push(["ok","<b>Message routier cohérent.</b> Phrase GDO, bilan sexe/âge/état, ordre conforme."]);
-    $("#warnings").innerHTML=W.map(([c,t])=>`<div class="w ${c}">${t}</div>`).join(""); return;
-  }
-  if(state.msg!=="transport"){
-    const acts=[...state.actions], grav=state.bilan.map(b=>b.gravite), quals=state.bilan.map(b=>b.qualif);
-    const hasUA = grav.includes("UA") || quals.some(q=>q.includes("arrêt cardio")) || grav.includes("en détresse vitale");
-    const acr = quals.some(q=>q.includes("arrêt cardio"));
-    if(state.renfort.size===0) W.push(["amber","<b>Renfort non renseigné.</b>"]);
-    if(hasUA && state.renfort.has("renforts néant") && state.renfort.size===1) W.push(["amber","<b>Gravité élevée sans renfort demandé.</b> Cohérence à vérifier."]);
-    if(acr && !acts.includes("à une réanimation cardio-pulmonaire")) W.push(["amber","<b>ACR annoncé mais pas de RCP dans le « je fais ».</b>"]);
-    if(quals.includes("blessé") && grav.includes("UA") && !acts.includes("à l'immobilisation") && !acts.includes("à la mise en condition")) W.push(["amber","Blessé UA sans immobilisation ni mise en condition — à confirmer."]);
-    if(acts.length===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
-    if(acts.length>4) W.push(["amber","Plus de 4 actions : risque de message trop long."]);
-    if(!$("#adresse").value.trim()) W.push(["amber","Adresse manquante dans le « je suis »."]);
-    if(W.length===0) W.push(["ok","<b>Message cohérent.</b> Ordre, ventilation et renfort conformes."]);
   } else {
-    if(!$("#tDest").value.trim()) W.push(["amber","Destination manquante."]);
-    if(W.length===0) W.push(["ok","<b>Message de transport complet.</b>"]);
+    const renfArr = renfortList(state.renfort,"#renfMan");
+    const grav=state.bilan.map(b=>b.gravite), quals=state.bilan.map(b=>b.qualif);
+    const hasUA = grav.includes("UA") || quals.some(q=>q.includes("ACR"));
+    const acr = quals.some(q=>q.includes("ACR"));
+    if(renfArr.length===0) W.push(["amber","<b>Demande non renseignée.</b> Précise un moyen ou « moyen suffisant »."]);
+    if(hasUA && state.renfort.has(NO_NEED) && renfArr.length===1) W.push(["amber","<b>Gravité élevée (UA / ACR) avec « moyen suffisant » seul.</b> Cohérence à vérifier."]);
+    if(acr && !state.actions.has("procédons à la RCP")) W.push(["amber","<b>ACR annoncé mais pas de RCP dans le « je fais ».</b>"]);
+    const faisCount = state.actions.size + ($("#faisMan").value.trim()?1:0);
+    if(faisCount===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
+    if(!state.adrInd && !$("#adresse").value.trim()) W.push(["amber","Adresse manquante, ou coche « adresse indiquée »."]);
+    if(W.length===0) W.push(["ok","<b>Message cohérent.</b> Ordre, ventilation et demande conformes."]);
   }
   $("#warnings").innerHTML=W.map(([c,t])=>`<div class="w ${c}">${t}</div>`).join("");
 }
 
 /* ===== RAFRAÎCHISSEMENT ===== */
 function refresh(){ if(!state.manualEdit) $("#output").value=build(); analyse(); }
-
-/* ===== FORMS / MODE ===== */
-function activeFormSel(){ if(state.type==="ROUTIER") return "#formROUTIER"; return state.msg==="transport" ? "#formTransport" : "#formSAP"; }
-function applyMode(){
-  const sel=activeFormSel();
-  const guided = state.mode==="guide" && !(state.type==="SAP" && state.msg==="transport");
-  $("#gnav").classList.toggle("on",guided);
-  const secs=$$(sel+" .section");
-  if(!guided){ secs.forEach(s=>s.classList.remove("hide")); return; }
-  const n=secs.length; if(state.gstep>=n) state.gstep=n-1; if(state.gstep<0) state.gstep=0;
-  secs.forEach((s,i)=>s.classList.toggle("hide", i!==state.gstep));
-  $("#gStep").textContent=(state.gstep+1)+" / "+n;
-  $("#gPrev").disabled=state.gstep===0;
-  $("#gNext").textContent = state.gstep===n-1 ? "Terminer" : "Suivant ›";
-}
-function setMsgButtons(){ $$("#msgType button").forEach(b=>b.classList.toggle("on",b.dataset.msg===state.msg)); }
 function switchForms(){
   const r = state.type==="ROUTIER";
   $("#formROUTIER").classList.toggle("hide", !r);
-  $("#formSAP").classList.toggle("hide", r || state.msg==="transport");
-  $("#formTransport").classList.toggle("hide", r || state.msg!=="transport");
-  $("#btnTransport").classList.toggle("hide", r);
-  applyMode();
+  $("#formSAP").classList.toggle("hide", r);
 }
 
 /* ===== ÉVÉNEMENTS ===== */
-$("#renfortChips").addEventListener("click",e=>{
-  const r=e.target.dataset.r; if(!r)return;
-  if(r==="renforts néant") state.renfort=new Set(["renforts néant"]);
-  else { state.renfort.delete("renforts néant"); state.renfort.has(r)?state.renfort.delete(r):state.renfort.add(r); if(state.renfort.size===0) state.renfort.add("renforts néant"); }
-  state.manualEdit=false; renderRenfort(); refresh();
-});
+function toggleRenfort(set,r){
+  if(r===NO_NEED) return new Set([NO_NEED]);
+  set.delete(NO_NEED);
+  set.has(r)?set.delete(r):set.add(r);
+  if(set.size===0) set.add(NO_NEED);
+  return set;
+}
+$("#renfortChips").addEventListener("click",e=>{ const r=e.target.dataset.r; if(!r)return; state.renfort=toggleRenfort(state.renfort,r); state.manualEdit=false; renderRenfort(); refresh(); });
+$("#renfortChipsR").addEventListener("click",e=>{ const r=e.target.dataset.rr; if(!r)return; state.renfortR=toggleRenfort(state.renfortR,r); state.manualEdit=false; renderRenfortR(); refresh(); });
 $("#actionChips").addEventListener("click",e=>{ const a=e.target.dataset.a; if(!a)return; state.actions.has(a)?state.actions.delete(a):state.actions.add(a); state.manualEdit=false; renderActions(); refresh(); });
-$("#addBilan").addEventListener("click",()=>{ state.bilan.push({nb:1,qualif:"impliqué",gravite:""}); state.manualEdit=false; renderBilan(); refresh(); });
+$("#addBilan").addEventListener("click",()=>{ state.bilan.push({nb:1,qualif:"victime indemne",gravite:""}); state.manualEdit=false; renderBilan(); refresh(); });
 $("#bilanLines").addEventListener("input",e=>{ const i=e.target.dataset.bi,k=e.target.dataset.bk; if(i===undefined)return; state.bilan[i][k]=e.target.value; state.manualEdit=false; refresh(); });
 $("#bilanLines").addEventListener("click",e=>{ const d=e.target.dataset.del; if(d===undefined)return; if(state.bilan.length>1){ state.bilan.splice(d,1); state.manualEdit=false; renderBilan(); refresh(); } });
-$("#tMedic").addEventListener("click",()=>{ const el=$("#tMedic"); el.dataset.on=el.dataset.on==="1"?"0":"1"; el.classList.toggle("on",el.dataset.on==="1"); state.manualEdit=false; refresh(); });
+$("#adrIndChip").addEventListener("click",()=>{ state.adrInd=!state.adrInd; state.manualEdit=false; applyAdr(); refresh(); });
+$("#adrIndChipR").addEventListener("click",()=>{ state.adrIndR=!state.adrIndR; state.manualEdit=false; applyAdr(); refresh(); });
 
 /* routier */
 $("#enginSel").addEventListener("click",e=>{
@@ -640,12 +594,6 @@ $("#enginSel").addEventListener("click",e=>{
   const d=ENGIN_DEFAULTS[g]; state.actionsR=new Set(d.actions); state.renfortR=new Set(d.renfort);
   $$("#enginSel button").forEach(b=>b.classList.toggle("on",b.dataset.engin===g));
   state.manualEdit=false; renderActionsR(); renderRenfortR(); refresh();
-});
-$("#renfortChipsR").addEventListener("click",e=>{
-  const r=e.target.dataset.rr; if(!r)return;
-  if(r==="renforts néant") state.renfortR=new Set(["renforts néant"]);
-  else { state.renfortR.delete("renforts néant"); state.renfortR.has(r)?state.renfortR.delete(r):state.renfortR.add(r); if(state.renfortR.size===0) state.renfortR.add("renforts néant"); }
-  state.manualEdit=false; renderRenfortR(); refresh();
 });
 $("#actionChipsR").addEventListener("click",e=>{ const a=e.target.dataset.ar; if(!a)return; state.actionsR.has(a)?state.actionsR.delete(a):state.actionsR.add(a); state.manualEdit=false; renderActionsR(); refresh(); });
 $("#addBilanR").addEventListener("click",()=>{ state.bilanR.push({sexe:"masculin",age:"",etat:"UR",vecteur:"",ch:""}); state.manualEdit=false; renderBilanR(); refresh(); });
@@ -665,25 +613,19 @@ $("#vgrid").addEventListener("click",e=>{
 });
 
 /* champs texte */
-["adresse","description","cfgIndicatif","cfgCodis","cfgCommune","tDest","tNb","tQualif","tGravite","tDispo","adresseR","vehicA","antag"]
+["adresse","description","cfgIndicatif","cfgCodis","cfgCommune","adresseR","vehicA","antag","renfMan","renfManR","faisMan"]
   .forEach(id=>{const el=$("#"+id); if(el) el.addEventListener("input",()=>{state.manualEdit=false;refresh();saveCfg();});});
 function saveCfg(){ store.set("op_cfg",JSON.stringify({ ind:$("#cfgIndicatif").value, codis:$("#cfgCodis").value, com:$("#cfgCommune").value })); }
 
-/* type d'intervention */
+/* type d'intervention / message */
 $("#typeTabs").addEventListener("click",e=>{
   const t=e.target.dataset.type; if(!t)return;
-  state.type=t; state.manualEdit=false; state.gstep=0;
-  if(t==="ROUTIER" && state.msg==="transport"){ state.msg="ambiance"; setMsgButtons(); }
+  state.type=t; state.manualEdit=false;
   $$("#typeTabs button").forEach(b=>b.classList.toggle("on",b.dataset.type===t));
   switchForms(); refresh();
 });
-/* type de message */
-$("#msgType").addEventListener("click",e=>{ const m=e.target.dataset.msg; if(!m)return; state.msg=m; state.manualEdit=false; state.gstep=0; setMsgButtons(); switchForms(); refresh(); });
-/* mode */
-$("#mode").addEventListener("click",e=>{ const m=e.target.dataset.mode; if(!m)return; state.mode=m; state.gstep=0; $$("#mode button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m)); applyMode(); });
-/* nav guidée */
-$("#gNext").addEventListener("click",()=>{ const n=$$(activeFormSel()+" .section").length; if(state.gstep<n-1){state.gstep++;applyMode();} else { state.mode="rapide"; $$("#mode button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="rapide")); applyMode(); toast("Récapitulatif — vérifie le message"); } });
-$("#gPrev").addEventListener("click",()=>{ if(state.gstep>0){state.gstep--;applyMode();} });
+$("#msgType").addEventListener("click",e=>{ const m=e.target.dataset.msg; if(!m)return; state.msg=m; state.manualEdit=false; $$("#msgType button").forEach(b=>b.classList.toggle("on",b.dataset.msg===m)); refresh(); });
+
 /* sortie */
 $("#output").addEventListener("input",()=>{state.manualEdit=true;});
 $("#resync").addEventListener("click",()=>{state.manualEdit=false;refresh();toast("Message resynchronisé");});
@@ -693,8 +635,8 @@ $("#reviewBtn").addEventListener("click",async()=>{
   const prompt =
 `Tu es mon appui doctrine (sergent SP, SDIS 16), intervention : ${ctx}. Analyse ce message opérationnel, concis :
 1) ordre des postes ① je demande → ② je suis → ③ je vois → ④ je fais respecté ?
-2) cohérence interne (nature/cinétique ↔ action ↔ renfort) ?
-3) bilan conforme (SAP : nombre+qualif+gravité / routier : sexe+âge+état, jamais l'emplacement) ?
+2) cohérence interne (nature/cinétique ↔ action ↔ demande) ?
+3) bilan conforme (SAP : nombre+qualification+gravité / routier : sexe+âge+état, jamais l'emplacement) ?
 4) vocabulaire normalisé (pas de « décédé » hors critères de constat) ?
 5) concision et lisibilité radio.
 Propose une version corrigée si nécessaire.
@@ -709,14 +651,15 @@ $("#clearHist").addEventListener("click",()=>{store.del("op_hist");renderHist();
 $("#resetBtn").addEventListener("click",()=>{
   if(state.type==="ROUTIER"){
     const d=ENGIN_DEFAULTS[state.engin]; state.renfortR=new Set(d.renfort); state.actionsR=new Set(d.actions);
-    state.bilanR=[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}]; state.collision="frontale"; state.cinetique="forte";
-    $("#adresseR").value=""; $("#vehicA").value=""; $("#antag").value="";
+    state.bilanR=[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}]; state.collision="frontale"; state.cinetique="forte"; state.adrIndR=false;
+    $("#adresseR").value=""; $("#vehicA").value=""; $("#antag").value=""; $("#renfManR").value="";
     fillRoutierSelects(); renderRenfortR(); renderActionsR(); renderBilanR();
   } else {
-    state.renfort=new Set(["renforts néant"]); state.actions=new Set(); state.bilan=[{nb:1,qualif:"malade",gravite:"UA"}];
-    $("#adresse").value=""; $("#description").value=""; renderRenfort(); renderActions(); renderBilan();
+    state.renfort=new Set([NO_NEED]); state.actions=new Set(); state.bilan=[{nb:1,qualif:"malade",gravite:"UA"}]; state.adrInd=false;
+    $("#adresse").value=""; $("#description").value=""; $("#renfMan").value=""; $("#faisMan").value="";
+    renderRenfort(); renderActions(); renderBilan();
   }
-  state.manualEdit=false; state.gstep=0; applyMode(); refresh(); toast("Nouveau message");
+  state.manualEdit=false; applyAdr(); refresh(); toast("Nouveau message");
 });
 function renderHist(){ const h=JSON.parse(store.get("op_hist")||"[]"); $("#histBody").innerHTML = h.length? h.map(x=>`<div class="hist-item"><div class="t">${x.t}</div>${x.m.replace(/</g,"&lt;")}</div>`).join("") : '<div class="sub" style="padding:6px 0">Aucun message archivé.</div>'; }
 
@@ -726,9 +669,9 @@ function renderHist(){ const h=JSON.parse(store.get("op_hist")||"[]"); $("#histB
   $("#cfgIndicatif").value = cfg.ind || "VSAV 1";
   if(cfg.codis) $("#cfgCodis").value=cfg.codis;
   $("#cfgCommune").value = cfg.com || "Cognac";
-  renderRenfort(); renderActions(); renderBilan(); fillTransportSelects();
+  renderRenfort(); renderActions(); renderBilan();
   renderRenfortR(); renderActionsR(); renderBilanR(); fillRoutierSelects(); renderVehicules();
-  renderLexique(); renderHist(); setMsgButtons(); switchForms(); refresh();
+  renderLexique(); renderHist(); applyAdr(); switchForms(); refresh();
 })();
 </script>
 </body>
