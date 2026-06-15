@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#241f18">
+<title>Marché médiéval — Son et Lumière de Bourg-Charente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Spectral:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Palette pierre & encre — château de Bourg-Charente */
+    --pierre:#e7e1d3;        /* fond parchemin/pierre */
+    --pierre-claire:#f1ecdf; /* cartouches clairs */
+    --encre:#241f18;         /* texte / fond sombre */
+    --encre-doux:#4a4338;
+    --gueules:#8a322b;       /* rouge héraldique (cabane) */
+    --gueules-clair:#a8413a;
+    --or:#a9863f;            /* laiton / accents */
+    --or-clair:#c5a45c;
+    --sinople:#4f6042;       /* vert présent */
+    --ardoise:#3a4654;       /* bleu-gris (stand) */
+    --trait:#cabd9f;         /* hairlines */
+    --alerte:#9c4a1f;
+    --radius:7px;
+    --ombre:0 1px 0 rgba(255,255,255,.4), 0 2px 12px rgba(36,31,24,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Spectral",Iowan Old Style,"Palatino",Georgia,serif;
+    color:var(--encre);
+    background:var(--pierre);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(169,134,63,.07), transparent 40%),
+      radial-gradient(circle at 82% 78%, rgba(138,50,43,.05), transparent 45%);
+    line-height:1.5;
+    -webkit-text-size-adjust:100%;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  h1,h2,h3,.serif{font-family:"Cormorant Garamond","Iowan Old Style","Hoefler Text",Georgia,serif}
+
+  /* ---- Bandeau ---- */
+  header{
+    background:var(--encre);
+    color:var(--pierre);
+    padding:18px 20px 16px;
+    border-bottom:3px solid var(--or);
+    position:relative;
+  }
+  header::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:3px;
+    background:repeating-linear-gradient(90deg,var(--or) 0 14px,transparent 14px 28px);opacity:.45}
+  .titre-rangee{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  header h1{
+    margin:0;font-weight:700;font-size:clamp(1.5rem,4.6vw,2.3rem);letter-spacing:.4px;
+    line-height:1.05;color:var(--pierre);
+  }
+  header .surtitre{font-family:"Spectral",serif;font-size:.74rem;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--or-clair);margin:0 0 4px;font-weight:500}
+  .edition-bloc{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .edition-bloc label{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--or-clair)}
+  .edition-bloc select{
+    background:rgba(255,255,255,.08);color:var(--pierre);border:1px solid var(--or);
+    border-radius:var(--radius);padding:7px 10px;font-family:inherit;font-size:1rem;font-weight:600
+  }
+  .btn-edition{background:transparent;border:1px solid var(--encre-doux);color:var(--or-clair);
+    border-radius:var(--radius);padding:7px 9px;cursor:pointer;font-family:inherit;font-size:.85rem}
+  .btn-edition:hover{border-color:var(--or)}
+
+  /* ---- Synthèse ---- */
+  .synthese{display:flex;gap:0;flex-wrap:wrap;background:var(--encre);border-bottom:1px solid #000}
+  .stat{flex:1 1 90px;padding:9px 12px 11px;border-right:1px solid rgba(255,255,255,.07);text-align:center;min-width:84px}
+  .stat .v{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:700;color:var(--or-clair);line-height:1}
+  .stat .l{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#9d937f;margin-top:3px}
+
+  /* ---- Mise en page ---- */
+  main{max-width:1180px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:920px){main{grid-template-columns:340px 1fr}}
+  .colonne{display:flex;flex-direction:column;gap:18px}
+
+  .carte{background:var(--pierre-claire);border:1px solid var(--trait);border-radius:var(--radius);box-shadow:var(--ombre);overflow:hidden}
+  .carte > h2{
+    font-size:1.18rem;margin:0;padding:11px 15px;font-weight:600;color:var(--encre);
+    background:linear-gradient(var(--pierre-claire),#e8e1d1);border-bottom:1px solid var(--trait);
+    display:flex;align-items:center;justify-content:space-between;gap:10px
+  }
+  .carte > h2 .compte{font-family:"Spectral",serif;font-size:.72rem;letter-spacing:.08em;color:var(--encre-doux);
+    background:var(--pierre);border:1px solid var(--trait);border-radius:20px;padding:2px 9px;font-weight:500}
+  .corps{padding:14px 15px}
+
+  /* ---- Liste exposants ---- */
+  .recherche{width:100%;padding:9px 11px;border:1px solid var(--trait);border-radius:var(--radius);
+    font-family:inherit;font-size:.92rem;background:#fff;margin-bottom:10px}
+  .liste{list-style:none;margin:0;padding:0;max-height:46vh;overflow-y:auto}
+  @media(min-width:920px){.liste{max-height:none}}
+  .item{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--trait);cursor:pointer;border-radius:5px}
+  .item:hover{background:#fff}
+  .item.sel{background:#fff;box-shadow:inset 3px 0 0 var(--or)}
+  .item.absent .nom{color:#9a917f;text-decoration:line-through;text-decoration-color:#c7bca2}
+  .pastille-num{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;
+    font-size:.72rem;font-weight:700;color:#fff;font-family:"Spectral",serif}
+  .pastille-num.cabane{background:var(--gueules)}
+  .pastille-num.stand{background:var(--ardoise)}
+  .pastille-num.vide{background:#bcb29a}
+  .item .info{flex:1;min-width:0}
+  .item .nom{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .sous{font-size:.74rem;color:var(--encre-doux);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* interrupteur présence */
+  .sw{flex:0 0 auto;position:relative;width:42px;height:24px}
+  .sw input{opacity:0;width:0;height:0;position:absolute}
+  .sw .piste{position:absolute;inset:0;background:#cfc6b0;border-radius:24px;transition:.2s;border:1px solid var(--trait)}
+  .sw .piste::before{content:"";position:absolute;width:18px;height:18px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .sw input:checked + .piste{background:var(--sinople)}
+  .sw input:checked + .piste::before{transform:translateX(18px)}
+  .sw input:focus-visible + .piste{outline:2px solid var(--or);outline-offset:2px}
+  .liste-vide{padding:18px 8px;color:var(--encre-doux);font-style:italic;font-size:.9rem;text-align:center}
+
+  .barre-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button.act{font-family:inherit;font-size:.86rem;border-radius:var(--radius);padding:9px 13px;cursor:pointer;border:1px solid transparent;font-weight:600}
+  .b-primaire{background:var(--gueules);color:#fff;border-color:var(--gueules)}
+  .b-primaire:hover{background:var(--gueules-clair)}
+  .b-second{background:#fff;color:var(--encre);border-color:var(--trait)}
+  .b-second:hover{border-color:var(--or)}
+  .b-danger{background:transparent;color:var(--gueules);border-color:var(--trait)}
+  .b-danger:hover{border-color:var(--gueules);background:#fbeeed}
+  button:disabled{opacity:.45;cursor:not-allowed}
+
+  /* ---- Formulaire ---- */
+  fieldset{border:1px solid var(--trait);border-radius:var(--radius);margin:0 0 14px;padding:12px 14px 14px;background:#fff}
+  legend{font-family:"Cormorant Garamond",serif;font-size:1.12rem;font-weight:700;padding:0 8px;color:var(--gueules)}
+  legend .pp{font-family:"Spectral",serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--or);margin-right:6px;font-weight:500}
+  .grille{display:grid;grid-template-columns:1fr;gap:11px}
+  @media(min-width:560px){.grille.c2{grid-template-columns:1fr 1fr}.grille.c3{grid-template-columns:1fr 1fr 1fr}}
+  .champ{display:flex;flex-direction:column;gap:4px}
+  .champ.large{grid-column:1/-1}
+  .champ label{font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--encre-doux);font-weight:600}
+  .champ input,.champ select,.champ textarea{
+    font-family:inherit;font-size:.96rem;padding:9px 10px;border:1px solid var(--trait);border-radius:6px;background:#fff;color:var(--encre);width:100%
+  }
+  .champ input:focus,.champ select:focus,.champ textarea:focus{outline:2px solid var(--or-clair);outline-offset:1px;border-color:var(--or)}
+  .champ textarea{resize:vertical;min-height:70px}
+  .suffixe{position:relative}
+  .suffixe span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--encre-doux);font-size:.85rem;pointer-events:none}
+  .indice{font-size:.78rem;color:var(--encre-doux);font-style:italic}
+  .calc{background:var(--pierre);border:1px dashed var(--or);border-radius:6px;padding:10px 12px;margin-top:4px;font-size:.86rem}
+  .calc strong{font-family:"Cormorant Garamond",serif;font-size:1.05rem}
+  .calc .ligne{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+  .pastille-conseil{display:inline-block;background:var(--encre);color:var(--or-clair);border-radius:4px;padding:1px 8px;font-weight:600}
+  .masque{display:none}
+
+  /* ---- Plan ---- */
+  .plan-outils{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+  .plan-aide{font-size:.8rem;color:var(--encre-doux);font-style:italic;margin-bottom:8px}
+  .plan-cadre{position:relative;width:100%;aspect-ratio:16/10;background:#ded6c0;border:1px solid var(--trait);border-radius:6px;overflow:hidden;touch-action:manipulation;user-select:none}
+  .plan-cadre svg{position:absolute;inset:0;width:100%;height:100%}
+  .plan-cadre img.fond{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#ded6c0}
+  /* emplacements prédéfinis */
+  .slot{position:absolute;transform:translate(-50%,-50%);min-width:36px;height:36px;padding:0 4px;
+    border-radius:8px;border:2px dashed var(--encre-doux);background:rgba(255,255,255,.78);
+    display:grid;place-items:center;cursor:pointer;z-index:3;font-family:"Spectral",serif;
+    font-weight:700;font-size:.78rem;color:var(--encre-doux);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .slot.occ{border-style:solid;color:#fff}
+  .slot.occ.cabane{background:var(--gueules)}
+  .slot.occ.stand{background:var(--ardoise)}
+  .slot.actif{outline:3px solid var(--or);outline-offset:1px}
+  .slot .euro{position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;
+    background:var(--or);color:var(--encre);font-size:.66rem;font-weight:700;display:grid;place-items:center;
+    border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .slot .etiq{position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%);white-space:nowrap;
+    background:var(--encre);color:var(--pierre);font-size:.68rem;padding:2px 7px;border-radius:4px;opacity:0;transition:.15s;pointer-events:none;z-index:10}
+  .slot:hover .etiq,.slot.actif .etiq{opacity:1}
+  body.editplan .slot{cursor:grab}
+  body.editplan .plan-cadre{box-shadow:0 0 0 3px var(--ardoise);cursor:copy}
+  .legende{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:.8rem}
+  .legende span{display:inline-flex;align-items:center;gap:6px}
+  .legende i{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .i-cab{background:var(--gueules)}.i-stand{background:var(--ardoise)}
+  .i-libre{background:rgba(255,255,255,.9);border:2px dashed var(--encre-doux);width:11px;height:11px}
+  .i-euro{background:var(--or);border-radius:50%}
+  .non-places{margin-top:10px}
+  .non-places .titre{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--encre-doux);margin-bottom:6px}
+  .puce-np{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--trait);border-radius:20px;padding:4px 10px;margin:0 6px 6px 0;font-size:.82rem;cursor:pointer}
+  .puce-np:hover{border-color:var(--or)}
+  .puce-np .d{width:9px;height:9px;border-radius:50%}
+  .puce-np .d.cabane{background:var(--gueules)}.puce-np .d.stand{background:var(--ardoise)}
+
+  /* mode attribution */
+  body.placement .plan-cadre{cursor:pointer;box-shadow:0 0 0 3px var(--or)}
+  body.placement .slot:not(.occ){animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 1px 3px rgba(0,0,0,.18)}50%{box-shadow:0 0 0 5px rgba(169,134,63,.35)}}
+  .banniere-placement{display:none;background:var(--or);color:var(--encre);padding:8px 12px;border-radius:6px;font-size:.86rem;font-weight:600;margin-bottom:10px;align-items:center;justify-content:space-between;gap:10px}
+  body.placement .banniere-placement{display:flex}
+
+  footer{text-align:center;padding:22px 16px 30px;color:var(--encre-doux);font-size:.78rem}
+  footer .filet{width:60px;height:1px;background:var(--or);margin:0 auto 12px}
+
+  /* impression d'une fiche */
+  @media print{
+    body{background:#fff}
+    header,.synthese,.col-liste,.col-plan,.barre-actions,footer,.plan-outils{display:none!important}
+    main{display:block;max-width:none;padding:0}
+    .carte{border:none;box-shadow:none}
+    fieldset{break-inside:avoid}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="titre-rangee">
+    <div>
+      <p class="surtitre">Son &amp; Lumière · Bourg-Charente</p>
+      <h1>Suivi des exposants</h1>
+    </div>
+    <div class="edition-bloc">
+      <label for="edition">Édition</label>
+      <select id="edition"></select>
+      <button class="btn-edition" id="addEdition" title="Ajouter une édition (année)">+ année</button>
+    </div>
+  </div>
+</header>
+
+<div class="synthese" id="synthese"></div>
+
+<main>
+  <!-- Colonne gauche : liste -->
+  <div class="colonne col-liste">
+    <div class="carte">
+      <h2>Exposants <span class="compte" id="compteListe">—</span></h2>
+      <div class="corps">
+        <input type="search" class="recherche" id="recherche" placeholder="Rechercher (entreprise, contact, activité)…">
+        <ul class="liste" id="liste"></ul>
+        <div class="barre-actions">
+          <button class="act b-primaire" id="btnNouveau">＋ Nouvel exposant</button>
+          <button class="act b-second" id="btnSauvegarde">⤓ Sauvegarder (.json)</button>
+          <button class="act b-second" id="btnImportJSON">⤒ Importer (.json)</button>
+          <input type="file" id="fichierJSON" accept=".json,application/json" class="masque">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colonne droite : fiche + plan -->
+  <div class="colonne">
+    <!-- FICHE -->
+    <div class="carte" id="carteFiche">
+      <h2 id="titreFiche">Fiche exposant</h2>
+      <div class="corps">
+        <form id="form" autocomplete="off">
+          <fieldset>
+            <legend><span class="pp">i</span>Entreprise</legend>
+            <div class="grille c2">
+              <div class="champ large"><label for="f_entreprise">Nom de l'entreprise</label><input id="f_entreprise" required></div>
+              <div class="champ"><label for="f_activite">Activité</label><input id="f_activite" placeholder="ex. potier, brasseur, forgeron…"></div>
+              <div class="champ">
+                <label for="f_statut">Statut</label>
+                <select id="f_statut">
+                  <option value="vendeur">Vendeur — emplacement payant</option>
+                  <option value="demo">Démonstration artistique — gratuit</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">ii</span>Contact</legend>
+            <div class="grille c2">
+              <div class="champ"><label for="f_nom">Nom</label><input id="f_nom"></div>
+              <div class="champ"><label for="f_prenom">Prénom</label><input id="f_prenom"></div>
+              <div class="champ"><label for="f_tel">Téléphone</label><input id="f_tel" type="tel" inputmode="tel"></div>
+              <div class="champ"><label for="f_mail">Courriel</label><input id="f_mail" type="email" inputmode="email"></div>
+              <div class="champ large"><label for="f_adresse">Adresse</label><input id="f_adresse"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">iii</span>Emplacement</legend>
+            <div class="grille c3">
+              <div class="champ">
+                <label for="f_lieu">Zone</label>
+                <select id="f_lieu">
+                  <option value="cabane">Cabane du Son &amp; Lumière</option>
+                  <option value="stand">Stand personnel</option>
+                </select>
+              </div>
+              <div class="champ">
+                <label for="f_ml">Mètres linéaires</label>
+                <div class="suffixe"><input id="f_ml" type="number" min="0" step="0.5" inputmode="decimal"><span>m</span></div>
+              </div>
+              <div class="champ">
+                <label>Surface (prof. 3 m)</label>
+                <div class="suffixe"><input id="f_surface" readonly tabindex="-1" style="background:#f4efe2"><span>m²</span></div>
+              </div>
+              <div class="champ">
+                <label for="f_empl">Emplacement attribué</label>
+                <select id="f_empl"><option value="">— aucun —</option></select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">iv</span>Électricité</legend>
+            <div class="champ" style="margin-bottom:10px">
+              <label style="display:flex;align-items:center;gap:9px;text-transform:none;font-size:.95rem;cursor:pointer">
+                <input type="checkbox" id="f_elec" style="width:auto;transform:scale(1.25)"> Besoin d'une prise électrique
+              </label>
+            </div>
+            <div id="blocElec" class="masque">
+              <p class="indice" style="margin:0 0 8px">Renseigne le matériel : le calibre conseillé est estimé automatiquement (tu gardes la main sur le calibre retenu).</p>
+              <div class="grille c2">
+                <div class="champ"><label for="e_frigo">Réfrigérateurs</label><input id="e_frigo" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+                <div class="champ"><label for="e_congel">Congélateurs / caissons de froid</label><input id="e_congel" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+                <div class="champ"><label for="e_glace">Machine à glace / glaçons</label><input id="e_glace" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+                <div class="champ"><label for="e_vitrine">Vitrines réfrigérées</label><input id="e_vitrine" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+                <div class="champ large"><label for="e_autre">Autre matériel — puissance cumulée (W)</label><input id="e_autre" type="number" min="0" step="50" value="0" inputmode="numeric" placeholder="éclairage, friteuse, etc."></div>
+              </div>
+              <div class="calc" id="calcElec"></div>
+              <div class="champ" style="margin-top:10px">
+                <label for="f_amperage">Calibre retenu</label>
+                <select id="f_amperage">
+                  <option value="">— à définir —</option>
+                  <option value="16A">16 A (monophasé · ~3,5 kW)</option>
+                  <option value="32A">32 A (monophasé · ~7 kW)</option>
+                  <option value="tri">Triphasé</option>
+                  <option value="autre">Autre (préciser en observations)</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">v</span>Logistique</legend>
+            <div class="grille c2">
+              <div class="champ"><label for="f_parking">Emplacements parking</label><input id="f_parking" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+              <div class="champ"><label for="f_badges">Badges d'accès à fournir</label><input id="f_badges" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">vi</span>Montage</legend>
+            <div class="grille c3">
+              <div class="champ"><label for="f_montageDate">Date &amp; heure prévues</label><input id="f_montageDate" type="datetime-local"></div>
+              <div class="champ"><label for="f_montageDuree">Durée de montage</label><div class="suffixe"><input id="f_montageDuree" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"><span>h</span></div></div>
+              <div class="champ"><label>Fin estimée</label><input id="f_montageFin" readonly tabindex="-1" style="background:#f4efe2"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">vii</span>Observations</legend>
+            <div class="champ large"><textarea id="f_obs" placeholder="Contraintes, demandes particulières, historique…"></textarea></div>
+          </fieldset>
+
+          <div class="barre-actions">
+            <button type="button" class="act b-primaire" id="btnEnreg">Enregistrer</button>
+            <button type="button" class="act b-second" id="btnPlacer">📍 Attribuer un emplacement</button>
+            <button type="button" class="act b-second" id="btnImprimer">Imprimer la fiche</button>
+            <button type="button" class="act b-danger" id="btnSupprimer">Supprimer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="carte col-plan">
+      <h2>Plan d'implantation
+        <span class="compte" id="comptePlan">—</span>
+      </h2>
+      <div class="corps">
+        <div class="banniere-placement">
+          <span id="txtAttribution">Touche un emplacement libre pour y affecter l'exposant.</span>
+          <button class="act b-second" id="btnAnnulerPlacement" style="padding:5px 10px">Annuler</button>
+        </div>
+        <div class="plan-outils">
+          <button class="act b-second" id="btnEditPlan">✏️ Modifier les emplacements</button>
+          <button class="act b-second" id="btnImporterPlan">🗺️ Importer un plan</button>
+          <button class="act b-second" id="btnPlanDefaut">Plan du site</button>
+          <button class="act b-second" id="btnExportCSV">⤓ Exporter (CSV)</button>
+          <input type="file" id="fichierPlan" accept="image/*" class="masque">
+        </div>
+        <p class="plan-aide" id="aidePlan">Touche un emplacement occupé pour ouvrir la fiche de l'exposant. Pour affecter quelqu'un : sélectionne-le puis « Attribuer un emplacement ». Emplacements <strong>E1 à E21</strong>. La couleur d'une case occupée reflète la zone de l'exposant (rouge = cabane, bleu = stand). Pastille <strong>€</strong> = exposant payant (vendeur) ; les démonstrations sont exonérées.</p>
+        <div class="plan-cadre" id="planCadre">
+          <img class="fond masque" id="planImg" alt="">
+          <svg id="planSvg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+          <!-- emplacements injectés -->
+        </div>
+        <div class="legende">
+          <span><i class="i-cab"></i> Cabane S&amp;L (occupé)</span>
+          <span><i class="i-stand"></i> Stand personnel (occupé)</span>
+          <span><i class="i-libre"></i> Libre</span>
+          <span><i class="i-euro"></i> Exposant payant (vendeur)</span>
+        </div>
+        <div class="non-places" id="nonPlaces"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="filet"></div>
+  Suivi des exposants — Marché médiéval du Son &amp; Lumière de Bourg-Charente.<br>
+  Données enregistrées localement sur cet appareil (aucun envoi extérieur).
+</footer>
+
+<script id="donnees-init" type="application/json">[{"id": "a_pazhdlmidy", "entreprise": "Belle de Brillet", "activite": "Vente cocktail Cognac à la poire", "nom": "", "prenom": "Aurélie", "tel": "A : 07 72 41 53 28 / J : 06 76 01 10 10", "mail": "julie.salzard@brillet.fr", "adresse": "Graves-Saint-Amant (16)", "lieu": "cabane", "ml": 4, "elec": true, "equip": {"frigo": 1, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Élec 2026 : frigo / TPE / lumière. Deux contacts (A = Aurélie, J = Julie Salzard, cf. téléphone).", "parking": 0, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_k0yc752x3b", "entreprise": "Goule de Fripouille", "activite": "Vente objets — enfants malades (association)", "nom": "Picard", "prenom": "Valérie", "tel": "06 22 84 00 14", "mail": "val.pic@orange.fr", "adresse": "Cognac (16)", "lieu": "cabane", "ml": 2, "elec": false, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Surface indiquée 2×2 (profondeur ≠ 3 m). Association caritative.", "parking": 0, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_asqcp4topv", "entreprise": "Jessica Kerthe", "activite": "Vente de glaces à l'italienne", "nom": "Kerthe", "prenom": "Jessica", "tel": "06 59 99 83 73", "mail": "sica.kerthe@icloud.com", "adresse": "Jarnac (16)", "lieu": "stand", "ml": 6, "elec": true, "equip": {"frigo": 0, "congel": 0, "glace": 2, "vitrine": 0, "autre": 0}, "amperage": "32A", "obs": "Élec 2026 : machine à glace ×2, 15 A chacune.", "parking": 0, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_rm7objwggs", "entreprise": "Les Ruches de Mamille", "activite": "Vente de miel", "nom": "Blond", "prenom": "Rémi", "tel": "06 78 91 59 48", "mail": "lesruchesdemamille@gmail.com", "adresse": "La Couronne (16)", "lieu": "stand", "ml": 3, "elec": true, "equip": {"frigo": 1, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Souhaite de l'ombre dans le dos.", "parking": 1, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_o4pt0620v4", "entreprise": "Cognac Grande Champagne", "activite": "Vente de Cognac", "nom": "Pantier", "prenom": "", "tel": "06 74 21 56 88", "mail": "maisongrandechampagne@gmail.com", "adresse": "Cognac (16)", "lieu": "cabane", "ml": 3, "elec": true, "equip": {"frigo": 1, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Avec Jus de Raisin Tanguidé (regroupement).", "parking": 0, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_8i9d6imp0u", "entreprise": "Le Manslois", "activite": "Vente et dégustation de fromages", "nom": "Le Manslois", "prenom": "", "tel": "06 89 32 21 57", "mail": "lemanslois@wanadoo.fr", "adresse": "Mansle (16)", "lieu": "cabane", "ml": 4, "elec": true, "equip": {"frigo": 3, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "", "parking": 0, "badges": 3, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_j8x57suocb", "entreprise": "Huîtres Neau et Penisson", "activite": "Vente et dégustation d'huîtres", "nom": "Pénisson", "prenom": "", "tel": "06 20 69 25 15", "mail": "maisonneaupenisson@outlook.com", "adresse": "La Rochelle (17)", "lieu": "stand", "ml": 5, "elec": false, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "2e contact : Justine Robert — 06 43 74 65 08.", "parking": 0, "badges": 2, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_gknrtr5njp", "entreprise": "Association Maison du Lin", "activite": "Démonstration de tissage de lin", "nom": "Bourreau", "prenom": "Yves", "tel": "07 67 19 99 17", "mail": "lapetitemaisondulin@gmail.com", "adresse": "", "lieu": "stand", "ml": 3, "elec": false, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Taille 3×3 + 2,50 m. Demande de la place autour du stand.", "parking": 3, "badges": 3, "montageDate": "", "montageDuree": "", "statut": "demo", "presence": {"2026": true}, "empl": {}}, {"id": "a_xucizkv2pj", "entreprise": "Cristaux and Co", "activite": "Vente de minéraux", "nom": "Nicolas", "prenom": "Esther", "tel": "06 73 47 86 71", "mail": "cristaux.co@gmail.com", "adresse": "", "lieu": "stand", "ml": 5, "elec": true, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Élec 2026 : oui — matériel à préciser.", "parking": 1, "badges": 2, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_6bjo2rvzdw", "entreprise": "Créanina Pyrogravure", "activite": "Vente objets gravure sur bois", "nom": "", "prenom": "Nina", "tel": "06 13 62 10 86", "mail": "marguerite.nina16@gmail.com", "adresse": "", "lieu": "stand", "ml": 6, "elec": true, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Élec 2026 : matériel de gravure — puissance à préciser.", "parking": 1, "badges": 4, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_za1qmf8583", "entreprise": "Le Brenn Cuir", "activite": "Vente objets en cuir", "nom": "Le Brenn", "prenom": "Patrick", "tel": "06 58 37 87 53", "mail": "lebrenn35@gmail.com", "adresse": "Camps-sur-l'Isle (33)", "lieu": "stand", "ml": 3, "elec": true, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Taille 3×3 + 1,50 m. Élec : 220 V. Véhicule : 1 camping-car. Demande de la place autour du stand.", "parking": 1, "badges": 2, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_rjv8fo6sus", "entreprise": "Domaine Le Grand Bourras", "activite": "Vente de vins de pays charentais", "nom": "Oser", "prenom": "Heinz et Elizabeth", "tel": "06 10 07 62 81", "mail": "heinzoser@aol.com", "adresse": "Bourras (16)", "lieu": "cabane", "ml": 4, "elec": true, "equip": {"frigo": 1, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "", "parking": 0, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_kxxxuzog9l", "entreprise": "Maquillage Médiéval", "activite": "Maquillage médiéval", "nom": "", "prenom": "Charlotte", "tel": "06 24 77 22 44", "mail": "charlotte.chauvin1@gmail.com", "adresse": "Cognac (16)", "lieu": "stand", "ml": 3, "elec": false, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Placement 2026 : « à fournir » — structure à prévoir par l'organisation. Statut payant/exonéré à confirmer.", "parking": 0, "badges": 0, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_j31w0hjcpb", "entreprise": "Jus de Raisin Tanguidé", "activite": "Vente de jus de raisin", "nom": "Audebeau", "prenom": "Jonas", "tel": "06 98 32 09 35", "mail": "cognactanguide@gmail.com", "adresse": "Jonzac (17)", "lieu": "cabane", "ml": 3, "elec": true, "equip": {"frigo": 1, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Avec Cognac Grande Champagne (regroupement).", "parking": 0, "badges": 2, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_3otnkqa58i", "entreprise": "Les Couleurs de la Bonnieure", "activite": "Démonstration de tissage de laine", "nom": "Audureau", "prenom": "Bernard", "tel": "06 30 94 02 50", "mail": "lescouleursdelabonnieure@bbox.fr", "adresse": "", "lieu": "stand", "ml": 3, "elec": true, "equip": {"frigo": 0, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Élec 2026 : éclairage.", "parking": 1, "badges": 2, "montageDate": "", "montageDuree": "", "statut": "demo", "presence": {"2026": true}, "empl": {}}, {"id": "a_ci3ucgfxq4", "entreprise": "La Cagouille Charentaise", "activite": "Vente de cagouilles", "nom": "", "prenom": "Cassandra", "tel": "06 62 04 10 24", "mail": "cagouillecharentaise16@gmail.com", "adresse": "Asnières-sur-Nouère (16)", "lieu": "stand", "ml": 5, "elec": true, "equip": {"frigo": 0, "congel": 1, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "32A", "obs": "Caisson froid ~6 kW annoncé — calibre à vérifier. Présence samedi et dimanche.", "parking": 1, "badges": 4, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}, {"id": "a_n71g8xzsyy", "entreprise": "Maison Cabanne et Feret", "activite": "Vente de spiritueux et cosmétiques", "nom": "Cabanne", "prenom": "Marine", "tel": "", "mail": "m.cabanne@famillecabanne.com", "adresse": "Bourg-Charente (16)", "lieu": "cabane", "ml": 4, "elec": true, "equip": {"frigo": 1, "congel": 0, "glace": 0, "vitrine": 0, "autre": 0}, "amperage": "", "obs": "Stand extérieur en plus. Téléphone manquant.", "parking": 0, "badges": 4, "montageDate": "", "montageDuree": "", "statut": "vendeur", "presence": {"2026": true}, "empl": {}}]</script>
+<script>
+"use strict";
+/* ===================== Modèle & stockage ===================== */
+const CLE = "marche_medieval_bourg_charente_v1";
+const ANNEE = new Date().getFullYear();
+
+/* Plan officiel 2026 (intégré) + ratio largeur/hauteur de l'image */
+const PLAN_DEFAUT = "data:image/png;base64,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";
+const RATIO_DEFAUT = 1.4134;
+/* Emplacements E1..E21 calés sur le plan 2026 (centres en % du cadre) */
+function emplsDefaut(){
+  return [
+    {code:"E1",x:15.7,y:25.5},{code:"E2",x:22.4,y:25.5},{code:"E3",x:29.8,y:25.5},
+    {code:"E4",x:35.7,y:25.5},{code:"E5",x:41.6,y:25.5},{code:"E6",x:47.5,y:25.5},
+    {code:"E7",x:53.4,y:25.5},{code:"E8",x:59.4,y:25.5},{code:"E9",x:65.3,y:25.5},
+    {code:"E10",x:78.9,y:25.5},{code:"E11",x:85.3,y:25.5},{code:"E12",x:92.2,y:77.2},
+    {code:"E13",x:49.4,y:77.2},{code:"E14",x:41.9,y:77.2},{code:"E15",x:34.5,y:77.2},
+    {code:"E16",x:27.1,y:77.2},{code:"E17",x:19.7,y:77.2},{code:"E18",x:11.1,y:71.5},
+    {code:"E19",x:8.6,y:57.8},{code:"E20",x:8.6,y:47.2},{code:"E21",x:8.6,y:36.5}
+  ];
+}
+function estPayant(a){ return (a.statut||"vendeur")==="vendeur"; }
+function zoneOcc(a){ return a && a.lieu==="cabane" ? "cabane" : "stand"; }
+function zoneDeCode(code){ return /^c/i.test(code) ? "cabane" : "stand"; }
+
+const defautEtat = () => ({
+  editionActive: ANNEE,
+  editions: [ANNEE - 1, ANNEE],
+  planImg: PLAN_DEFAUT,     // plan 2026 intégré (un import remplace)
+  planRatio: RATIO_DEFAUT,
+  empls: emplsDefaut(),    // emplacements prédéfinis {code,x,y}
+  artisans: artisansInit()
+});
+function artisansInit(){
+  try{
+    const n = document.getElementById("donnees-init");
+    return n ? JSON.parse(n.textContent) : [];
+  }catch(e){ return []; }
+}
+
+let etat = charger();
+let selId = null;          // exposant sélectionné
+let modePlacement = false;
+
+function charger(){
+  try{
+    const b = localStorage.getItem(CLE);
+    if(!b) return defautEtat();
+    const e = JSON.parse(b);
+    if(!e.editions || !e.editions.length) e.editions = [ANNEE];
+    if(!e.editionActive) e.editionActive = e.editions[e.editions.length-1];
+    if(!Array.isArray(e.artisans)) e.artisans = [];
+    e.artisans.forEach(a=>{ if(!a.empl) a.empl = {}; if(!a.statut) a.statut = "vendeur"; });
+    if(!Array.isArray(e.empls) || !e.empls.length) e.empls = emplsDefaut();
+    if(e.planImg===undefined) e.planImg = PLAN_DEFAUT;
+    if(!e.planRatio) e.planRatio = e.planImg===PLAN_DEFAUT ? RATIO_DEFAUT : 0;
+    return e;
+  }catch(err){ console.warn("Lecture impossible, état neuf.", err); return defautEtat(); }
+}
+function sauver(){
+  try{ localStorage.setItem(CLE, JSON.stringify(etat)); }
+  catch(err){ console.warn("Sauvegarde impossible (quota ?).", err); }
+}
+
+/* ===================== Constantes électriques ===================== */
+/* Puissances "logistiques" indicatives par appareil (W), marge démarrage incluse plus bas */
+const PUISS = { frigo:200, congel:350, glace:1000, vitrine:500 };
+const MARGE = 1.3;       // marge pics compresseurs
+const V = 230;
+
+function estimationElec(eq){
+  const base = eq.frigo*PUISS.frigo + eq.congel*PUISS.congel + eq.glace*PUISS.glace
+             + eq.vitrine*PUISS.vitrine + (eq.autre||0);
+  const dim = Math.round(base * MARGE);
+  let conseil, calibreVal;
+  if(base === 0){ conseil = "Aucun matériel renseigné"; calibreVal=""; }
+  else if(dim <= 3400){ conseil = "16 A monophasé"; calibreVal="16A"; }
+  else if(dim <= 7000){ conseil = "32 A monophasé"; calibreVal="32A"; }
+  else { conseil = "Triphasé / plusieurs lignes"; calibreVal="tri"; }
+  const ampere = (dim / V);
+  return { base, dim, ampere, conseil, calibreVal };
+}
+
+/* ===================== Utilitaires ===================== */
+const $ = s => document.querySelector(s);
+const ce = (t,c) => { const e=document.createElement(t); if(c) e.className=c; return e; };
+const nbId = () => "a_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+function nettoie(s){ return (s==null?"":String(s)); }
+function estPresent(a){ return !!(a.presence && a.presence[etat.editionActive]); }
+function emplDe(a){ return a.empl ? (a.empl[etat.editionActive]||null) : null; }
+function setEmpl(a, code){ a.empl = a.empl || {}; if(code) a.empl[etat.editionActive]=code; else delete a.empl[etat.editionActive]; }
+function occupantDe(code){ return etat.artisans.find(x=>estPresent(x) && emplDe(x)===code) || null; }
+
+/* ===================== Rendu liste ===================== */
+function rendreListe(){
+  const ul = $("#liste");
+  const q = $("#recherche").value.trim().toLowerCase();
+  ul.innerHTML = "";
+  // ordre : présents d'abord, puis alpha entreprise
+  const tries = [...etat.artisans].sort((a,b)=>{
+    const pa=estPresent(a), pb=estPresent(b);
+    if(pa!==pb) return pa?-1:1;
+    return (a.entreprise||"").localeCompare(b.entreprise||"","fr");
+  });
+  const filtres = tries.filter(a=>{
+    if(!q) return true;
+    return [a.entreprise,a.activite,a.nom,a.prenom].some(x=>(x||"").toLowerCase().includes(q));
+  });
+  if(!filtres.length){
+    ul.innerHTML = `<li class="liste-vide">${etat.artisans.length? "Aucun exposant ne correspond." : "Aucun exposant. Commence par « Nouvel exposant »."}</li>`;
+  }
+  filtres.forEach(a=>{
+    const present = estPresent(a);
+    const li = ce("li","item"+(a.id===selId?" sel":"")+(present?"":" absent"));
+    const numero = numeroPlan(a);
+    const past = ce("div","pastille-num "+(present? a.lieu : "vide"));
+    past.textContent = numero || "·";
+    const info = ce("div","info");
+    info.innerHTML = `<div class="nom">${echap(a.entreprise)||"(sans nom)"}</div>
+      <div class="sous">${echap(a.activite)||"—"}${a.nom?(" · "+echap(a.prenom?a.prenom+" ":"")+echap(a.nom)) : ""}</div>`;
+    // interrupteur présence
+    const sw = ce("label","sw");
+    sw.title = "Présent à l'édition "+etat.editionActive;
+    const inp = ce("input"); inp.type="checkbox"; inp.checked=present;
+    inp.addEventListener("click", e=>e.stopPropagation());
+    inp.addEventListener("change", ()=>{ basculerPresence(a.id, inp.checked); });
+    const piste = ce("span","piste");
+    sw.append(inp,piste);
+    li.append(past,info,sw);
+    li.addEventListener("click", ()=>selectionner(a.id));
+    ul.appendChild(li);
+  });
+  const present = etat.artisans.filter(estPresent).length;
+  $("#compteListe").textContent = present + " présent" + (present>1?"s":"") + " / " + etat.artisans.length;
+}
+function echap(s){ return nettoie(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* numéro stable d'un exposant = rang parmi les présents placés (pour pastilles) */
+function numeroPlan(a){
+  const presents = etat.artisans.filter(estPresent);
+  const idx = presents.findIndex(x=>x.id===a.id);
+  return idx>=0 ? idx+1 : "";
+}
+
+/* ===================== Présence (cœur du sélectionnable / désélectionnable) ===================== */
+function basculerPresence(id, val){
+  const a = etat.artisans.find(x=>x.id===id);
+  if(!a) return;
+  a.presence = a.presence || {};
+  a.presence[etat.editionActive] = val;
+  sauver(); rendreTout();
+}
+
+/* ===================== Sélection & formulaire ===================== */
+function selectionner(id){
+  selId = id;
+  const a = etat.artisans.find(x=>x.id===id);
+  if(!a) return;
+  $("#titreFiche").textContent = a.entreprise ? a.entreprise : "Fiche exposant";
+  $("#f_entreprise").value = nettoie(a.entreprise);
+  $("#f_activite").value = nettoie(a.activite);
+  $("#f_statut").value = a.statut || "vendeur";
+  $("#f_nom").value = nettoie(a.nom);
+  $("#f_prenom").value = nettoie(a.prenom);
+  $("#f_tel").value = nettoie(a.tel);
+  $("#f_mail").value = nettoie(a.mail);
+  $("#f_adresse").value = nettoie(a.adresse);
+  $("#f_lieu").value = a.lieu || "cabane";
+  $("#f_ml").value = a.ml ?? "";
+  $("#f_parking").value = a.parking ?? 0;
+  $("#f_badges").value = a.badges ?? 0;
+  $("#f_montageDate").value = nettoie(a.montageDate);
+  $("#f_montageDuree").value = a.montageDuree || "";
+  $("#f_obs").value = nettoie(a.obs);
+  const eq = a.equip || {};
+  $("#e_frigo").value = eq.frigo||0;
+  $("#e_congel").value = eq.congel||0;
+  $("#e_glace").value = eq.glace||0;
+  $("#e_vitrine").value = eq.vitrine||0;
+  $("#e_autre").value = eq.autre||0;
+  $("#f_elec").checked = !!a.elec;
+  $("#f_amperage").value = a.amperage || "";
+  majSurface(); majBlocElec(); majCalcElec(); majMontage(); majChampEmpl(a);
+  $("#btnSupprimer").disabled = false;
+  $("#btnPlacer").disabled = false;
+  $("#btnImprimer").disabled = false;
+  rendreListe(); rendrePlan();
+  $("#carteFiche").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function nouveau(){
+  const a = {
+    id:nbId(), entreprise:"", activite:"", nom:"", prenom:"", tel:"", mail:"", adresse:"",
+    lieu:"cabane", ml:"", elec:false, equip:{frigo:0,congel:0,glace:0,vitrine:0,autre:0},
+    amperage:"", obs:"", parking:0, badges:0, montageDate:"", montageDuree:"",
+    statut:"vendeur", presence:{ [etat.editionActive]:true }, empl:{}
+  };
+  etat.artisans.push(a); sauver();
+  selectionner(a.id);
+  $("#f_entreprise").focus();
+}
+
+function lireFormulaire(a){
+  a.entreprise = $("#f_entreprise").value.trim();
+  a.activite = $("#f_activite").value.trim();
+  a.statut = $("#f_statut").value;
+  a.nom = $("#f_nom").value.trim();
+  a.prenom = $("#f_prenom").value.trim();
+  a.tel = $("#f_tel").value.trim();
+  a.mail = $("#f_mail").value.trim();
+  a.adresse = $("#f_adresse").value.trim();
+  a.lieu = $("#f_lieu").value;
+  a.ml = parseFloat($("#f_ml").value) || 0;
+  a.elec = $("#f_elec").checked;
+  a.equip = {
+    frigo:int($("#e_frigo").value), congel:int($("#e_congel").value),
+    glace:int($("#e_glace").value), vitrine:int($("#e_vitrine").value),
+    autre:int($("#e_autre").value)
+  };
+  a.amperage = $("#f_amperage").value;
+  a.parking = int($("#f_parking").value);
+  a.badges = int($("#f_badges").value);
+  a.montageDate = $("#f_montageDate").value;
+  a.montageDuree = Math.max(0, parseFloat($("#f_montageDuree").value)||0);
+  a.obs = $("#f_obs").value.trim();
+}
+function int(v){ return Math.max(0, parseInt(v,10)||0); }
+
+function enregistrer(e){
+  if(e && e.preventDefault) e.preventDefault();
+  if(!selId){ alert("Aucune fiche sélectionnée. Touche « Nouvel exposant » ou choisis une ligne dans la liste."); return; }
+  const a = etat.artisans.find(x=>x.id===selId);
+  if(!a){ alert("Fiche introuvable — sélectionne à nouveau l'exposant dans la liste."); return; }
+  if(!$("#f_entreprise").value.trim()){
+    alert("Le nom de l'entreprise est obligatoire.");
+    $("#f_entreprise").focus(); return;
+  }
+  lireFormulaire(a);
+  sauver(); rendreTout();
+  $("#titreFiche").textContent = a.entreprise || "Fiche exposant";
+  flash($("#btnEnreg"), "✓ Enregistré");
+}
+function flash(btn, txt){
+  const o = btn.textContent; btn.textContent = txt; btn.disabled=true;
+  setTimeout(()=>{ btn.textContent=o; btn.disabled=false; }, 1100);
+}
+
+function supprimer(){
+  if(!selId) return;
+  const a = etat.artisans.find(x=>x.id===selId);
+  if(!a) return;
+  if(!confirm(`Supprimer définitivement « ${a.entreprise||"cet exposant"} » et tout son historique ?\n\n(Pour le retirer d'une seule édition, utilise plutôt l'interrupteur de présence.)`)) return;
+  etat.artisans = etat.artisans.filter(x=>x.id!==selId);
+  selId = null; sauver(); reinitFiche(); rendreTout();
+}
+function reinitFiche(){
+  $("#form").reset();
+  $("#titreFiche").textContent = "Fiche exposant";
+  $("#e_frigo").value=$("#e_congel").value=$("#e_glace").value=$("#e_vitrine").value=$("#e_autre").value=0;
+  $("#f_montageFin").value="";
+  $("#f_empl").value="";
+  majSurface(); majBlocElec(); majCalcElec();
+  ["#btnSupprimer","#btnPlacer","#btnImprimer"].forEach(s=>$(s).disabled=true);
+}
+
+/* ===================== Calculs formulaire ===================== */
+function majSurface(){
+  const ml = parseFloat($("#f_ml").value)||0;
+  $("#f_surface").value = ml ? (ml*3).toLocaleString("fr-FR") : "";
+}
+function majBlocElec(){ $("#blocElec").classList.toggle("masque", !$("#f_elec").checked); }
+function majMontage(){
+  const d = $("#f_montageDate").value;
+  const duree = parseFloat($("#f_montageDuree").value)||0;
+  const out = $("#f_montageFin");
+  if(!d || !duree){ out.value=""; return; }
+  const fin = new Date(new Date(d).getTime() + duree*3600000);
+  out.value = fin.toLocaleString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+function majCalcElec(){
+  const eq = { frigo:int($("#e_frigo").value), congel:int($("#e_congel").value),
+    glace:int($("#e_glace").value), vitrine:int($("#e_vitrine").value), autre:int($("#e_autre").value) };
+  const r = estimationElec(eq);
+  const box = $("#calcElec");
+  if(r.base===0){
+    box.innerHTML = `<div class="ligne"><span>Aucun matériel chiffré</span><span>—</span></div>
+      <div class="indice">Renseigne le matériel pour obtenir une estimation.</div>`;
+    return;
+  }
+  box.innerHTML =
+    `<div class="ligne"><span>Puissance nominale</span><strong>${r.base.toLocaleString("fr-FR")} W</strong></div>
+     <div class="ligne"><span>Avec marge démarrage (×1,3)</span><strong>${r.dim.toLocaleString("fr-FR")} W</strong> · ≈ ${r.ampere.toFixed(1).replace(".",",")} A</div>
+     <div class="ligne" style="margin-top:4px"><span>Calibre conseillé</span><span class="pastille-conseil">${r.conseil}</span></div>`;
+}
+
+/* ===================== Synthèse ===================== */
+function rendreSynthese(){
+  const p = etat.artisans.filter(estPresent);
+  const ml = p.reduce((s,a)=>s+(a.ml||0),0);
+  const surf = ml*3;
+  const badges = p.reduce((s,a)=>s+(a.badges||0),0);
+  const parking = p.reduce((s,a)=>s+(a.parking||0),0);
+  const cab = p.filter(a=>a.lieu==="cabane").length;
+  const stand = p.filter(a=>a.lieu==="stand").length;
+  const elec = p.filter(a=>a.elec).length;
+  const payants = p.filter(estPayant).length;
+  const stats = [
+    ["Exposants", p.length],
+    ["Mètres lin.", ml.toLocaleString("fr-FR")+" m"],
+    ["Surface", surf.toLocaleString("fr-FR")+" m²"],
+    ["Cabane / Stand", cab+" / "+stand],
+    ["Branchements", elec],
+    ["Payants / Exonérés", payants+" / "+(p.length-payants)],
+    ["Parking", parking],
+    ["Badges", badges],
+  ];
+  $("#synthese").innerHTML = stats.map(([l,v])=>
+    `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+}
+
+/* ===================== Éditions ===================== */
+function rendreEditions(){
+  const sel = $("#edition");
+  etat.editions.sort((a,b)=>a-b);
+  sel.innerHTML = etat.editions.map(an=>`<option value="${an}">${an}</option>`).join("");
+  sel.value = etat.editionActive;
+}
+function ajouterEdition(){
+  const proposee = (Math.max(...etat.editions)||ANNEE)+1;
+  const v = prompt("Année de la nouvelle édition :", proposee);
+  if(v===null) return;
+  const an = parseInt(v,10);
+  if(!an || an<2000 || an>2100){ alert("Année invalide."); return; }
+  if(!etat.editions.includes(an)) etat.editions.push(an);
+  etat.editionActive = an; sauver(); rendreTout(); rendreEditions();
+}
+
+/* ===================== Plan ===================== */
+const SCHEMA_SVG = `
+  <defs>
+    <pattern id="herbe" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#cdd3b8"/><circle cx="3" cy="3" r=".5" fill="#bcc4a3"/>
+    </pattern>
+  </defs>
+  <rect width="160" height="100" fill="url(#herbe)"/>
+  <!-- Charente -->
+  <path d="M0,82 C40,74 70,90 110,80 C135,74 150,80 160,78 L160,100 L0,100 Z" fill="#9bb6c4" opacity=".8"/>
+  <text x="6" y="96" font-size="4" fill="#456" font-family="serif" font-style="italic">la Charente</text>
+  <!-- Château / scène Son & Lumière -->
+  <g>
+    <rect x="8" y="10" width="34" height="22" fill="#c9bfa6" stroke="#a08a5a"/>
+    <rect x="8" y="6" width="6" height="6" fill="#b6a677"/><rect x="36" y="6" width="6" height="6" fill="#b6a677"/>
+    <text x="25" y="23" font-size="3.6" text-anchor="middle" fill="#5b4d2e" font-family="serif">Scène S&amp;L</text>
+  </g>
+  <!-- Cabane du Son & Lumière (zone) -->
+  <rect x="6" y="38" width="60" height="30" fill="#e6d8c4" stroke="#a08a5a" stroke-dasharray="2 1.5"/>
+  <text x="36" y="36" font-size="4" text-anchor="middle" fill="#8a322b" font-family="serif" font-weight="bold">Cabane du Son &amp; Lumière</text>
+  <!-- Allée de stands -->
+  <rect x="74" y="14" width="80" height="50" fill="#e7ddc6" stroke="#a08a5a" stroke-dasharray="2 1.5"/>
+  <text x="114" y="12" font-size="4" text-anchor="middle" fill="#3a4654" font-family="serif" font-weight="bold">Allée des stands</text>
+  <line x1="74" y1="39" x2="154" y2="39" stroke="#c3b491" stroke-width=".6"/>
+  <!-- Parking -->
+  <g>
+    <rect x="120" y="68" width="36" height="14" fill="#d8d2c0" stroke="#a08a5a"/>
+    <text x="138" y="77" font-size="3.6" text-anchor="middle" fill="#5b4d2e" font-family="serif">Parking</text>
+  </g>
+  <!-- Entrée -->
+  <text x="36" y="78" font-size="3.4" text-anchor="middle" fill="#5b4d2e" font-family="serif">Entrée visiteurs ↑</text>
+`;
+
+function rendrePlan(){
+  // fond
+  const img = $("#planImg"), svg = $("#planSvg"), cadre0 = $("#planCadre");
+  if(etat.planImg){
+    img.src = etat.planImg; img.classList.remove("masque"); svg.classList.add("masque");
+    cadre0.style.aspectRatio = etat.planRatio ? String(etat.planRatio) : "16/10";
+  }else{
+    img.classList.add("masque"); svg.classList.remove("masque");
+    cadre0.style.aspectRatio = "16/10";
+    if(!svg.dataset.rempli){ svg.innerHTML = SCHEMA_SVG; svg.dataset.rempli="1"; }
+  }
+  // emplacements
+  const cadre = $("#planCadre");
+  cadre.querySelectorAll(".slot").forEach(s=>s.remove());
+  let occupes = 0;
+  etat.empls.forEach(em=>{
+    const occ = occupantDe(em.code);
+    if(occ) occupes++;
+    const el = ce("div","slot "+(occ? "occ "+zoneOcc(occ) : "")+(occ && occ.id===selId?" actif":""));
+    el.style.left = em.x+"%"; el.style.top = em.y+"%";
+    el.dataset.code = em.code;
+    el.innerHTML = `<span>${echap(em.code)}</span>`
+      + (occ && estPayant(occ) ? `<span class="euro">€</span>` : ``)
+      + (occ ? `<div class="etiq">${echap(occ.entreprise||"(sans nom)")}${estPayant(occ)?" · payant":" · exonéré"}</div>`
+             : `<div class="etiq">Libre</div>`);
+    cadre.appendChild(el);
+    brancherSlot(el, em);
+  });
+  $("#comptePlan").textContent = occupes + " / " + etat.empls.length + " occupé" + (occupes>1?"s":"");
+  // présents sans emplacement
+  const presents = etat.artisans.filter(estPresent);
+  const np = presents.filter(a=>!emplDe(a));
+  const box = $("#nonPlaces");
+  if(np.length){
+    box.innerHTML = `<div class="titre">Sans emplacement (${np.length})</div>` +
+      np.map(a=>`<button class="puce-np" data-id="${a.id}"><span class="d ${a.lieu}"></span>${echap(a.entreprise||"(sans nom)")}</button>`).join("");
+    box.querySelectorAll(".puce-np").forEach(b=>{
+      b.addEventListener("click",()=>{ selId=b.dataset.id; demarrerPlacement(); rendreListe(); });
+    });
+  }else box.innerHTML = "";
+}
+
+/* ----- interactions sur un emplacement ----- */
+function brancherSlot(el, em){
+  // glissement uniquement en mode édition du plan
+  let glisse=false, bougea=false, downX=0, downY=0;
+  const cadre = $("#planCadre");
+  el.addEventListener("pointerdown", e=>{
+    downX=e.clientX; downY=e.clientY; bougea=false;
+    if(!modeEditPlan) return;
+    e.preventDefault(); glisse=true; el.setPointerCapture && el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener("pointermove", e=>{
+    if(!glisse) return;
+    if(Math.abs(e.clientX-downX)>4 || Math.abs(e.clientY-downY)>4) bougea=true;
+    const r = cadre.getBoundingClientRect();
+    const x = Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+    const y = Math.max(0,Math.min(100,((e.clientY-r.top)/r.height)*100));
+    el.style.left=x+"%"; el.style.top=y+"%";
+    em.x=+x.toFixed(1); em.y=+y.toFixed(1);
+  });
+  const finGlisse = ()=>{ if(glisse){ glisse=false; sauver(); } };
+  el.addEventListener("pointerup", finGlisse);
+  el.addEventListener("pointercancel", finGlisse);
+
+  el.addEventListener("click", e=>{
+    e.stopPropagation();
+    if(bougea) return;                       // c'était un déplacement
+    if(modeEditPlan){ editerSlot(em); return; }
+    if(modePlacement){ attribuerSlot(em); return; }
+    const occ = occupantDe(em.code);
+    if(occ) selectionner(occ.id);
+  });
+}
+
+/* ----- attribution ----- */
+function attribuerSlot(em){
+  const a = etat.artisans.find(x=>x.id===selId);
+  if(!a) { arreterPlacement(); return; }
+  const occ = occupantDe(em.code);
+  if(occ && occ.id===a.id){
+    if(confirm("Libérer l'emplacement "+em.code+" pour « "+(a.entreprise||"cet exposant")+" » ?")){
+      setEmpl(a, null); sauver();
+    }
+    arreterPlacement(); rendreTout(); return;
+  }
+  if(occ){
+    if(!confirm(em.code+" est occupé par « "+(occ.entreprise||"?")+" ».\nLe remplacer par « "+(a.entreprise||"cet exposant")+" » ?")) return;
+    setEmpl(occ, null);
+  }
+  setEmpl(a, em.code);
+  sauver(); arreterPlacement(); rendreTout(); majChampEmpl(a);
+}
+
+function demarrerPlacement(){
+  if(!selId){ alert("Sélectionne d'abord un exposant."); return; }
+  const a = etat.artisans.find(x=>x.id===selId);
+  if(!estPresent(a)){ alert("Cet exposant n'est pas marqué présent à l'édition "+etat.editionActive+". Active sa présence pour lui attribuer un emplacement."); return; }
+  if(modeEditPlan) basculerEditPlan();
+  modePlacement = true; document.body.classList.add("placement");
+  $("#txtAttribution").textContent = "Touche un emplacement pour y affecter « "+(a.entreprise||"l'exposant")+" » ("+etat.editionActive+").";
+  $("#planCadre").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function arreterPlacement(){ modePlacement=false; document.body.classList.remove("placement"); }
+
+/* ----- édition des emplacements (codes, payant, position, ajout, suppression) ----- */
+let modeEditPlan = false;
+function basculerEditPlan(){
+  modeEditPlan = !modeEditPlan;
+  if(modeEditPlan && modePlacement) arreterPlacement();
+  document.body.classList.toggle("editplan", modeEditPlan);
+  $("#btnEditPlan").textContent = modeEditPlan ? "✓ Terminer la modification" : "✏️ Modifier les emplacements";
+  $("#aidePlan").innerHTML = modeEditPlan
+    ? "<strong>Mode modification :</strong> touche une zone vide pour <strong>créer</strong> un emplacement ; touche un emplacement pour changer son code ou son statut payant/gratuit (code vide = suppression) ; fais-le <strong>glisser</strong> pour le déplacer."
+    : "Touche un emplacement occupé pour ouvrir la fiche de l'exposant. Pour affecter quelqu'un : sélectionne-le puis « Attribuer un emplacement ». Emplacements E1 à E21. Pastille <strong>€</strong> = exposant payant (vendeur).";
+}
+
+function editerSlot(em){
+  const code = prompt("Code de l'emplacement (C… = Cabane, S… = Stand).\nLaisser vide pour SUPPRIMER cet emplacement.", em.code);
+  if(code===null) return;
+  const c = code.trim().toUpperCase();
+  if(!c){
+    const occ = occupantDe(em.code);
+    if(!confirm("Supprimer l'emplacement "+em.code+(occ?" (occupé par « "+(occ.entreprise||"?")+" », qui sera libéré)":"")+" ?")) return;
+    if(occ) setEmpl(occ, null);
+    etat.empls = etat.empls.filter(x=>x!==em);
+    sauver(); rendreTout(); return;
+  }
+  if(c!==em.code && etat.empls.some(x=>x.code===c)){ alert("Le code "+c+" existe déjà."); return; }
+  // répercuter le renommage sur toutes les attributions (toutes éditions)
+  if(c!==em.code){
+    etat.artisans.forEach(a=>{ if(a.empl) Object.keys(a.empl).forEach(an=>{ if(a.empl[an]===em.code) a.empl[an]=c; }); });
+    em.code = c;
+  }
+  sauver(); rendreTout();
+}
+
+$("#planCadre").addEventListener("click", e=>{
+  if(modeEditPlan){
+    // créer un emplacement à l'endroit touché
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = +(Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100))).toFixed(1);
+    const y = +(Math.max(0,Math.min(100,((e.clientY-r.top)/r.height)*100))).toFixed(1);
+    const code = prompt("Code du nouvel emplacement (ex. C7 ou S9) :");
+    if(code===null) return;
+    const c = code.trim().toUpperCase();
+    if(!c) return;
+    if(etat.empls.some(x=>x.code===c)){ alert("Le code "+c+" existe déjà."); return; }
+    etat.empls.push({code:c, x, y});
+    sauver(); rendrePlan(); return;
+  }
+  if(modePlacement){
+    // clic hors emplacement en mode attribution : ne rien faire
+    return;
+  }
+});
+
+/* menu déroulant "Emplacement attribué" de la fiche */
+function majChampEmpl(a){
+  const sel = $("#f_empl");
+  if(!a){ sel.innerHTML = '<option value="">— aucun —</option>'; sel.value=""; return; }
+  const courant = emplDe(a) || "";
+  const opts = ['<option value="">— aucun —</option>'];
+  etat.empls.slice().sort((u,v)=>codeNum(u.code)-codeNum(v.code)).forEach(em=>{
+    const occ = occupantDe(em.code);
+    let lib = em.code;
+    if(occ && occ.id!==a.id) lib += " — occupé ("+(occ.entreprise||"?")+")";
+    opts.push(`<option value="${em.code}">${lib}</option>`);
+  });
+  sel.innerHTML = opts.join("");
+  sel.value = courant;
+}
+function codeNum(c){ const m=(c||"").match(/\d+/); return m?parseInt(m[0],10):999; }
+
+function changerEmpl(){
+  if(!selId) return;
+  const a = etat.artisans.find(x=>x.id===selId); if(!a) return;
+  if(!estPresent(a)){ alert("Marque d'abord cet exposant présent à l'édition "+etat.editionActive+"."); majChampEmpl(a); return; }
+  const code = $("#f_empl").value;
+  if(!code){ setEmpl(a,null); sauver(); rendreTout(); majChampEmpl(a); return; }
+  const occ = occupantDe(code);
+  if(occ && occ.id!==a.id){
+    if(!confirm(code+" est occupé par « "+(occ.entreprise||"?")+" ».\nLe réattribuer à « "+(a.entreprise||"cet exposant")+" » ?")){ majChampEmpl(a); return; }
+    setEmpl(occ, null);
+  }
+  setEmpl(a, code); sauver(); rendreTout(); majChampEmpl(a);
+}
+
+/* import plan image */
+$("#btnImporterPlan").addEventListener("click",()=>$("#fichierPlan").click());
+$("#fichierPlan").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const lec = new FileReader();
+  lec.onload = ()=>{
+    const im = new Image();
+    im.onload = ()=>{ etat.planImg = lec.result; etat.planRatio = im.naturalWidth/im.naturalHeight; sauver(); rendrePlan(); };
+    im.onerror = ()=>{ etat.planImg = lec.result; etat.planRatio = 0; sauver(); rendrePlan(); };
+    im.src = lec.result;
+  };
+  lec.readAsDataURL(f);
+});
+$("#btnPlanDefaut").addEventListener("click",()=>{
+  if(etat.planImg!==PLAN_DEFAUT && !confirm("Revenir au plan officiel du site ? Un éventuel plan importé sera remplacé (les emplacements et leurs positions sont conservés).")) return;
+  etat.planImg=PLAN_DEFAUT; etat.planRatio=RATIO_DEFAUT; sauver(); rendrePlan();
+});
+
+/* ===================== Export CSV ===================== */
+function exporterCSV(){
+  const p = etat.artisans.filter(estPresent);
+  if(!p.length){ alert("Aucun exposant présent à exporter pour l'édition "+etat.editionActive+"."); return; }
+  const entetes = ["Entreprise","Activité","Nom","Prénom","Téléphone","Courriel","Adresse",
+    "Zone","Emplacement","Statut","Mètres linéaires","Surface m²","Électricité","Calibre","Parking","Badges",
+    "Montage (date/heure)","Durée montage (h)","Observations"];
+  const lignes = p.map(a=>{
+    const code = emplDe(a) || "";
+    return [
+      a.entreprise, a.activite, a.nom, a.prenom, a.tel, a.mail, a.adresse,
+      a.lieu==="cabane"?"Cabane Son & Lumière":"Stand personnel",
+      code, estPayant(a)?"payant":"exonéré (démonstration)",
+      a.ml||0, (a.ml||0)*3, a.elec?"oui":"non", a.amperage||"",
+      a.parking||0, a.badges||0,
+      a.montageDate? new Date(a.montageDate).toLocaleString("fr-FR") : "", a.montageDuree||0,
+      (a.obs||"").replace(/\n/g," ")
+    ];
+  });
+  const csv = [entetes, ...lignes].map(r=>r.map(c=>{
+    const s = nettoie(c); return /[";\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(";")).join("\r\n");
+  const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const lien = ce("a"); lien.href=url;
+  lien.download = "exposants_bourg-charente_"+etat.editionActive+".csv";
+  lien.click(); URL.revokeObjectURL(url);
+}
+
+/* ===================== Sauvegarde / import complet (.json) ===================== */
+function sauvegarderJSON(){
+  const data = JSON.stringify(etat, null, 2);
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const d = new Date().toISOString().slice(0,10);
+  const lien = ce("a"); lien.href=url;
+  lien.download = "suivi-exposants_bourg-charente_"+d+".json";
+  lien.click(); URL.revokeObjectURL(url);
+}
+function importerJSON(e){
+  const f = e.target.files[0]; if(!f) return;
+  const lec = new FileReader();
+  lec.onload = ()=>{
+    try{
+      const o = JSON.parse(lec.result);
+      if(!o || !Array.isArray(o.artisans)) throw new Error("structure inattendue");
+      if(!confirm("Remplacer les données de cet appareil par le contenu de la sauvegarde ?\n\n"
+        + (o.artisans.length) + " exposant(s) seront chargés. L'état actuel sera écrasé.")) { e.target.value=""; return; }
+      etat = o;
+      if(!etat.editions || !etat.editions.length) etat.editions=[ANNEE];
+      if(!etat.editionActive) etat.editionActive=etat.editions[etat.editions.length-1];
+      etat.artisans.forEach(a=>{ if(!a.empl) a.empl={}; if(!a.statut) a.statut="vendeur"; });
+      if(!Array.isArray(etat.empls) || !etat.empls.length) etat.empls = emplsDefaut();
+      if(etat.planImg===undefined) etat.planImg = PLAN_DEFAUT;
+      if(!etat.planRatio) etat.planRatio = etat.planImg===PLAN_DEFAUT ? RATIO_DEFAUT : 0;
+      selId=null; sauver(); rendreEditions(); reinitFiche(); rendreTout();
+      alert("Sauvegarde importée.");
+    }catch(err){ alert("Fichier illisible : "+err.message); }
+    e.target.value="";
+  };
+  lec.readAsText(f);
+}
+
+/* ===================== Branchements événements ===================== */
+$("#btnNouveau").addEventListener("click", nouveau);
+$("#btnEnreg").addEventListener("click", enregistrer);
+$("#form").addEventListener("submit", enregistrer); // touche Entrée (si l'environnement le permet)
+$("#btnSupprimer").addEventListener("click", supprimer);
+$("#btnPlacer").addEventListener("click", demarrerPlacement);
+$("#btnAnnulerPlacement").addEventListener("click", arreterPlacement);
+$("#btnEditPlan").addEventListener("click", basculerEditPlan);
+$("#btnImprimer").addEventListener("click", ()=>window.print());
+$("#btnExportCSV").addEventListener("click", exporterCSV);
+$("#recherche").addEventListener("input", rendreListe);
+$("#f_ml").addEventListener("input", majSurface);
+$("#f_empl").addEventListener("change", changerEmpl);
+$("#f_montageDate").addEventListener("input", majMontage);
+$("#f_montageDuree").addEventListener("input", majMontage);
+$("#f_elec").addEventListener("change", ()=>{ majBlocElec(); });
+["#e_frigo","#e_congel","#e_glace","#e_vitrine","#e_autre"].forEach(s=>$(s).addEventListener("input", majCalcElec));
+$("#btnSauvegarde").addEventListener("click", sauvegarderJSON);
+$("#btnImportJSON").addEventListener("click", ()=>$("#fichierJSON").click());
+$("#fichierJSON").addEventListener("change", importerJSON);
+$("#edition").addEventListener("change", e=>{ etat.editionActive=parseInt(e.target.value,10); sauver(); rendreTout(); });
+$("#addEdition").addEventListener("click", ajouterEdition);
+
+/* ===================== Rendu global ===================== */
+function rendreTout(){ rendreSynthese(); rendreListe(); rendrePlan(); }
+rendreEditions();
+reinitFiche();
+rendreTout();
+</script>
+</body>
+</html>
