@@ -44,6 +44,7 @@
     line-height:1.5;
     -webkit-text-size-adjust:100%;
     padding-bottom:env(safe-area-inset-bottom);
+    overflow-x:hidden;
   }
   h1,h2,h3,.serif{font-family:"Cormorant Garamond","Iowan Old Style","Hoefler Text",Georgia,serif}
 
@@ -80,8 +81,25 @@
   .stat .v{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:700;color:var(--or-clair);line-height:1}
   .stat .l{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#9d937f;margin-top:3px}
 
+  /* ---- Barre réglages édition ---- */
+  .barre-edition{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    max-width:1180px;margin:0 auto;padding:8px 18px;color:var(--encre-doux);font-size:.84rem}
+  .barre-edition #cfgEdition{font-family:"Spectral",serif}
+  .barre-edition strong{color:var(--encre);font-weight:600}
+  .barre-edition .act{padding:6px 11px;font-size:.8rem}
+  /* cases jours de présence */
+  .jours-boite{display:flex;flex-wrap:wrap;gap:7px}
+  .jour-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--trait);border-radius:20px;
+    padding:6px 12px;background:#fff;cursor:pointer;font-size:.86rem;user-select:none}
+  .jour-chip input{width:auto;margin:0;transform:scale(1.1)}
+  .jour-chip.coche{border-color:var(--sinople);background:#eef2e8;color:var(--encre);font-weight:600}
+  .jours-vide{font-size:.82rem;color:var(--encre-doux);font-style:italic}
+
   /* ---- Mise en page ---- */
   main{max-width:1180px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr;gap:18px}
+  /* anti-débordement horizontal : les éléments de grille/flex doivent pouvoir rétrécir */
+  main,.colonne,.carte,.corps,.grille,.champ{min-width:0}
+  .grille{max-width:100%}
   @media(min-width:920px){main{grid-template-columns:340px 1fr}}
   .colonne{display:flex;flex-direction:column;gap:18px}
 
@@ -103,7 +121,10 @@
   .item{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--trait);cursor:pointer;border-radius:5px}
   .item:hover{background:#fff}
   .item.sel{background:#fff;box-shadow:inset 3px 0 0 var(--or)}
-  .item.absent .nom{color:#9a917f;text-decoration:line-through;text-decoration-color:#c7bca2}
+  .item.absent{opacity:.6}
+  .item.absent .nom{color:#7a715d;text-decoration:none;font-weight:500}
+  .separateur{list-style:none;padding:9px 10px 5px;margin-top:8px;border-top:1px dashed var(--trait);
+    font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--encre-doux)}
   .pastille-num{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;
     font-size:.72rem;font-weight:700;color:#fff;font-family:"Spectral",serif}
   .pastille-num.cabane{background:var(--gueules)}
@@ -142,7 +163,7 @@
   .champ.large{grid-column:1/-1}
   .champ label{font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--encre-doux);font-weight:600}
   .champ input,.champ select,.champ textarea{
-    font-family:inherit;font-size:.96rem;padding:9px 10px;border:1px solid var(--trait);border-radius:6px;background:#fff;color:var(--encre);width:100%
+    font-family:inherit;font-size:.96rem;padding:9px 10px;border:1px solid var(--trait);border-radius:6px;background:#fff;color:var(--encre);width:100%;min-width:0;max-width:100%
   }
   .champ input:focus,.champ select:focus,.champ textarea:focus{outline:2px solid var(--or-clair);outline-offset:1px;border-color:var(--or)}
   .champ textarea{resize:vertical;min-height:70px}
@@ -170,6 +191,10 @@
   .slot.occ.cabane{background:var(--gueules)}
   .slot.occ.stand{background:var(--ardoise)}
   .slot.actif{outline:3px solid var(--or);outline-offset:1px}
+  .slot.occ.partage{background:repeating-linear-gradient(135deg,var(--gueules) 0 10px,var(--ardoise) 10px 20px);color:#fff}
+  .slot .part{position:absolute;top:-7px;left:-7px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;
+    background:var(--or);color:var(--encre);font-size:.64rem;font-weight:700;display:grid;place-items:center;
+    border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
   .slot .euro{position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;
     background:var(--or);color:var(--encre);font-size:.66rem;font-weight:700;display:grid;place-items:center;
     border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
@@ -198,6 +223,17 @@
   .banniere-placement{display:none;background:var(--or);color:var(--encre);padding:8px 12px;border-radius:6px;font-size:.86rem;font-weight:600;margin-bottom:10px;align-items:center;justify-content:space-between;gap:10px}
   body.placement .banniere-placement{display:flex}
 
+  /* ---- Panneau de réglages ---- */
+  .overlay{position:fixed;inset:0;background:rgba(36,31,24,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:18px}
+  .overlay.masque{display:none}
+  .modale{background:var(--pierre-claire);border:1px solid var(--or);border-radius:10px;max-width:460px;width:100%;padding:20px;box-shadow:0 12px 44px rgba(0,0,0,.35);max-height:90vh;overflow:auto}
+  .modale h3{font-family:"Cormorant Garamond",serif;margin:0 0 14px;color:var(--gueules);font-size:1.45rem}
+  .modale .champ{margin-bottom:13px}
+  .modale label{font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--encre-doux);font-weight:600;display:block;margin-bottom:4px}
+  .modale input[type=date],.modale input[type=number]{font-family:inherit;font-size:.96rem;padding:9px 10px;border:1px solid var(--trait);border-radius:6px;background:#fff;width:100%;min-width:0}
+  .grille-tarifs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px}
+  .grille-tarifs .tt label{font-size:.7rem;text-transform:none;letter-spacing:0;color:var(--encre-doux);margin-bottom:2px}
+  .modale-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:6px}
   footer{text-align:center;padding:22px 16px 30px;color:var(--encre-doux);font-size:.78rem}
   footer .filet{width:60px;height:1px;background:var(--or);margin:0 auto 12px}
 
@@ -229,6 +265,10 @@
 </header>
 
 <div class="synthese" id="synthese"></div>
+<div class="barre-edition" id="barreEdition">
+  <span id="cfgEdition">—</span>
+  <button class="act b-second" id="btnReglages" type="button">⚙︎ Réglages de l'édition</button>
+</div>
 
 <main>
   <!-- Colonne gauche : liste -->
@@ -354,7 +394,27 @@
           </fieldset>
 
           <fieldset>
-            <legend><span class="pp">vii</span>Observations</legend>
+            <legend><span class="pp">vii</span>Présence &amp; règlement</legend>
+            <div class="champ large" style="margin-bottom:10px">
+              <label>Jours de présence</label>
+              <div id="joursPresence" class="jours-boite"></div>
+            </div>
+            <div class="grille c2">
+              <div class="champ">
+                <label>Montant dû</label>
+                <input id="f_montant" readonly tabindex="-1" style="background:#f4efe2;font-weight:700">
+              </div>
+              <div class="champ" id="champRegle">
+                <label>Règlement</label>
+                <label style="display:flex;align-items:center;gap:9px;text-transform:none;font-size:.95rem;cursor:pointer;padding-top:6px">
+                  <input type="checkbox" id="f_regle" style="width:auto;transform:scale(1.25)"> Réglé
+                </label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend><span class="pp">viii</span>Observations</legend>
             <div class="champ large"><textarea id="f_obs" placeholder="Contraintes, demandes particulières, historique…"></textarea></div>
           </fieldset>
 
@@ -403,6 +463,19 @@
   </div>
 </main>
 
+<div id="overlayReglages" class="overlay masque">
+  <div class="modale">
+    <h3 id="titreReglages">Réglages de l'édition</h3>
+    <div class="champ"><label for="r_debut">Date du 1er jour du Son &amp; Lumière</label><input id="r_debut" type="date"></div>
+    <div class="champ"><label for="r_jours">Nombre de jours (consécutifs)</label><input id="r_jours" type="number" min="1" max="31" step="1" inputmode="numeric"></div>
+    <div class="champ"><label>Tarif total selon le nombre de jours (€)</label><div id="r_grille" class="grille-tarifs"></div></div>
+    <p class="indice" style="margin:2px 0 0">Barème dégressif : saisis le prix total pour 1 jour, 2 jours, etc. Le dernier correspond à la présence complète.</p>
+    <div class="modale-actions">
+      <button class="act b-second" id="r_annuler" type="button">Annuler</button>
+      <button class="act b-primaire" id="r_ok" type="button">Enregistrer</button>
+    </div>
+  </div>
+</div>
 <footer>
   <div class="filet"></div>
   Suivi des exposants — Marché médiéval du Son &amp; Lumière de Bourg-Charente.<br>
@@ -441,6 +514,7 @@ const defautEtat = () => ({
   planImg: PLAN_DEFAUT,     // plan 2026 intégré (un import remplace)
   planRatio: RATIO_DEFAUT,
   empls: emplsDefaut(),    // emplacements prédéfinis {code,x,y}
+  config: { [ANNEE]: {debut:"", jours:4, tarif:125, grille:[35,70,100,125]} },
   artisans: artisansInit()
 });
 function artisansInit(){
@@ -462,7 +536,8 @@ function charger(){
     if(!e.editions || !e.editions.length) e.editions = [ANNEE];
     if(!e.editionActive) e.editionActive = e.editions[e.editions.length-1];
     if(!Array.isArray(e.artisans)) e.artisans = [];
-    e.artisans.forEach(a=>{ if(!a.empl) a.empl = {}; if(!a.statut) a.statut = "vendeur"; });
+    e.artisans.forEach(a=>{ if(!a.empl) a.empl = {}; if(!a.statut) a.statut = "vendeur"; if(!a.jours) a.jours = {}; if(!a.regle) a.regle = {}; });
+    if(!e.config) e.config = {};
     if(!Array.isArray(e.empls) || !e.empls.length) e.empls = emplsDefaut();
     if(e.planImg===undefined) e.planImg = PLAN_DEFAUT;
     if(!e.planRatio) e.planRatio = e.planImg===PLAN_DEFAUT ? RATIO_DEFAUT : 0;
@@ -502,48 +577,92 @@ function estPresent(a){ return !!(a.presence && a.presence[etat.editionActive]);
 function emplDe(a){ return a.empl ? (a.empl[etat.editionActive]||null) : null; }
 function setEmpl(a, code){ a.empl = a.empl || {}; if(code) a.empl[etat.editionActive]=code; else delete a.empl[etat.editionActive]; }
 function occupantDe(code){ return etat.artisans.find(x=>estPresent(x) && emplDe(x)===code) || null; }
+function occupantsDe(code){ return etat.artisans.filter(x=>estPresent(x) && emplDe(x)===code); }
+/* config de l'édition : dates consécutives, nb jours, tarif plein */
+function cfgEd(){ etat.config = etat.config || {}; const y=etat.editionActive;
+  if(!etat.config[y]) etat.config[y] = {debut:"", jours:4, tarif:125};
+  return etat.config[y]; }
+function joursTotalEd(){ return Math.max(1, cfgEd().jours||4); }
+function tarifPleinEd(){ const t=cfgEd().tarif; return (t==null?125:t); }
+function tarifJourEd(){ return Math.ceil((tarifPleinEd()/joursTotalEd())/5)*5; }  // arrondi tranche de 5 €
+function datesEd(){ const c=cfgEd(); if(!c.debut) return [];
+  const out=[], d=new Date(c.debut+"T00:00:00");
+  for(let i=0;i<joursTotalEd();i++){ const x=new Date(d); x.setDate(d.getDate()+i); out.push(x.toISOString().slice(0,10)); }
+  return out; }
+function fmtJour(s){ try{ return new Date(s+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}); }catch(e){ return s; } }
+function joursArr(a){ const j=a.jours&&a.jours[etat.editionActive]; return Array.isArray(j)? j : null; }  // null = non précisé (=plein)
+function nbJoursDe(a){ const j=joursArr(a); return j? j.length : joursTotalEd(); }
+function grilleEd(){
+  const c=cfgEd(), N=joursTotalEd();
+  if(Array.isArray(c.grille) && c.grille.length===N && c.grille.every(x=>typeof x==="number" && x>=0)) return c.grille;
+  // défaut : barème dégressif fourni (4 j / 125 €), sinon linéaire arrondi à 5 €
+  if(N===4 && tarifPleinEd()===125) return [35,70,100,125];
+  const tj=Math.ceil((tarifPleinEd()/N)/5)*5, out=[];
+  for(let i=1;i<=N;i++) out.push(i>=N? tarifPleinEd() : i*tj);
+  return out;
+}
+function prixPourJours(nb){ if(nb<=0) return 0; const g=grilleEd(); return g[Math.min(nb,g.length)-1]; }
+function montantDe(a){
+  if(!estPresent(a) || !estPayant(a)) return 0;
+  return prixPourJours(nbJoursDe(a));
+}
+function regleDe(a){ const r=a.regle&&a.regle[etat.editionActive]; return !!r; }
+/* occupation en jours : Set des jours, ou null = occupe tout le festival */
+function joursOccupes(a){ const j=joursArr(a); return j? new Set(j) : null; }
+function conflitJours(code, a){
+  const sa=joursOccupes(a);
+  return occupantsDe(code).some(o=>{
+    if(o.id===a.id) return false;
+    const so=joursOccupes(o);
+    if(sa===null||so===null) return true;
+    for(const d of sa){ if(so.has(d)) return true; }
+    return false;
+  });
+}
 
 /* ===================== Rendu liste ===================== */
 function rendreListe(){
   const ul = $("#liste");
   const q = $("#recherche").value.trim().toLowerCase();
   ul.innerHTML = "";
-  // ordre : présents d'abord, puis alpha entreprise
-  const tries = [...etat.artisans].sort((a,b)=>{
-    const pa=estPresent(a), pb=estPresent(b);
-    if(pa!==pb) return pa?-1:1;
-    return (a.entreprise||"").localeCompare(b.entreprise||"","fr");
-  });
-  const filtres = tries.filter(a=>{
-    if(!q) return true;
-    return [a.entreprise,a.activite,a.nom,a.prenom].some(x=>(x||"").toLowerCase().includes(q));
-  });
-  if(!filtres.length){
+  const passe = a => !q || [a.entreprise,a.activite,a.nom,a.prenom].some(x=>(x||"").toLowerCase().includes(q));
+  const tri = (a,b)=>(a.entreprise||"").localeCompare(b.entreprise||"","fr");
+  const presents = etat.artisans.filter(a=>estPresent(a)&&passe(a)).sort(tri);
+  const absents  = etat.artisans.filter(a=>!estPresent(a)&&passe(a)).sort(tri);
+  if(!presents.length && !absents.length){
     ul.innerHTML = `<li class="liste-vide">${etat.artisans.length? "Aucun exposant ne correspond." : "Aucun exposant. Commence par « Nouvel exposant »."}</li>`;
+    majCompteListe(); return;
   }
-  filtres.forEach(a=>{
-    const present = estPresent(a);
-    const li = ce("li","item"+(a.id===selId?" sel":"")+(present?"":" absent"));
-    const numero = numeroPlan(a);
-    const past = ce("div","pastille-num "+(present? a.lieu : "vide"));
-    past.textContent = numero || "·";
-    const info = ce("div","info");
-    info.innerHTML = `<div class="nom">${echap(a.entreprise)||"(sans nom)"}</div>
-      <div class="sous">${echap(a.activite)||"—"}${a.nom?(" · "+echap(a.prenom?a.prenom+" ":"")+echap(a.nom)) : ""}</div>`;
-    // interrupteur présence
-    const sw = ce("label","sw");
-    sw.title = "Présent à l'édition "+etat.editionActive;
-    const inp = ce("input"); inp.type="checkbox"; inp.checked=present;
-    inp.addEventListener("click", e=>e.stopPropagation());
-    inp.addEventListener("change", ()=>{ basculerPresence(a.id, inp.checked); });
-    const piste = ce("span","piste");
-    sw.append(inp,piste);
-    li.append(past,info,sw);
-    li.addEventListener("click", ()=>selectionner(a.id));
-    ul.appendChild(li);
-  });
+  presents.forEach(a=>ul.appendChild(ligneItem(a,true)));
+  if(absents.length){
+    const sep = ce("li","separateur");
+    sep.textContent = "Mis de côté — absents en " + etat.editionActive + " (" + absents.length + ")";
+    ul.appendChild(sep);
+    absents.forEach(a=>ul.appendChild(ligneItem(a,false)));
+  }
+  majCompteListe();
+}
+function majCompteListe(){
   const present = etat.artisans.filter(estPresent).length;
   $("#compteListe").textContent = present + " présent" + (present>1?"s":"") + " / " + etat.artisans.length;
+}
+function ligneItem(a, present){
+  const li = ce("li","item"+(a.id===selId?" sel":"")+(present?"":" absent"));
+  const past = ce("div","pastille-num "+(present? a.lieu : "vide"));
+  past.textContent = (present? numeroPlan(a) : "") || "·";
+  const info = ce("div","info");
+  info.innerHTML = `<div class="nom">${echap(a.entreprise)||"(sans nom)"}</div>
+    <div class="sous">${echap(a.activite)||"—"}${a.nom?(" · "+echap(a.prenom?a.prenom+" ":"")+echap(a.nom)) : ""}</div>`;
+  const sw = ce("label","sw");
+  sw.title = present ? "Présent — toucher pour mettre de côté" : "Absent — toucher pour réintégrer";
+  const inp = ce("input"); inp.type="checkbox"; inp.checked=present;
+  sw.addEventListener("click", e=>e.stopPropagation());   // n'ouvre pas la fiche
+  inp.addEventListener("change", ()=>basculerPresence(a.id, inp.checked));
+  const piste = ce("span","piste");
+  sw.append(inp,piste);
+  li.append(past,info,sw);
+  li.addEventListener("click", ()=>selectionner(a.id));
+  return li;
 }
 function echap(s){ return nettoie(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -560,6 +679,7 @@ function basculerPresence(id, val){
   if(!a) return;
   a.presence = a.presence || {};
   a.presence[etat.editionActive] = val;
+  if(!val) setEmpl(a, null);   // un absent libère son emplacement pour cette édition
   sauver(); rendreTout();
 }
 
@@ -592,6 +712,8 @@ function selectionner(id){
   $("#e_autre").value = eq.autre||0;
   $("#f_elec").checked = !!a.elec;
   $("#f_amperage").value = a.amperage || "";
+  $("#f_regle").checked = regleDe(a);
+  rendreJours(a); majMontant();
   majSurface(); majBlocElec(); majCalcElec(); majMontage(); majChampEmpl(a);
   $("#btnSupprimer").disabled = false;
   $("#btnPlacer").disabled = false;
@@ -605,7 +727,7 @@ function nouveau(){
     id:nbId(), entreprise:"", activite:"", nom:"", prenom:"", tel:"", mail:"", adresse:"",
     lieu:"cabane", ml:"", elec:false, equip:{frigo:0,congel:0,glace:0,vitrine:0,autre:0},
     amperage:"", obs:"", parking:0, badges:0, montageDate:"", montageDuree:"",
-    statut:"vendeur", presence:{ [etat.editionActive]:true }, empl:{}
+    statut:"vendeur", presence:{ [etat.editionActive]:true }, empl:{}, jours:{}, regle:{}
   };
   etat.artisans.push(a); sauver();
   selectionner(a.id);
@@ -635,6 +757,13 @@ function lireFormulaire(a){
   a.montageDate = $("#f_montageDate").value;
   a.montageDuree = Math.max(0, parseFloat($("#f_montageDuree").value)||0);
   a.obs = $("#f_obs").value.trim();
+  // jours de présence (seulement si l'édition a des dates définies)
+  if(datesEd().length){
+    a.jours = a.jours || {};
+    a.jours[etat.editionActive] = [...document.querySelectorAll("#joursPresence input:checked")].map(c=>c.value);
+  }
+  a.regle = a.regle || {};
+  a.regle[etat.editionActive] = $("#f_regle").checked;
 }
 function int(v){ return Math.max(0, parseInt(v,10)||0); }
 
@@ -671,6 +800,7 @@ function reinitFiche(){
   $("#e_frigo").value=$("#e_congel").value=$("#e_glace").value=$("#e_vitrine").value=$("#e_autre").value=0;
   $("#f_montageFin").value="";
   $("#f_empl").value="";
+  $("#f_montant").value=""; $("#f_regle").checked=false; $("#joursPresence").innerHTML="";
   majSurface(); majBlocElec(); majCalcElec();
   ["#btnSupprimer","#btnPlacer","#btnImprimer"].forEach(s=>$(s).disabled=true);
 }
@@ -688,6 +818,84 @@ function majMontage(){
   if(!d || !duree){ out.value=""; return; }
   const fin = new Date(new Date(d).getTime() + duree*3600000);
   out.value = fin.toLocaleString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+/* ----- jours de présence ----- */
+function rendreJours(a){
+  const box = $("#joursPresence");
+  const dates = datesEd();
+  if(!dates.length){
+    box.innerHTML = '<span class="jours-vide">Dates de l\'édition non définies — touche « Réglages de l\'édition » en haut pour les saisir.</span>';
+    return;
+  }
+  const sel = joursArr(a);                 // null = non précisé => tous cochés (plein)
+  box.innerHTML = "";
+  dates.forEach(d=>{
+    const coche = sel ? sel.includes(d) : true;
+    const lab = ce("label","jour-chip"+(coche?" coche":""));
+    const inp = ce("input"); inp.type="checkbox"; inp.value=d; inp.checked=coche;
+    inp.addEventListener("change", ()=>{ lab.classList.toggle("coche", inp.checked); majMontant(); });
+    lab.append(inp, document.createTextNode(fmtJour(d)));
+    box.appendChild(lab);
+  });
+}
+function majMontant(){
+  const out = $("#f_montant");
+  const champRegle = $("#champRegle");
+  const demo = $("#f_statut").value === "demo";
+  if(demo){
+    out.value = "0 € — exonéré (démonstration)";
+    champRegle.style.opacity = .4;
+    return;
+  }
+  champRegle.style.opacity = 1;
+  const N = joursTotalEd();
+  const dates = datesEd();
+  let nb;
+  if(dates.length){ nb = [...document.querySelectorAll("#joursPresence input:checked")].length; }
+  else { nb = N; }                          // pas de dates => plein tarif
+  const montant = prixPourJours(nb);
+  const detail = nb>=N ? (N+" jours (complet)") : (nb+" jour"+(nb>1?"s":""));
+  out.value = nb===0 ? "0 €" : (montant.toLocaleString("fr-FR")+" € — "+detail);
+}
+
+/* ----- barre + réglages de l'édition ----- */
+function rendreCfgBar(){
+  const c = cfgEd(), dates = datesEd();
+  let periode = "dates non définies";
+  if(dates.length) periode = fmtJour(dates[0]) + " → " + fmtJour(dates[dates.length-1]);
+  $("#cfgEdition").innerHTML = "Édition <strong>"+etat.editionActive+"</strong> · "
+    + joursTotalEd() + " jours · " + periode
+    + " · barème <strong>"+grilleEd().join(" / ")+" €</strong>";
+}
+function ouvrirReglages(){
+  const c = cfgEd();
+  $("#titreReglages").textContent = "Réglages de l'édition " + etat.editionActive;
+  $("#r_debut").value = c.debut || "";
+  $("#r_jours").value = joursTotalEd();
+  construireGrilleInputs(joursTotalEd(), grilleEd());
+  $("#overlayReglages").classList.remove("masque");
+}
+function fermerReglages(){ $("#overlayReglages").classList.add("masque"); }
+function construireGrilleInputs(n, vals){
+  const box = $("#r_grille"); box.innerHTML = "";
+  for(let i=1;i<=n;i++){
+    const wrap = ce("div","tt");
+    const lab = ce("label"); lab.textContent = i + " jour" + (i>1?"s":"");
+    const inp = ce("input"); inp.type="number"; inp.min="0"; inp.step="1"; inp.inputMode="numeric";
+    inp.value = (vals && vals[i-1]!=null) ? vals[i-1] : "";
+    wrap.append(lab, inp); box.appendChild(wrap);
+  }
+}
+function enregistrerReglages(){
+  const deb = $("#r_debut").value;
+  const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||4));
+  let vals = [...document.querySelectorAll("#r_grille input")].map(i=>Math.max(0, parseFloat(i.value)||0));
+  if(vals.length !== n){ vals = vals.slice(0,n); while(vals.length<n) vals.push(0); }
+  const c = cfgEd();
+  c.debut = deb; c.jours = n; c.grille = vals; c.tarif = vals[n-1];
+  sauver(); fermerReglages(); rendreCfgBar(); rendreTout();
+  if(selId){ const a = etat.artisans.find(x=>x.id===selId); if(a){ rendreJours(a); majMontant(); } }
 }
 function majCalcElec(){
   const eq = { frigo:int($("#e_frigo").value), congel:int($("#e_congel").value),
@@ -716,13 +924,20 @@ function rendreSynthese(){
   const stand = p.filter(a=>a.lieu==="stand").length;
   const elec = p.filter(a=>a.elec).length;
   const payants = p.filter(estPayant).length;
+  const totalDu = p.reduce((s,a)=>s+montantDe(a),0);
+  const encaisse = p.reduce((s,a)=>s+(regleDe(a)?montantDe(a):0),0);
+  const reste = totalDu - encaisse;
+  const fmt = n => n.toLocaleString("fr-FR")+" €";
   const stats = [
     ["Exposants", p.length],
+    ["Total dû", fmt(totalDu)],
+    ["Encaissé", fmt(encaisse)],
+    ["Reste à encaisser", fmt(reste)],
+    ["Payants / Exonérés", payants+" / "+(p.length-payants)],
     ["Mètres lin.", ml.toLocaleString("fr-FR")+" m"],
     ["Surface", surf.toLocaleString("fr-FR")+" m²"],
     ["Cabane / Stand", cab+" / "+stand],
     ["Branchements", elec],
-    ["Payants / Exonérés", payants+" / "+(p.length-payants)],
     ["Parking", parking],
     ["Badges", badges],
   ];
@@ -796,15 +1011,27 @@ function rendrePlan(){
   cadre.querySelectorAll(".slot").forEach(s=>s.remove());
   let occupes = 0;
   etat.empls.forEach(em=>{
-    const occ = occupantDe(em.code);
-    if(occ) occupes++;
-    const el = ce("div","slot "+(occ? "occ "+zoneOcc(occ) : "")+(occ && occ.id===selId?" actif":""));
+    const occ = occupantsDe(em.code);
+    const n = occ.length;
+    if(n) occupes++;
+    const partage = n>1;
+    const actif = occ.some(o=>o.id===selId);
+    const cls = "slot " + (n? (partage? "occ partage" : "occ "+zoneOcc(occ[0])) : "") + (actif? " actif":"");
+    const el = ce("div", cls);
     el.style.left = em.x+"%"; el.style.top = em.y+"%";
     el.dataset.code = em.code;
+    const payant = occ.some(estPayant);
+    let etiq;
+    if(n===0) etiq = "Libre";
+    else etiq = occ.map(o=>{
+      const nb = nbJoursDe(o); const total = joursTotalEd();
+      const jl = (nb>=total) ? "tous les jours" : (nb+"/"+total+" j");
+      return echap(o.entreprise||"(sans nom)") + " — " + jl + (estPayant(o)?"":" · exonéré");
+    }).join(" · ");
     el.innerHTML = `<span>${echap(em.code)}</span>`
-      + (occ && estPayant(occ) ? `<span class="euro">€</span>` : ``)
-      + (occ ? `<div class="etiq">${echap(occ.entreprise||"(sans nom)")}${estPayant(occ)?" · payant":" · exonéré"}</div>`
-             : `<div class="etiq">Libre</div>`);
+      + (partage ? `<span class="part">${n}</span>` : ``)
+      + (!partage && payant ? `<span class="euro">€</span>` : ``)
+      + `<div class="etiq">${etiq}${partage?" · partagé":""}</div>`;
     cadre.appendChild(el);
     brancherSlot(el, em);
   });
@@ -859,16 +1086,16 @@ function brancherSlot(el, em){
 function attribuerSlot(em){
   const a = etat.artisans.find(x=>x.id===selId);
   if(!a) { arreterPlacement(); return; }
-  const occ = occupantDe(em.code);
-  if(occ && occ.id===a.id){
+  if(emplDe(a)===em.code){
     if(confirm("Libérer l'emplacement "+em.code+" pour « "+(a.entreprise||"cet exposant")+" » ?")){
       setEmpl(a, null); sauver();
     }
-    arreterPlacement(); rendreTout(); return;
+    arreterPlacement(); rendreTout(); majChampEmpl(a); return;
   }
-  if(occ){
-    if(!confirm(em.code+" est occupé par « "+(occ.entreprise||"?")+" ».\nLe remplacer par « "+(a.entreprise||"cet exposant")+" » ?")) return;
-    setEmpl(occ, null);
+  if(conflitJours(em.code, a)){
+    const noms = occupantsDe(em.code).filter(o=>o.id!==a.id).map(o=>o.entreprise||"?").join(", ");
+    alert(em.code+" est déjà occupé sur des jours qui chevauchent ceux de « "+(a.entreprise||"cet exposant")+" » (par : "+noms+").\\n\\nAjuste les jours de présence, ou choisis un autre emplacement.");
+    arreterPlacement(); return;
   }
   setEmpl(a, em.code);
   sauver(); arreterPlacement(); rendreTout(); majChampEmpl(a);
@@ -944,9 +1171,10 @@ function majChampEmpl(a){
   const courant = emplDe(a) || "";
   const opts = ['<option value="">— aucun —</option>'];
   etat.empls.slice().sort((u,v)=>codeNum(u.code)-codeNum(v.code)).forEach(em=>{
-    const occ = occupantDe(em.code);
+    const autres = occupantsDe(em.code).filter(o=>o.id!==a.id);
     let lib = em.code;
-    if(occ && occ.id!==a.id) lib += " — occupé ("+(occ.entreprise||"?")+")";
+    if(autres.length===1) lib += " — occupé ("+(autres[0].entreprise||"?")+")";
+    else if(autres.length>1) lib += " — partagé ("+autres.length+")";
     opts.push(`<option value="${em.code}">${lib}</option>`);
   });
   sel.innerHTML = opts.join("");
@@ -960,10 +1188,10 @@ function changerEmpl(){
   if(!estPresent(a)){ alert("Marque d'abord cet exposant présent à l'édition "+etat.editionActive+"."); majChampEmpl(a); return; }
   const code = $("#f_empl").value;
   if(!code){ setEmpl(a,null); sauver(); rendreTout(); majChampEmpl(a); return; }
-  const occ = occupantDe(code);
-  if(occ && occ.id!==a.id){
-    if(!confirm(code+" est occupé par « "+(occ.entreprise||"?")+" ».\nLe réattribuer à « "+(a.entreprise||"cet exposant")+" » ?")){ majChampEmpl(a); return; }
-    setEmpl(occ, null);
+  if(conflitJours(code, a)){
+    const noms = occupantsDe(code).filter(o=>o.id!==a.id).map(o=>o.entreprise||"?").join(", ");
+    alert(code+" est déjà occupé sur des jours qui chevauchent ceux de « "+(a.entreprise||"cet exposant")+" » (par : "+noms+").\\n\\nAjuste les jours de présence (et enregistre) avant de partager cet emplacement.");
+    majChampEmpl(a); return;
   }
   setEmpl(a, code); sauver(); rendreTout(); majChampEmpl(a);
 }
@@ -991,7 +1219,8 @@ function exporterCSV(){
   const p = etat.artisans.filter(estPresent);
   if(!p.length){ alert("Aucun exposant présent à exporter pour l'édition "+etat.editionActive+"."); return; }
   const entetes = ["Entreprise","Activité","Nom","Prénom","Téléphone","Courriel","Adresse",
-    "Zone","Emplacement","Statut","Mètres linéaires","Surface m²","Électricité","Calibre","Parking","Badges",
+    "Zone","Emplacement","Statut","Jours présents","Montant dû (€)","Réglé",
+    "Mètres linéaires","Surface m²","Électricité","Calibre","Parking","Badges",
     "Montage (date/heure)","Durée montage (h)","Observations"];
   const lignes = p.map(a=>{
     const code = emplDe(a) || "";
@@ -999,6 +1228,7 @@ function exporterCSV(){
       a.entreprise, a.activite, a.nom, a.prenom, a.tel, a.mail, a.adresse,
       a.lieu==="cabane"?"Cabane Son & Lumière":"Stand personnel",
       code, estPayant(a)?"payant":"exonéré (démonstration)",
+      nbJoursDe(a)+"/"+joursTotalEd(), montantDe(a), regleDe(a)?"oui":"non",
       a.ml||0, (a.ml||0)*3, a.elec?"oui":"non", a.amperage||"",
       a.parking||0, a.badges||0,
       a.montageDate? new Date(a.montageDate).toLocaleString("fr-FR") : "", a.montageDuree||0,
@@ -1037,7 +1267,8 @@ function importerJSON(e){
       etat = o;
       if(!etat.editions || !etat.editions.length) etat.editions=[ANNEE];
       if(!etat.editionActive) etat.editionActive=etat.editions[etat.editions.length-1];
-      etat.artisans.forEach(a=>{ if(!a.empl) a.empl={}; if(!a.statut) a.statut="vendeur"; });
+      etat.artisans.forEach(a=>{ if(!a.empl) a.empl={}; if(!a.statut) a.statut="vendeur"; if(!a.jours) a.jours={}; if(!a.regle) a.regle={}; });
+      if(!etat.config) etat.config={};
       if(!Array.isArray(etat.empls) || !etat.empls.length) etat.empls = emplsDefaut();
       if(etat.planImg===undefined) etat.planImg = PLAN_DEFAUT;
       if(!etat.planRatio) etat.planRatio = etat.planImg===PLAN_DEFAUT ? RATIO_DEFAUT : 0;
@@ -1065,6 +1296,17 @@ $("#f_empl").addEventListener("change", changerEmpl);
 $("#f_montageDate").addEventListener("input", majMontage);
 $("#f_montageDuree").addEventListener("input", majMontage);
 $("#f_elec").addEventListener("change", ()=>{ majBlocElec(); });
+$("#btnReglages").addEventListener("click", ouvrirReglages);
+$("#r_annuler").addEventListener("click", fermerReglages);
+$("#r_ok").addEventListener("click", enregistrerReglages);
+$("#r_jours").addEventListener("input", ()=>{
+  const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||1));
+  const cur = [...document.querySelectorAll("#r_grille input")].map(i=>i.value===""?null:parseFloat(i.value));
+  construireGrilleInputs(n, cur);
+});
+$("#overlayReglages").addEventListener("click", e=>{ if(e.target.id==="overlayReglages") fermerReglages(); });
+$("#f_statut").addEventListener("change", majMontant);
+$("#f_regle").addEventListener("change", ()=>{});
 ["#e_frigo","#e_congel","#e_glace","#e_vitrine","#e_autre"].forEach(s=>$(s).addEventListener("input", majCalcElec));
 $("#btnSauvegarde").addEventListener("click", sauvegarderJSON);
 $("#btnImportJSON").addEventListener("click", ()=>$("#fichierJSON").click());
@@ -1073,7 +1315,7 @@ $("#edition").addEventListener("change", e=>{ etat.editionActive=parseInt(e.targ
 $("#addEdition").addEventListener("click", ajouterEdition);
 
 /* ===================== Rendu global ===================== */
-function rendreTout(){ rendreSynthese(); rendreListe(); rendrePlan(); }
+function rendreTout(){ rendreCfgBar(); rendreSynthese(); rendreListe(); rendrePlan(); }
 rendreEditions();
 reinitFiche();
 rendreTout();
