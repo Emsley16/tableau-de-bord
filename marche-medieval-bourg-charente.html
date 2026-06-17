@@ -589,10 +589,16 @@ function joursTotalEd(){ return Math.max(1, cfgEd().jours||4); }
 function tarifPleinEd(){ const t=cfgEd().tarif; return (t==null?125:t); }
 function tarifJourEd(){ return Math.ceil((tarifPleinEd()/joursTotalEd())/5)*5; }  // arrondi tranche de 5 €
 function datesEd(){ const c=cfgEd(); if(!c.debut) return [];
-  const out=[], d=new Date(c.debut+"T00:00:00");
-  for(let i=0;i<joursTotalEd();i++){ const x=new Date(d); x.setDate(d.getDate()+i); out.push(x.toISOString().slice(0,10)); }
+  const p=c.debut.split("-").map(Number); const Y=p[0],M=p[1],D=p[2];
+  const out=[];
+  for(let i=0;i<joursTotalEd();i++){
+    const x=new Date(Y, M-1, D+i);   // date locale ; D+i gère les changements de mois
+    out.push(x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"));
+  }
   return out; }
-function fmtJour(s){ try{ return new Date(s+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}); }catch(e){ return s; } }
+function fmtJour(s){ const p=(s||"").split("-").map(Number); if(p.length<3) return s;
+  const x=new Date(p[0], p[1]-1, p[2]);
+  return x.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}); }
 function joursArr(a){ const j=a.jours&&a.jours[etat.editionActive]; return Array.isArray(j)? j : null; }  // null = non précisé (=plein)
 function nbJoursDe(a){ const j=joursArr(a); return j? j.length : joursTotalEd(); }
 function grilleEd(){
