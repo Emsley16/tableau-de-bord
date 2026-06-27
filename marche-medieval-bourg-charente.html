@@ -601,14 +601,18 @@ function fmtJour(s){ const p=(s||"").split("-").map(Number); if(p.length<3) retu
   return x.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}); }
 function joursArr(a){ const j=a.jours&&a.jours[etat.editionActive]; return Array.isArray(j)? j : null; }  // null = non précisé (=plein)
 function nbJoursDe(a){ const j=joursArr(a); return j? j.length : joursTotalEd(); }
+function grilleDefaut(N, full){
+  full = (full && full>0) ? full : 125;
+  if(N===4 && full===125) return [35,70,100,125];
+  const tj=Math.ceil((full/N)/5)*5, out=[];
+  for(let i=1;i<=N;i++) out.push(i>=N? full : i*tj);
+  return out;
+}
 function grilleEd(){
   const c=cfgEd(), N=joursTotalEd();
-  if(Array.isArray(c.grille) && c.grille.length===N && c.grille.every(x=>typeof x==="number" && x>=0)) return c.grille;
-  // défaut : barème dégressif fourni (4 j / 125 €), sinon linéaire arrondi à 5 €
-  if(N===4 && tarifPleinEd()===125) return [35,70,100,125];
-  const tj=Math.ceil((tarifPleinEd()/N)/5)*5, out=[];
-  for(let i=1;i<=N;i++) out.push(i>=N? tarifPleinEd() : i*tj);
-  return out;
+  // une grille valide = N valeurs numériques toutes > 0 (sinon on répare avec le défaut)
+  if(Array.isArray(c.grille) && c.grille.length===N && c.grille.every(x=>typeof x==="number" && x>0)) return c.grille;
+  return grilleDefaut(N, tarifPleinEd());
 }
 function prixPourJours(nb){ if(nb<=0) return 0; const g=grilleEd(); return g[Math.min(nb,g.length)-1]; }
 function montantDe(a){
@@ -887,20 +891,30 @@ function ouvrirReglages(){
 }
 function fermerReglages(){ $("#overlayReglages").classList.add("masque"); }
 function construireGrilleInputs(n, vals){
+  const full = (vals && vals[n-1]>0) ? vals[n-1] : (tarifPleinEd()||125);
+  const def = grilleDefaut(n, full);
   const box = $("#r_grille"); box.innerHTML = "";
   for(let i=1;i<=n;i++){
+    const v = (vals && vals[i-1]!=null && vals[i-1]!=="" && !isNaN(vals[i-1]) && vals[i-1]>0) ? vals[i-1] : def[i-1];
     const wrap = ce("div","tt");
     const lab = ce("label"); lab.textContent = i + " jour" + (i>1?"s":"");
     const inp = ce("input"); inp.type="number"; inp.min="0"; inp.step="1"; inp.inputMode="numeric";
-    inp.value = (vals && vals[i-1]!=null) ? vals[i-1] : "";
+    inp.value = v;
     wrap.append(lab, inp); box.appendChild(wrap);
   }
 }
 function enregistrerReglages(){
   const deb = $("#r_debut").value;
   const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||4));
-  let vals = [...document.querySelectorAll("#r_grille input")].map(i=>Math.max(0, parseFloat(i.value)||0));
-  if(vals.length !== n){ vals = vals.slice(0,n); while(vals.length<n) vals.push(0); }
+  const inputs = [...document.querySelectorAll("#r_grille input")];
+  // valeur plein = dernière case si valide, sinon tarif courant
+  const fullSaisi = inputs.length ? parseFloat(inputs[inputs.length-1].value) : NaN;
+  const def = grilleDefaut(n, (isFinite(fullSaisi)&&fullSaisi>0)? fullSaisi : (tarifPleinEd()||125));
+  const vals = [];
+  for(let i=0;i<n;i++){
+    const x = inputs[i] ? parseFloat(inputs[i].value) : NaN;
+    vals.push((isFinite(x) && x>0) ? x : def[i]);   // jamais 0/vide
+  }
   const c = cfgEd();
   c.debut = deb; c.jours = n; c.grille = vals; c.tarif = vals[n-1];
   sauver(); fermerReglages(); rendreCfgBar(); rendreTout();
@@ -1308,8 +1322,9 @@ $("#f_elec").addEventListener("change", ()=>{ majBlocElec(); });
 $("#btnReglages").addEventListener("click", ouvrirReglages);
 $("#r_annuler").addEventListener("click", fermerReglages);
 $("#r_ok").addEventListener("click", enregistrerReglages);
-$("#r_jours").addEventListener("input", ()=>{
-  const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||1));
+$("#r_jours").addEventListener("change", ()=>{
+  const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||4));
+  $("#r_jours").value = n;
   const cur = [...document.querySelectorAll("#r_grille input")].map(i=>i.value===""?null:parseFloat(i.value));
   construireGrilleInputs(n, cur);
 });
