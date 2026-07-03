@@ -399,8 +399,9 @@
           <fieldset>
             <legend><span class="pp">vii</span>Présence &amp; règlement</legend>
             <div class="champ large" style="margin-bottom:10px">
-              <label>Jours de présence</label>
+              <label>Jours de présence de cet exposant</label>
               <div id="joursPresence" class="jours-boite"></div>
+              <p class="indice" style="margin:6px 0 0">Coche uniquement les jours où <strong>cet exposant</strong> est présent. Le montant s'ajuste seul.</p>
             </div>
             <div class="grille c2">
               <div class="champ">
@@ -469,11 +470,13 @@
 <div id="overlayReglages" class="overlay masque">
   <div class="modale">
     <h3 id="titreReglages">Réglages de l'édition</h3>
+    <p class="indice" style="margin:-6px 0 12px">Paramètres <strong>communs à toute l'édition</strong> (dates du festival + barème), à régler une seule fois. Ce n'est <strong>pas</strong> ici qu'on indique la présence d'un exposant — ça se fait par les cases de sa fiche.</p>
     <div class="champ"><label for="r_debut">Date du 1er jour du Son &amp; Lumière</label><input id="r_debut" type="date"></div>
     <div class="champ"><label for="r_jours">Nombre de jours (consécutifs)</label><input id="r_jours" type="number" min="1" max="31" step="1" inputmode="numeric"></div>
     <div class="champ"><label>Tarif total selon le nombre de jours (€)</label><div id="r_grille" class="grille-tarifs"></div></div>
     <p class="indice" style="margin:2px 0 0">Barème dégressif : saisis le prix total pour 1 jour, 2 jours, etc. Le dernier correspond à la présence complète.</p>
     <div class="modale-actions">
+      <button class="act b-second" id="r_standard" type="button" style="margin-right:auto">Barème standard</button>
       <button class="act b-second" id="r_annuler" type="button">Annuler</button>
       <button class="act b-primaire" id="r_ok" type="button">Enregistrer</button>
     </div>
@@ -509,15 +512,34 @@ function emplsDefaut(){
 }
 function estPayant(a){ return (a.statut||"vendeur")==="vendeur"; }
 function zoneOcc(a){ return a && a.lieu==="cabane" ? "cabane" : "stand"; }
-function zoneDeCode(code){ return /^c/i.test(code) ? "cabane" : "stand"; }
 
+function assainirJours(artisans){
+  const valides = new Set(datesEd());
+  artisans.forEach(a=>{
+    if(!a.jours) { a.jours = {}; return; }
+    const j = a.jours[etat.editionActive];
+    if(Array.isArray(j) && j.some(d=>!valides.has(d))){
+      delete a.jours[etat.editionActive];   // données périmées -> retour présence complète
+    }
+  });
+}
+function repare2026(config){
+  config = config || {};
+  const c = config[2026] || {};
+  const grilleOK = Array.isArray(c.grille) && c.grille.length===4
+    && c.grille.every((x,i,a)=> typeof x==="number" && x>0 && (i===0 || x>a[i-1]));
+  config[2026] = { debut:"2026-07-09", jours:4,
+    grille: grilleOK ? c.grille : [35,70,100,125],
+    tarif:  grilleOK ? c.grille[3] : 125 };
+  return config;
+}
 const defautEtat = () => ({
   editionActive: ANNEE,
   editions: [ANNEE - 1, ANNEE],
   planImg: PLAN_DEFAUT,     // plan 2026 intégré (un import remplace)
   planRatio: RATIO_DEFAUT,
   empls: emplsDefaut(),    // emplacements prédéfinis {code,x,y}
-  config: { [ANNEE]: {debut:"", jours:4, tarif:125, grille:[35,70,100,125]} },
+  config: { [ANNEE]: {debut:"2026-07-09", jours:4, tarif:125, grille:[35,70,100,125]} },
   artisans: artisansInit()
 });
 function artisansInit(){
@@ -540,7 +562,7 @@ function charger(){
     if(!e.editionActive) e.editionActive = e.editions[e.editions.length-1];
     if(!Array.isArray(e.artisans)) e.artisans = [];
     e.artisans.forEach(a=>{ if(!a.empl) a.empl = {}; if(!a.statut) a.statut = "vendeur"; if(!a.jours) a.jours = {}; if(!a.regle) a.regle = {}; });
-    if(!e.config) e.config = {};
+    e.config = repare2026(e.config);
     if(!Array.isArray(e.empls) || !e.empls.length) e.empls = emplsDefaut();
     if(e.planImg===undefined) e.planImg = PLAN_DEFAUT;
     if(!e.planRatio) e.planRatio = e.planImg===PLAN_DEFAUT ? RATIO_DEFAUT : 0;
@@ -554,7 +576,7 @@ function sauver(){
 
 /* ===================== Constantes électriques ===================== */
 /* Puissances "logistiques" indicatives par appareil (W), marge démarrage incluse plus bas */
-const PUISS = { frigo:200, congel:350, glace:1000, vitrine:500 };
+const PUISS = { frigo:200, congel:350, glace:2500, vitrine:500 };
 const MARGE = 1.3;       // marge pics compresseurs
 const V = 230;
 
@@ -917,6 +939,7 @@ function enregistrerReglages(){
   }
   const c = cfgEd();
   c.debut = deb; c.jours = n; c.grille = vals; c.tarif = vals[n-1];
+  assainirJours(etat.artisans);
   sauver(); fermerReglages(); rendreCfgBar(); rendreTout();
   if(selId){ const a = etat.artisans.find(x=>x.id===selId); if(a){ rendreJours(a); majMontant(); } }
 }
@@ -1291,10 +1314,11 @@ function importerJSON(e){
       if(!etat.editions || !etat.editions.length) etat.editions=[ANNEE];
       if(!etat.editionActive) etat.editionActive=etat.editions[etat.editions.length-1];
       etat.artisans.forEach(a=>{ if(!a.empl) a.empl={}; if(!a.statut) a.statut="vendeur"; if(!a.jours) a.jours={}; if(!a.regle) a.regle={}; });
-      if(!etat.config) etat.config={};
+      etat.config = repare2026(etat.config);
       if(!Array.isArray(etat.empls) || !etat.empls.length) etat.empls = emplsDefaut();
       if(etat.planImg===undefined) etat.planImg = PLAN_DEFAUT;
       if(!etat.planRatio) etat.planRatio = etat.planImg===PLAN_DEFAUT ? RATIO_DEFAUT : 0;
+      assainirJours(etat.artisans);
       selId=null; sauver(); rendreEditions(); reinitFiche(); rendreTout();
       alert("Sauvegarde importée.");
     }catch(err){ alert("Fichier illisible : "+err.message); }
@@ -1322,6 +1346,10 @@ $("#f_elec").addEventListener("change", ()=>{ majBlocElec(); });
 $("#btnReglages").addEventListener("click", ouvrirReglages);
 $("#r_annuler").addEventListener("click", fermerReglages);
 $("#r_ok").addEventListener("click", enregistrerReglages);
+$("#r_standard").addEventListener("click", ()=>{
+  const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||4));
+  construireGrilleInputs(n, grilleDefaut(n, 125));
+});
 $("#r_jours").addEventListener("change", ()=>{
   const n = Math.max(1, Math.min(31, parseInt($("#r_jours").value,10)||4));
   $("#r_jours").value = n;
@@ -1341,6 +1369,7 @@ $("#addEdition").addEventListener("click", ajouterEdition);
 /* ===================== Rendu global ===================== */
 function rendreTout(){ rendreCfgBar(); rendreSynthese(); rendreListe(); rendrePlan(); }
 rendreEditions();
+assainirJours(etat.artisans); sauver();
 reinitFiche();
 rendreTout();
 </script>
