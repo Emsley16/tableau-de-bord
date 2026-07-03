@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -108,6 +111,10 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .hide{display:none!important}
   .lbl-inline{margin:2px 2px 6px}
+  #majBanner{display:none;gap:10px;align-items:center;justify-content:space-between;
+    background:#0f2a3a;border:1px solid #2e6f8f;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.86rem;color:#9fd4ee}
+  #majBanner.on{display:flex}
+  #majBanner button{flex:0 0 auto;min-height:38px;border-radius:9px;border:0;background:#2e88b8;color:#fff;font-weight:800;padding:0 14px}
 </style>
 </head>
 <body>
@@ -116,9 +123,11 @@
   <div class="badge">18</div>
   <div>
     <h1>Constructeur message opérationnel</h1>
-    <div class="sub">Hors ligne · SDIS 16 · v3.1 — SAP + Secours routier</div>
+    <div class="sub">Hors ligne · SDIS 16 · v4.1 — SAP + Secours routier</div>
   </div>
 </header>
+
+<div id="majBanner"><span>Mise à jour disponible (v<b id="majVer"></b>).</span><button id="majBtn">Recharger</button></div>
 
 <div class="cfg">
   <div class="field"><label>Indicatif engin</label><input id="cfgIndicatif" placeholder="ex. VSAV 1" autocomplete="off"></div>
@@ -146,7 +155,7 @@
 <div id="formSAP">
   <div class="section">
     <h2><span class="num">1</span> Je demande</h2>
-    <div class="hint">La décision avant la description. Pas de besoin = « moyen suffisant ».</div>
+    <div class="hint">La décision avant la description. Pas de besoin = « secours suffisants ».</div>
     <div class="chips" id="renfortChips"></div>
     <div class="man"><label>Autre demande (saisie libre)</label>
     <input id="renfMan" placeholder="ex. un moyen de levage" autocomplete="off"></div>
@@ -188,7 +197,7 @@
   </div>
   <div class="section">
     <h2><span class="num">1</span> Je demande</h2>
-    <div class="hint">Pas de besoin = « moyen suffisant ».</div>
+    <div class="hint">Pas de besoin = « secours suffisants ».</div>
     <div class="chips" id="renfortChipsR"></div>
     <div class="man"><label>Autre demande (saisie libre)</label>
     <input id="renfManR" placeholder="ex. une dépollution" autocomplete="off"></div>
@@ -207,6 +216,8 @@
     <div class="hint">Accident → collision → cinétique → bilan (sexe / âge / état).</div>
     <label>Véhicule(s) mis en cause</label>
     <input id="vehicA" placeholder="ex. un véhicule léger" autocomplete="off">
+    <label style="margin-top:10px">Énergie du véhicule</label>
+    <div class="chips" id="energChips"></div>
     <div class="rgrid2" style="margin-top:10px">
       <select id="collisionSel"></select>
       <select id="cinetiqueSel"></select>
@@ -219,6 +230,10 @@
       <button data-vt="antag">→ Antagoniste</button>
     </div>
     <div class="vgrid" id="vgrid"></div>
+    <label style="margin-top:12px">Chargement</label>
+    <div class="chips" id="chargChips"></div>
+    <div class="man"><label>Précision du risque (si connu)</label>
+    <input id="chargPrec" placeholder="ex. fuite d'hydrocarbures" autocomplete="off"></div>
     <label style="margin-top:12px">Bilan humain</label>
     <div id="bilanLinesR"></div>
     <button class="addbtn" id="addBilanR">+ ajouter une victime</button>
@@ -267,6 +282,27 @@
 <script>
 "use strict";
 
+/* ===== VERSION & MISE À JOUR =====
+   APP_VERSION est la référence unique : incrémenter à chaque livraison.
+   Au chargement, si le réseau est disponible, l'app compare sa version à
+   celle publiée en ligne et propose un rechargement. Hors ligne : inerte. */
+const APP_VERSION = "4.1";
+function checkUpdate(){
+  try{
+    if(typeof fetch!=="function" || (typeof navigator!=="undefined" && navigator.onLine===false)) return;
+    fetch(location.href.split("?")[0]+"?maj="+Date.now(), {cache:"no-store"})
+      .then(r=>r.ok?r.text():null)
+      .then(t=>{
+        if(!t) return;
+        const m=t.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+        if(m && m[1]!==APP_VERSION){
+          document.querySelector("#majVer").textContent=m[1];
+          document.querySelector("#majBanner").classList.add("on");
+        }
+      }).catch(()=>{});
+  }catch(e){}
+}
+
 /* ===== STOCKAGE ===== */
 const _mem = {};
 const store = {
@@ -276,7 +312,7 @@ const store = {
 };
 
 /* ===== RENFORTS (liste unique SAP + SR, ordre imposé) ===== */
-const NO_NEED = "moyen suffisant";
+const NO_NEED = "secours suffisants";
 const RENFORTS = [
   NO_NEED,
   "SMUR","Forces de l'ordre","Chef de Groupe","Élu",
@@ -336,25 +372,26 @@ const ENGIN_DEFAULTS = {
   VSAV:{ actions:["pec"], renfort:["SMUR","VSR"] },
   VSR :{ actions:["site","vehic","desinc"], renfort:["SMUR"] }
 };
-/* Pictogrammes SVG ORIGINAUX (pas les schémas © SDIS 59). Hors ligne, inline, légers. */
+/* Pictogrammes SVG ORIGINAUX (pas les schémas © SDIS 59). 8 catégories opérationnelles. */
 const VEHICULES = [
- {id:"berline",  lab:"Berline",    d:"un véhicule léger (berline)",   svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 4,21 15,21 21,13 39,13 45,21 60,21 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
- {id:"coupe",    lab:"Coupé",      d:"un véhicule léger (coupé)",     svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 4,22 16,22 24,14 41,14 59,22 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
- {id:"break",    lab:"Break",      d:"un véhicule léger (break)",     svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 4,21 15,21 21,13 50,13 54,21 60,21 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
- {id:"cabriolet",lab:"Cabriolet",  d:"un véhicule léger (cabriolet)", svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 4,22 24,22 28,17 35,17 39,22 60,22 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
- {id:"monospace",lab:"Monospace",  d:"un véhicule léger (monospace)", svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 6,13 24,9 50,9 58,15 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
- {id:"suv",      lab:"SUV",        d:"un véhicule léger (SUV)",       svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="5,26 5,17 16,17 21,11 45,11 50,17 59,17 59,26"/><circle cx="17" cy="28" r="4.5"/><circle cx="47" cy="28" r="4.5"/></svg>`},
- {id:"q4x4",     lab:"4×4",        d:"un véhicule léger (4×4)",       svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="6,24 6,16 17,16 22,11 44,11 49,16 58,16 58,24"/><circle cx="17" cy="27" r="5"/><circle cx="47" cy="27" r="5"/></svg>`},
- {id:"pickup",   lab:"Pick-up",    d:"un véhicule léger (pick-up)",   svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 4,19 13,19 18,12 31,12 34,19 60,19 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
- {id:"vul",      lab:"Utilitaire", d:"un véhicule utilitaire léger",  svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,27 4,16 11,16 15,11 52,11 52,27"/><circle cx="16" cy="28" r="4"/><circle cx="44" cy="28" r="4"/></svg>`},
- {id:"pl",       lab:"Poids lourd",d:"un poids lourd",                svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,28 4,15 14,15 14,11 21,11 21,15 58,15 58,28"/><circle cx="15" cy="29" r="4"/><circle cx="44" cy="29" r="4"/><circle cx="52" cy="29" r="4"/></svg>`},
- {id:"plart",    lab:"PL articulé",d:"un poids lourd articulé",       svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,28 4,13 12,13 12,11 18,11 18,22 22,22 22,28"/><polygon points="26,28 26,11 60,11 60,28"/><circle cx="13" cy="29" r="3.6"/><circle cx="34" cy="29" r="3.6"/><circle cx="52" cy="29" r="3.6"/></svg>`},
- {id:"bus",      lab:"Autobus",    d:"un autobus",                    svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="3,27 3,13 61,13 61,27"/><circle cx="15" cy="28" r="4"/><circle cx="49" cy="28" r="4"/></svg>`},
- {id:"car",      lab:"Autocar",    d:"un autocar",                    svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="3,27 6,11 59,11 61,16 61,27"/><circle cx="15" cy="28" r="4"/><circle cx="49" cy="28" r="4"/></svg>`},
- {id:"moto",     lab:"Deux-roues", d:"un deux-roues motorisé",        svg:`<svg viewBox="0 0 64 34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="24" r="7"/><circle cx="50" cy="24" r="7"/><path d="M14 24 L28 16 L40 16 L50 24 M28 16 L23 10 L17 10"/></svg>`},
- {id:"cycle",    lab:"Cycle",      d:"un cycle",                      svg:`<svg viewBox="0 0 64 34" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="23" r="8"/><circle cx="49" cy="23" r="8"/><path d="M15 23 L30 23 L40 12 L49 23 M30 23 L24 12 L36 12 M40 12 L40 9"/></svg>`},
- {id:"pieton",   lab:"Piéton",     d:"un piéton",                     svg:`<svg viewBox="0 0 64 34" fill="currentColor"><circle cx="32" cy="6" r="4"/><path d="M28 12 h8 v9 l4 10 h-3.5 l-4.5 -9 -4.5 9 h-3.5 l4 -10 z"/></svg>`},
- {id:"enjambeur",lab:"Enjambeur",  d:"un engin agricole (enjambeur)", svg:`<svg viewBox="0 0 64 34" fill="currentColor"><rect x="22" y="4" width="20" height="8" rx="1"/><rect x="20" y="11" width="24" height="3"/><rect x="24" y="13" width="3" height="12"/><rect x="37" y="13" width="3" height="12"/><circle cx="20" cy="27" r="5"/><circle cx="44" cy="27" r="5"/></svg>`}
+ {id:"cycle",    lab:"Cycle",              d:"un cycle",                          svg:`<svg viewBox="0 0 64 34" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="23" r="8"/><circle cx="49" cy="23" r="8"/><path d="M15 23 L30 23 L40 12 L49 23 M30 23 L24 12 L36 12 M40 12 L40 9"/></svg>`},
+ {id:"moto",     lab:"Deux-roues motorisé",d:"un deux-roues motorisé",            svg:`<svg viewBox="0 0 64 34" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="24" r="7"/><circle cx="50" cy="24" r="7"/><path d="M14 24 L28 16 L40 16 L50 24 M28 16 L23 10 L17 10"/></svg>`},
+ {id:"vl",       lab:"Véhicule léger",     d:"un véhicule léger",                 svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,26 4,21 15,21 21,13 39,13 45,21 60,21 60,26"/><circle cx="17" cy="27" r="4"/><circle cx="47" cy="27" r="4"/></svg>`},
+ {id:"vul",      lab:"Utilitaire",         d:"un véhicule utilitaire",            svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,27 4,16 11,16 15,11 52,11 52,27"/><circle cx="16" cy="28" r="4"/><circle cx="44" cy="28" r="4"/></svg>`},
+ {id:"pl",       lab:"Poids lourd",        d:"un poids lourd",                    svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="4,28 4,15 14,15 14,11 21,11 21,15 58,15 58,28"/><circle cx="15" cy="29" r="4"/><circle cx="44" cy="29" r="4"/><circle cx="52" cy="29" r="4"/></svg>`},
+ {id:"tc",       lab:"Transport en commun",d:"un véhicule de transport en commun",svg:`<svg viewBox="0 0 64 34" fill="currentColor"><polygon points="3,27 3,13 61,13 61,27"/><circle cx="15" cy="28" r="4"/><circle cx="49" cy="28" r="4"/></svg>`},
+ {id:"part",     lab:"Particulier (quad, EDPM)",d:"un véhicule particulier",      svg:`<svg viewBox="0 0 64 34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="25" r="6"/><circle cx="48" cy="25" r="6"/><path d="M16 25 L26 18 L40 18 L48 25 M30 18 L30 11 L38 11"/></svg>`},
+ {id:"agri",     lab:"Engin agricole",     d:"un engin agricole",                 svg:`<svg viewBox="0 0 64 34" fill="currentColor"><rect x="22" y="4" width="20" height="8" rx="1"/><rect x="20" y="11" width="24" height="3"/><rect x="24" y="13" width="3" height="12"/><rect x="37" y="13" width="3" height="12"/><circle cx="20" cy="27" r="5"/><circle cx="44" cy="27" r="5"/></svg>`}
+];
+const ENERGIES = [
+  {v:"", l:"Thermique"},
+  {v:"électrique", l:"Électrique"},
+  {v:"hybride", l:"Hybride"}
+];
+const CHARGEMENTS = [
+  {v:"na", l:"Sans objet"},
+  {v:"intact", l:"Chargement intact"},
+  {v:"endommage", l:"Chargement endommagé"}
 ];
 
 /* ===== LEXIQUE ===== */
@@ -377,7 +414,8 @@ const LEXIQUE = {
     ["Cinétique","Faible : carrosserie. Moyenne : + air-bag déclenché. Forte : + cellule de survie atteinte. Indice de gravité indépendant de l'état apparent."],
     ["Transmission victimes","Jamais la numérotation par emplacement dans le véhicule. Uniquement sexe, âge, état."],
     ["IMP — Impliqué","Non blessé physiquement mais exposé au risque ; prise en charge possible (médico-psy)."],
-    ["Je fais (GDO)","Sécurisation du site, sécurisation du véhicule, prise en charge, désincarcération."]
+    ["Je fais (GDO)","Sécurisation du site, sécurisation du véhicule, prise en charge, désincarcération."],
+    ["Énergie électrique / hybride","À annoncer dans le message : risque de ré-ignition — dépanneur et FSI à informer (spécificité charentaise)."]
   ]
 };
 
@@ -392,6 +430,7 @@ let state = {
   renfortR:new Set(ENGIN_DEFAULTS.VSAV.renfort),
   actionsR:new Set(ENGIN_DEFAULTS.VSAV.actions),
   collision:"frontale", cinetique:"forte", vehTarget:"vehic",
+  energie:"", chargement:"na", chargRisque:false,
   bilanR:[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}],
   adrIndR:false,
   manualEdit:false
@@ -450,6 +489,11 @@ function fillRoutierSelects(){
   $("#cinetiqueSel").innerHTML = CINETIQUES.map(c=>`<option value="${c}" ${c===state.cinetique?"selected":""}>cinétique ${c}</option>`).join("");
 }
 function renderVehicules(){ $("#vgrid").innerHTML = VEHICULES.map(v=>`<button type="button" class="vtile" data-veh="${v.id}">${v.svg}<span>${v.lab}</span></button>`).join(""); }
+function renderEnerg(){ $("#energChips").innerHTML = ENERGIES.map(e=>`<div class="chip ${state.energie===e.v?"on":""}" data-en="${esc(e.v)}">${e.l}</div>`).join(""); }
+function renderCharg(){
+  $("#chargChips").innerHTML = CHARGEMENTS.map(c=>`<div class="chip ${state.chargement===c.v?"on":""}" data-ch="${c.v}">${c.l}</div>`).join("")
+   + `<div class="chip ${state.chargRisque?"on":""}" data-cr="1">Risques particuliers liés au chargement</div>`;
+}
 function renderLexique(){ $("#lexBody").innerHTML=Object.entries(LEXIQUE).map(([k,rows])=>`<h3>${k}</h3><dl>${rows.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join("")}</dl>`).join(""); }
 function applyAdr(){
   $("#adrIndChip").classList.toggle("on",state.adrInd);
@@ -478,10 +522,14 @@ function lieuR(){
   const adr=$("#adresseR").value.trim()||"[voie / axe]";
   return `Opération de secours sur la commune de ${com} à l'adresse : ${adr}`;
 }
+function demandeLine(set, manId){
+  const arr = renfortList(set, manId);
+  if(arr.length===1 && arr[0]===NO_NEED) return "Secours suffisants";
+  return `Je demande : ${joinFr(arr)||"[demande]"}`;
+}
 function buildSAP(){
   const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
   const desc=cleanDesc($("#description").value);
-  const renf=joinFr(renfortList(state.renfort,"#renfMan"))||"[demande]";
   const faisItems = ACTIONS.filter(a=>state.actions.has(a.v)).map(a=>a.v);
   const man=$("#faisMan").value.trim(); if(man) faisItems.push(lc(man));
   const fais = cap(faisItems.join(", "))||"[action]";
@@ -489,7 +537,7 @@ function buildSAP(){
   const prov = state.msg==="cr" ? "définitif" : "provisoire";
   return [
     `${codis} de ${ind}${titre}`,
-    `Je demande : ${renf}`,
+    demandeLine(state.renfort,"#renfMan"),
     lieuSAP(),
     `Nous sommes confrontés à ${desc} ; bilan humain ${prov} : ${bilanText()}`,
     fais
@@ -510,24 +558,33 @@ function bilanRText(){
 function buildROUTIER(){
   const codis=$("#cfgCodis").value.trim()||"CODIS", ind=$("#cfgIndicatif").value.trim()||"[indicatif]";
   let vehic=cleanDesc($("#vehicA").value); if(vehic==="[description]") vehic="[véhicule mis en cause]";
+  if(state.energie) vehic+=" "+state.energie;
   const col=COLLISIONS.find(c=>c.v===state.collision)||COLLISIONS[0];
   const antag=lc($("#antag").value), cin=state.cinetique;
   let collisionPart;
   if(col.antag) collisionPart=`dans une collision ${col.v} à ${cin} cinétique${antag?(" contre "+antag):""}`;
   else collisionPart=`${col.v} à ${cin} cinétique`;
-  const renf=joinFr(renfortList(state.renfortR,"#renfManR"))||"[demande]";
+  let chLine="";
+  if(state.chargement==="intact") chLine="Chargement intact";
+  else if(state.chargement==="endommage") chLine="Chargement endommagé";
+  if(state.chargRisque){
+    chLine = chLine ? chLine+" — risques particuliers liés au chargement" : "Risques particuliers liés au chargement";
+    const p=$("#chargPrec").value.trim(); if(p) chLine+=" : "+lc(p);
+  }
   const n=state.bilanR.length;
   const acts=joinFr(ACTIONS_R.filter(a=>state.actionsR.has(a.id)).map(a=>a.phrase(n)))||"[action]";
   const titre = state.msg==="cr" ? " — compte rendu" : "";
   const prov = state.msg==="cr" ? "définitif" : "provisoire";
-  return [
+  const lignes = [
     `${codis} de ${ind}${titre}`,
-    `Je demande : ${renf}`,
+    demandeLine(state.renfortR,"#renfManR"),
     lieuR(),
-    `Nous sommes confrontés à un accident de la circulation mettant en cause ${vehic} ${collisionPart}`,
-    `Bilan humain ${prov} : ${bilanRText()}`,
-    `Nous procédons ${acts}`
-  ].join("\n");
+    `Nous sommes confrontés à un accident de la circulation mettant en cause ${vehic} ${collisionPart}`
+  ];
+  if(chLine) lignes.push(chLine);
+  lignes.push(`Bilan humain ${prov} : ${bilanRText()}`);
+  lignes.push(`Nous procédons ${acts}`);
+  return lignes.join("\n");
 }
 function build(){ return state.type==="ROUTIER" ? buildROUTIER() : buildSAP(); }
 
@@ -536,24 +593,25 @@ function analyse(){
   const W=[];
   if(state.type==="ROUTIER"){
     const renfCount = renfortList(state.renfortR,"#renfManR").length;
-    if(renfCount===0) W.push(["amber","<b>Demande non renseignée.</b> Précise un moyen ou « moyen suffisant »."]);
+    if(renfCount===0) W.push(["amber","<b>Demande non renseignée.</b> Précise un moyen ou « secours suffisants »."]);
     const etats=state.bilanR.map(b=>b.etat);
     if(etats.includes("UA") && state.renfortR.has(NO_NEED) && renfCount===1)
-      W.push(["amber","Victime UA avec « moyen suffisant » seul — cohérence à vérifier."]);
+      W.push(["amber","Victime UA avec « secours suffisants » seul — cohérence à vérifier."]);
     const col=COLLISIONS.find(c=>c.v===state.collision);
     if(col&&col.antag&&!$("#antag").value.trim()) W.push(["amber","Collision "+col.v+" : précise l'antagoniste (contre quoi)."]);
     if(state.actionsR.size===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
     if(state.bilanR.some(b=>!b.age.trim())) W.push(["amber","Âge manquant sur une victime (sexe / âge / état attendus)."]);
     if(!state.adrIndR && !$("#adresseR").value.trim()) W.push(["amber","Localisation manquante (voie / axe), ou coche « adresse indiquée »."]);
     if(!$("#vehicA").value.trim()) W.push(["amber","Véhicule mis en cause non renseigné."]);
+    if(state.chargRisque && !$("#chargPrec").value.trim()) W.push(["amber","Risque chargement signalé : précise sa nature si elle est connue."]);
     if(W.length===0) W.push(["ok","<b>Message routier cohérent.</b> Phrase GDO, bilan sexe/âge/état, ordre conforme."]);
   } else {
     const renfArr = renfortList(state.renfort,"#renfMan");
     const grav=state.bilan.map(b=>b.gravite), quals=state.bilan.map(b=>b.qualif);
     const hasUA = grav.includes("UA") || quals.some(q=>q.includes("ACR"));
     const acr = quals.some(q=>q.includes("ACR"));
-    if(renfArr.length===0) W.push(["amber","<b>Demande non renseignée.</b> Précise un moyen ou « moyen suffisant »."]);
-    if(hasUA && state.renfort.has(NO_NEED) && renfArr.length===1) W.push(["amber","<b>Gravité élevée (UA / ACR) avec « moyen suffisant » seul.</b> Cohérence à vérifier."]);
+    if(renfArr.length===0) W.push(["amber","<b>Demande non renseignée.</b> Précise un moyen ou « secours suffisants »."]);
+    if(hasUA && state.renfort.has(NO_NEED) && renfArr.length===1) W.push(["amber","<b>Gravité élevée (UA / ACR) avec « secours suffisants » seul.</b> Cohérence à vérifier."]);
     if(acr && !state.actions.has("procédons à la RCP")) W.push(["amber","<b>ACR annoncé mais pas de RCP dans le « je fais ».</b>"]);
     const faisCount = state.actions.size + ($("#faisMan").value.trim()?1:0);
     if(faisCount===0) W.push(["amber","<b>Aucune action dans le « je fais ».</b>"]);
@@ -602,6 +660,12 @@ $("#bilanLinesR").addEventListener("change",e=>{ const i=e.target.dataset.ri,k=e
 $("#bilanLinesR").addEventListener("click",e=>{ const d=e.target.dataset.delr; if(d===undefined)return; if(state.bilanR.length>1){ state.bilanR.splice(d,1); state.manualEdit=false; renderBilanR(); refresh(); } });
 $("#collisionSel").addEventListener("change",e=>{ state.collision=e.target.value; state.manualEdit=false; refresh(); });
 $("#cinetiqueSel").addEventListener("change",e=>{ state.cinetique=e.target.value; state.manualEdit=false; refresh(); });
+$("#energChips").addEventListener("click",e=>{ const v=e.target.dataset.en; if(v===undefined)return; state.energie=v; state.manualEdit=false; renderEnerg(); refresh(); });
+$("#chargChips").addEventListener("click",e=>{
+  if(e.target.dataset.cr){ state.chargRisque=!state.chargRisque; }
+  else { const v=e.target.dataset.ch; if(v===undefined)return; state.chargement=v; }
+  state.manualEdit=false; renderCharg(); refresh();
+});
 $("#vehTarget").addEventListener("click",e=>{ const v=e.target.dataset.vt; if(!v)return; state.vehTarget=v; $$("#vehTarget button").forEach(b=>b.classList.toggle("on",b.dataset.vt===v)); });
 $("#vgrid").addEventListener("click",e=>{
   const tile=e.target.closest(".vtile"); if(!tile)return;
@@ -613,7 +677,7 @@ $("#vgrid").addEventListener("click",e=>{
 });
 
 /* champs texte */
-["adresse","description","cfgIndicatif","cfgCodis","cfgCommune","adresseR","vehicA","antag","renfMan","renfManR","faisMan"]
+["adresse","description","cfgIndicatif","cfgCodis","cfgCommune","adresseR","vehicA","antag","renfMan","renfManR","faisMan","chargPrec"]
   .forEach(id=>{const el=$("#"+id); if(el) el.addEventListener("input",()=>{state.manualEdit=false;refresh();saveCfg();});});
 function saveCfg(){ store.set("op_cfg",JSON.stringify({ ind:$("#cfgIndicatif").value, codis:$("#cfgCodis").value, com:$("#cfgCommune").value })); }
 
@@ -651,9 +715,9 @@ $("#clearHist").addEventListener("click",()=>{store.del("op_hist");renderHist();
 $("#resetBtn").addEventListener("click",()=>{
   if(state.type==="ROUTIER"){
     const d=ENGIN_DEFAULTS[state.engin]; state.renfortR=new Set(d.renfort); state.actionsR=new Set(d.actions);
-    state.bilanR=[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}]; state.collision="frontale"; state.cinetique="forte"; state.adrIndR=false;
-    $("#adresseR").value=""; $("#vehicA").value=""; $("#antag").value=""; $("#renfManR").value="";
-    fillRoutierSelects(); renderRenfortR(); renderActionsR(); renderBilanR();
+    state.bilanR=[{sexe:"masculin",age:"",etat:"UA",vecteur:"",ch:""}]; state.collision="frontale"; state.cinetique="forte"; state.adrIndR=false; state.energie=""; state.chargement="na"; state.chargRisque=false;
+    $("#adresseR").value=""; $("#vehicA").value=""; $("#antag").value=""; $("#renfManR").value=""; $("#chargPrec").value="";
+    fillRoutierSelects(); renderRenfortR(); renderActionsR(); renderBilanR(); renderEnerg(); renderCharg();
   } else {
     state.renfort=new Set([NO_NEED]); state.actions=new Set(); state.bilan=[{nb:1,qualif:"malade",gravite:"UA"}]; state.adrInd=false;
     $("#adresse").value=""; $("#description").value=""; $("#renfMan").value=""; $("#faisMan").value="";
@@ -670,8 +734,10 @@ function renderHist(){ const h=JSON.parse(store.get("op_hist")||"[]"); $("#histB
   if(cfg.codis) $("#cfgCodis").value=cfg.codis;
   $("#cfgCommune").value = cfg.com || "Cognac";
   renderRenfort(); renderActions(); renderBilan();
-  renderRenfortR(); renderActionsR(); renderBilanR(); fillRoutierSelects(); renderVehicules();
+  renderRenfortR(); renderActionsR(); renderBilanR(); fillRoutierSelects(); renderVehicules(); renderEnerg(); renderCharg();
   renderLexique(); renderHist(); applyAdr(); switchForms(); refresh();
+  document.querySelector("#majBtn").addEventListener("click",()=>{ location.replace(location.href.split("?")[0]+"?maj="+Date.now()); });
+  checkUpdate();
 })();
 </script>
 </body>
