@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planning SDIS → Agenda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14202B; --slate:#3C4B5B; --slate-2:#5A6B7C; --mute:#93A1AF;
+    --paper:#F4F6F8; --card:#FFFFFF; --line:#DCE2E8; --line-strong:#C3CCD6;
+    --ember:#C8462D; --blue:#2F6DB0; --blue-soft:#EAF1F8;
+    --ok:#2E7D57; --ok-soft:#E8F3ED;
+    --radius:14px; --shadow:0 1px 2px rgba(20,32,43,.06),0 6px 20px rgba(20,32,43,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'Barlow',system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);
+    line-height:1.5;font-size:16px;padding:env(safe-area-inset-top) 0 48px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:620px;margin:0 auto;padding:0 16px}
+
+  header{background:linear-gradient(180deg,#33424F,#2B3945);color:#EEF2F6;padding:22px 0 20px;
+    margin-bottom:20px;border-bottom:3px solid var(--ember)}
+  .eyebrow{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;font-size:12px;color:#9DB0C0;display:flex;align-items:center;gap:8px}
+  .eyebrow::before{content:"";width:22px;height:2px;background:var(--ember)}
+  h1{font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:29px;line-height:1.05;margin:8px 0 4px}
+  h1 .arrow{color:var(--ember)}
+  .sub{color:#B8C4CF;font-size:14.5px;max-width:46ch}
+
+  .monthbar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .monthbar label{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;text-transform:uppercase;
+    letter-spacing:.08em;font-size:12px;color:var(--slate-2);flex:1 1 100%}
+  select,input[type=number]{font-family:'Barlow',sans-serif;font-size:16px;color:var(--ink);background:var(--paper);
+    border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px;flex:1;min-width:110px;-webkit-appearance:none;appearance:none}
+  input[type=number]{max-width:100px;flex:0 0 auto}
+
+  .progress{display:flex;gap:6px;margin-bottom:18px;padding:0 2px}
+  .progress i{flex:1;height:4px;border-radius:2px;background:var(--line-strong);transition:background .3s}
+  .progress i.on{background:var(--ok)}
+
+  .step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:20px 18px;margin-bottom:14px;transition:opacity .25s}
+  .step.locked{opacity:.42}
+  .step.locked .btn,.step.locked .validate{pointer-events:none}
+  .step.locked .lockmsg{display:block}
+  .lockmsg{display:none;font-size:13px;color:var(--mute);margin-top:12px;font-style:italic}
+  .step.done{border-color:#BFDECB;background:#FBFDFC}
+
+  .step-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .num{font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:15px;color:#fff;background:var(--slate);
+    width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .step.archive .num{background:var(--ember)} .step.agenda .num{background:var(--blue)}
+  .step.done .num{background:var(--ok)}
+  .step h2{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:20px;flex:1}
+  .badge{font-family:'Barlow Semi Condensed',sans-serif;font-size:11.5px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ok);background:var(--ok-soft);padding:3px 8px;border-radius:6px;display:none}
+  .step.done .badge{display:block}
+  .step p{color:var(--slate);font-size:15px}
+  .step p.hint{color:var(--slate-2);font-size:13.5px;margin-top:8px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:.02em;
+    text-transform:uppercase;text-decoration:none;padding:13px 16px;border-radius:11px;border:0;cursor:pointer;
+    margin-top:14px;transition:filter .15s,transform .05s}
+  .btn:active{transform:translateY(1px)}
+  .btn.slate{background:var(--slate);color:#fff}
+  .btn.ember{background:var(--ember);color:#fff}
+  .btn.blue{background:var(--blue);color:#fff}
+  .btn.ghost{background:var(--paper);color:var(--slate);border:1px solid var(--line-strong)}
+  .btn.dashed{background:var(--blue-soft);color:var(--blue);border:2px dashed var(--blue);text-transform:none;font-size:15px}
+  .btn:disabled{background:#E6EAEE;color:#9AA6B2;cursor:default}
+  .btn.small{font-size:13px;padding:9px;margin-top:8px}
+  .btn.copied{background:var(--ok)!important;color:#fff!important}
+  .validate{width:100%;margin-top:10px;padding:11px;border-radius:11px;border:1.5px solid var(--ok);
+    background:transparent;color:var(--ok);font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;
+    font-size:14.5px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+  .validate:active{background:var(--ok-soft)}
+  textarea{width:100%;min-height:110px;margin-top:14px;resize:vertical;font-family:ui-monospace,Menlo,monospace;
+    font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--paper);border:1px solid var(--line-strong);
+    border-radius:11px;padding:12px}
+  input[type=file]{display:none}
+  .filename{margin-top:12px;padding:10px 12px;background:var(--blue-soft);border-radius:10px;font-size:13.5px;
+    color:var(--blue);display:none;word-break:break-all}
+  .filename.show{display:block}
+
+  .preview{margin-top:14px;display:none} .preview.show{display:block}
+  .count{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+    font-size:13px;color:var(--slate-2);margin-bottom:8px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;text-transform:uppercase;
+    letter-spacing:.05em;font-size:11.5px;color:var(--slate-2);padding:6px 8px;border-bottom:1px solid var(--line-strong)}
+  td{padding:7px 8px;border-bottom:1px solid var(--line)}
+  td.d{white-space:nowrap;color:var(--slate-2);font-variant-numeric:tabular-nums}
+  td.t{font-weight:600;font-family:'Barlow Semi Condensed',sans-serif}
+  .tag{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+  .tag.night{background:#2B3945;color:#DCE7F2} .tag.other{background:#EEF0F2;color:var(--slate-2)}
+  .banner{display:none;margin-top:14px;padding:14px;border-radius:11px;background:var(--ok-soft);
+    border:1px solid #BFDECB;color:var(--ok);font-size:14.5px;line-height:1.45}
+  .banner.show{display:block}
+  .banner b{font-family:'Barlow Semi Condensed',sans-serif;font-size:16px;display:block;margin-bottom:3px}
+  .err{color:var(--ember);font-size:13.5px;margin-top:10px;display:none} .err.show{display:block}
+
+  details{margin-top:10px;border:1px dashed var(--line-strong);border-radius:11px;background:var(--paper);padding:0 14px}
+  summary{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:14px;padding:12px 0;cursor:pointer;
+    list-style:none;color:var(--blue);display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";font-size:19px} details[open] summary::after{content:"–"}
+  details .body{padding:0 0 14px;color:var(--slate);font-size:14px}
+  details ol{padding-left:20px;margin:6px 0} details li{margin-bottom:6px}
+  .prompt{background:var(--ink);border-radius:10px;padding:12px;margin-top:10px}
+  .prompt pre{color:#DDE6EE;font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.5;
+    white-space:pre-wrap;word-break:break-word;margin-top:8px}
+  footer{color:var(--slate-2);font-size:12.5px;text-align:center;margin-top:24px;line-height:1.6}
+  footer b{color:var(--slate)}
+  #finish{display:none;margin-top:14px;text-align:center;padding:18px;background:var(--ok-soft);
+    border:1px solid #BFDECB;border-radius:var(--radius)}
+  #finish.show{display:block}
+  #finish b{font-family:'Barlow Semi Condensed',sans-serif;font-size:19px;color:var(--ok);display:block;margin-bottom:4px}
+  #finish span{font-size:14px;color:var(--slate)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">SDIS 16 · Agendis</div>
+    <h1>Planning <span class="arrow">→</span> Agenda</h1>
+    <p class="sub">Suis les étapes dans l'ordre. Chacune s'ouvre quand la précédente est validée.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="monthbar">
+    <label>Mois traité</label>
+    <select id="mois"></select>
+    <input type="number" id="annee" min="2025" max="2035" step="1">
+  </div>
+  <div class="progress"><i id="p1"></i><i id="p2"></i><i id="p3"></i><i id="p4"></i></div>
+
+  <!-- 1 -->
+  <section class="step" id="s1">
+    <div class="step-head"><span class="num">1</span><h2>Récupérer le PDF</h2><span class="badge">Fait</span></div>
+    <p>Sur Agendis : onglet Agenda, va sur le mois voulu en vue Mois, touche l'icône PDF. Puis Partager → <b>Enregistrer dans Fichiers</b>.</p>
+    <p class="hint">Fais-le dès que le mois est publié : c'est cette version qui fera preuve en cas de changement tardif.</p>
+    <a class="btn slate" href="https://agendis.sdis16.fr" target="_blank" rel="noopener">Ouvrir Agendis</a>
+    <button class="validate" data-step="1">✓ PDF enregistré dans Fichiers</button>
+  </section>
+
+  <!-- 2 -->
+  <section class="step archive" id="s2">
+    <div class="step-head"><span class="num">2</span><h2>Archiver le PDF</h2><span class="badge">Fait</span></div>
+    <p>Le mail s'ouvre avec l'objet déjà rempli. Joins-y le PDF avec le trombone, puis envoie-le.</p>
+    <p class="hint">C'est ta preuve datée. Sans elle, aucun recours en cas de modification tardive du planning.</p>
+    <a class="btn ember" id="mailLink" href="#">Ouvrir le mail de sauvegarde</a>
+    <button class="btn ghost small" id="copySubj">Copier l'objet du mail</button>
+    <button class="validate" data-step="2">✓ Sauvegarde envoyée</button>
+  </section>
+
+  <!-- 3 -->
+  <section class="step" id="s3">
+    <div class="step-head"><span class="num">3</span><h2>Faire lire le PDF par Claude</h2><span class="badge">Fait</span></div>
+    <p>Copie la consigne, puis ouvre <b>toi-même l'app Claude</b> (tu y es déjà connecté). Colle la consigne, joins le PDF avec <b>＋ → Fichiers</b>, envoie.</p>
+    <p class="hint">N'ouvre pas Claude depuis un lien : Safari te connecterait en invité. Passe par l'app.</p>
+    <button class="btn blue" id="openClaude">Copier la consigne</button>
+    <details>
+      <summary>Voir la consigne</summary>
+      <div class="body"><div class="prompt"><pre id="promptText">Tu lis un planning de sapeur-pompier exporté depuis Agendis (SDIS 16), fourni en PDF dont le contenu est une image. Extrais toutes les activités du mois.
+
+Format EXACT, une ligne par activité :
+TITRE|JJ/MM/AAAA HH:MM|JJ/MM/AAAA HH:MM|note
+
+Règles :
+- Garde 07h-19h : titre « GARDE JOUR », de 07:00 à 19:00 le même jour.
+- Garde 19h-07h : titre « GARDE NUIT », de 19:00 le jour J à 07:00 le jour J+1 (passe minuit).
+- Journées de formation (Stage, Formateur, Formateur ITS...) : horaire réel 08:00 à 17:00, même si le PDF affiche 08h-18h.
+- Contrainte forte : telle qu'affichée (souvent 07:00 J à 07:00 J+1) ; commentaire en note.
+- Congé annuel : 24h, de 07:00 J à 07:00 J+1 ; ajouter « à vérifier » en note.
+- Centre ou commentaire en note (ex. « Centre : Cognac »).
+
+Périmètre :
+- Mettre TOUTES les activités du mois.
+- Un événement appartient au mois où il commence. Signale à part toute garde du 1er ou du dernier jour chevauchant le mois voisin.
+
+Sortie :
+- Fournis un fichier .txt téléchargeable contenant UNIQUEMENT ces lignes.</pre></div></div>
+    </details>
+    <button class="validate" data-step="3">✓ Fichier .txt enregistré dans Fichiers</button>
+  </section>
+
+  <!-- 4 -->
+  <section class="step agenda" id="s4">
+    <div class="step-head"><span class="num">4</span><h2>Envoyer vers l'agenda</h2><span class="badge">Fait</span></div>
+    <p>Ajoute le fichier .txt, vérifie le tableau, puis envoie. Choisis l'agenda <b>Planning professionnel Anthony</b>.</p>
+    <textarea id="paste" spellcheck="false" placeholder="Colle ici le texte que Claude t'a donné…"></textarea>
+    <label class="btn dashed" for="file">＋　ou ajouter le fichier .txt</label>
+    <input type="file" id="file" accept=".txt,text/plain">
+    <div class="filename" id="filename"></div>
+    <p class="err" id="err"></p>
+    <div class="preview" id="preview">
+      <div class="count" id="count"></div>
+      <table><thead><tr><th>Jour</th><th>Activité</th><th>Horaire</th></tr></thead><tbody id="rows"></tbody></table>
+      <button class="btn blue" id="sendBtn">Envoyer vers mon agenda</button>
+      <div class="banner" id="banner"></div>
+      <button class="btn ghost small" id="resetBtn">Renvoyer ce fichier</button>
+    </div>
+  </section>
+
+  <div id="finish"><b>✓ Mois terminé</b><span id="finishTxt"></span>
+    <button class="btn ghost small" id="newMonth">Commencer un nouveau mois</button></div>
+
+  <details>
+    <summary>Pourquoi je ne peux pas oublier une étape</summary>
+    <div class="body">
+      Chaque étape reste verrouillée tant que la précédente n'est pas validée : l'ordre est imposé, tu n'as rien à mémoriser.
+      <ol>
+        <li><b>Anti-doublons</b> : chaque activité porte un identifiant stable (date + titre). Un renvoi met à jour au lieu de dupliquer.</li>
+        <li><b>Preuve</b> : seul le PDF Agendis original fait foi. Le .txt et l'agenda n'ont aucune valeur probante.</li>
+        <li><b>Filet</b> : importe toujours dans ton agenda dédié, pour pouvoir tout corriger sans toucher au reste.</li>
+      </ol>
+    </div>
+  </details>
+
+  <footer>Fuseau Europe/Paris · usage personnel<br>La preuve reste le <b>PDF Agendis original</b></footer>
+</div>
+
+<script>
+const MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const EMAIL="emsley16@gmail.com";
+const selMois=document.getElementById('mois'), inpAnnee=document.getElementById('annee');
+MOIS.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m[0].toUpperCase()+m.slice(1);selMois.appendChild(o);});
+(function(){const n=new Date();let m=n.getMonth()+1,y=n.getFullYear();if(m>11){m=0;y++;}selMois.value=m;inpAnnee.value=y;})();
+
+/* --- parcours verrouillé --- */
+let faits={1:false,2:false,3:false,4:false};
+function maj(){
+  for(let i=1;i<=4;i++){
+    document.getElementById('s'+i).classList.toggle('done', faits[i]);
+    document.getElementById('p'+i).classList.toggle('on', faits[i]);
+  }
+}
+document.querySelectorAll('.validate').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const n=+b.dataset.step;
+    faits[n]=!faits[n]; maj();
+    if(faits[n]){const nx=document.getElementById('s'+(n+1));
+      if(nx) nx.scrollIntoView({behavior:'smooth',block:'center'});}
+  });
+});
+maj();
+
+/* --- étape 2 : mail --- */
+function sujet(){return 'Planning du mois de '+MOIS[+selMois.value].toUpperCase();}
+function majMail(){
+  const c="Sauvegarde du planning SDIS "+MOIS[+selMois.value]+" "+inpAnnee.value+".\n\nPDF Agendis original joint.";
+  document.getElementById('mailLink').href="mailto:"+EMAIL+"?subject="+encodeURIComponent(sujet())+"&body="+encodeURIComponent(c);
+}
+selMois.addEventListener('change',majMail); inpAnnee.addEventListener('input',majMail); majMail();
+function copie(txt){
+  const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).catch(()=>{});}
+}
+function flash(b,txt){const o=b.textContent;b.textContent=txt;b.classList.add('copied');
+  setTimeout(()=>{b.textContent=o;b.classList.remove('copied');},2200);}
+document.getElementById('copySubj').addEventListener('click',function(){copie(sujet());flash(this,'Objet copié');});
+document.getElementById('openClaude').addEventListener('click',function(){
+  copie(document.getElementById('promptText').textContent);flash(this,'✓ Copié — ouvre l\'app Claude');});
+
+/* --- étape 4 --- */
+let events=[],ics="",envoye=false;
+const preview=document.getElementById('preview'),err=document.getElementById('err'),
+      sendBtn=document.getElementById('sendBtn'),banner=document.getElementById('banner'),
+      fname=document.getElementById('filename');
+function pFR(s){const m=(s||'').match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);return m?{Y:m[3],Mo:m[2],D:m[1],H:m[4],Mi:m[5]}:null;}
+function dt(o){return o.Y+o.Mo+o.D+'T'+o.H+o.Mi+'00';}
+function esc(t){return t.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
+function slug(t){return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function tc(t){const u=t.toUpperCase();if(u.includes('NUIT'))return 'night';if(u.includes('GARDE'))return '';return 'other';}
+
+document.getElementById('paste').addEventListener('input',e=>{
+  const v=e.target.value.trim();
+  if(v.includes('|')) lire(v); else {preview.classList.remove('show');err.classList.remove('show');}
+});
+document.getElementById('file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{fname.textContent='📄  '+f.name;fname.classList.add('show');lire(r.result);};
+  r.readAsText(f,'utf-8');
+});
+function lire(raw){
+  err.classList.remove('show');preview.classList.remove('show');banner.classList.remove('show');
+  envoye=false;sendBtn.disabled=false;sendBtn.textContent='Envoyer vers mon agenda';
+  document.getElementById('finish').classList.remove('show');
+  events=[];let bad=0;
+  raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&l.includes('|')).forEach(l=>{
+    const p=l.split('|').map(s=>s.trim());const a=pFR(p[1]),b=pFR(p[2]);
+    if(p[0]&&a&&b)events.push({titre:p[0],d1:a,d2:b,note:p[3]||''});else bad++;
+  });
+  if(!events.length){err.textContent="Fichier illisible. Attendu : Titre | JJ/MM/AAAA HH:MM | JJ/MM/AAAA HH:MM | note";
+    err.classList.add('show');return;}
+  const rows=document.getElementById('rows');rows.innerHTML='';
+  events.forEach(e=>{const tr=document.createElement('tr');
+    const h=e.d1.H+'h'+(e.d1.Mi==='00'?'':e.d1.Mi)+' → '+e.d2.H+'h'+(e.d2.Mi==='00'?'':e.d2.Mi);
+    tr.innerHTML='<td class="d">'+e.d1.D+'/'+e.d1.Mo+'</td><td class="t">'+e.titre+'</td><td><span class="tag '+tc(e.titre)+'">'+h+'</span></td>';
+    rows.appendChild(tr);});
+  document.getElementById('count').textContent=events.length+' activité'+(events.length>1?'s':'')+' à vérifier'+(bad?' · '+bad+' ignorée(s)':'');
+  ics=build(events);preview.classList.add('show');preview.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function build(v){
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  const st=n.getUTCFullYear()+p(n.getUTCMonth()+1)+p(n.getUTCDate())+'T'+p(n.getUTCHours())+p(n.getUTCMinutes())+p(n.getUTCSeconds())+'Z';
+  let L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Anthony Jocquet//Planning SDIS16//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+   'X-WR-TIMEZONE:Europe/Paris','BEGIN:VTIMEZONE','TZID:Europe/Paris',
+   'BEGIN:DAYLIGHT','TZOFFSETFROM:+0100','TZOFFSETTO:+0200','TZNAME:CEST','DTSTART:19700329T020000','RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU','END:DAYLIGHT',
+   'BEGIN:STANDARD','TZOFFSETFROM:+0200','TZOFFSETTO:+0100','TZNAME:CET','DTSTART:19701025T030000','RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU','END:STANDARD','END:VTIMEZONE'];
+  v.forEach(e=>{L.push('BEGIN:VEVENT','UID:sdis-'+dt(e.d1)+'-'+slug(e.titre)+'@agendis.sdis16.fr','SEQUENCE:0','DTSTAMP:'+st,
+    'DTSTART;TZID=Europe/Paris:'+dt(e.d1),'DTEND;TZID=Europe/Paris:'+dt(e.d2),'SUMMARY:'+esc(e.titre));
+    if(e.note)L.push('DESCRIPTION:'+esc(e.note));L.push('END:VEVENT');});
+  L.push('END:VCALENDAR');return L.join('\r\n')+'\r\n';
+}
+sendBtn.addEventListener('click',()=>{
+  if(envoye||!ics)return;envoye=true;
+  sendBtn.disabled=true;sendBtn.textContent='✓ Déjà envoyé';
+  banner.innerHTML='<b>✓ '+events.length+' activités envoyées</b>Touche « Ajouter tout », puis choisis Planning professionnel Anthony.';
+  banner.classList.add('show');
+  const b=new Blob([ics],{type:'text/calendar;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download='Planning_SDIS16_'+MOIS[+selMois.value]+'_'+inpAnnee.value+'.ics';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),1500);
+  const f=document.getElementById('finish');
+  document.getElementById('finishTxt').textContent=MOIS[+selMois.value]+' '+inpAnnee.value+' : archivé et enregistré.';
+  f.classList.add('show');
+  faits[4]=true;maj();
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  envoye=false;sendBtn.disabled=false;sendBtn.textContent='Envoyer vers mon agenda';banner.classList.remove('show');});
+document.getElementById('newMonth').addEventListener('click',()=>{
+  faits={1:false,2:false,3:false,4:false};maj();events=[];ics="";envoye=false;
+  document.getElementById('paste').value='';
+  preview.classList.remove('show');fname.classList.remove('show');
+  document.getElementById('finish').classList.remove('show');
+  document.getElementById('file').value='';
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+</script>
+</body>
+</html>
