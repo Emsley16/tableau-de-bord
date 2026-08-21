@@ -137,6 +137,8 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
 .blk-h i{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:.04em}
 .blk-h i.over{color:var(--red);font-weight:700}
 .blk-c{padding:14px 13px;font-size:16px;line-height:1.68;white-space:pre-wrap;word-break:break-word}
+.amorce{font-family:var(--mono);font-size:14px;color:var(--muted);opacity:.6;
+  padding:0 3px 5px;font-style:italic}
 .amb{background:var(--surface);border:1px solid var(--acc);border-radius:var(--r);padding:13px;
   font-family:var(--mono);font-size:15px;line-height:1.55;word-break:break-word}
 .amb.vide{color:var(--muted);opacity:.5;font-style:italic;border-color:var(--border)}
@@ -521,7 +523,8 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
     <div class="bar"><i id="barre"></i></div>
   </div>
   <div class="scr" id="scr"></div>
-  <div class="rhead">Phrase d'ambiance — à coller dans VSAV Intervention</div>
+  <div class="rhead">Phrase d'ambiance — se place après « Nous sommes confrontés à »</div>
+  <div class="amorce">Nous sommes confrontés à</div>
   <div class="amb" id="amb"></div>
   <button class="btn2" id="copamb">Copier la phrase</button>
   <div class="rhead">Réserve — réponses prêtes à ses questions</div>
@@ -1270,6 +1273,20 @@ function demandeTxt(){
 }
 
 /* PHRASE D'AMBIANCE — une ligne : nature, sujet, lieu, aggravant */
+// La phrase se place après « Nous sommes confrontés à » : elle démarre donc
+// par un groupe nominal articulé, en minuscule.
+const NAT_FEM=["chute","plaie","brûlure","hémorragie","douleur","gêne","détresse","crise",
+ "décompensation","céphalée","perte","intoxication","fièvre","altération","suspicion",
+ "convulsion","agression","explosion","obstruction","noyade","électrisation","intervention"];
+const NAT_PLUR=["palpitations","vomissements","convulsions","brûlures"];
+function articuler(n){
+  const p=(n||"").trim().toLowerCase();
+  const m=p.split(/[\s']/)[0];
+  if(NAT_PLUR.includes(m))return"des "+p;
+  if(NAT_FEM.includes(m))return"une "+p;
+  if(/^[aeiouéèêh]/.test(p))return"un "+p;
+  return"un "+p;
+}
 function phraseAmbiance(){
   const nat=titrePropre();
   if(!nat&&!raw("sexe")&&!val("age"))return"";
@@ -1278,7 +1295,7 @@ function phraseAmbiance(){
   if(one("acg")==="oui"&&!ag.includes("sous anticoagulant"))ag.push("sous anticoagulant");
   const libre=raw("aggravlib");
   if(libre)ag.push(libre.charAt(0).toLowerCase()+libre.slice(1));
-  let p=cap(nat||"intervention");
+  let p=articuler(nat||"intervention");
   if(raw("sexe")||val("age"))p+=" chez "+sujet(true);
   if(lieu)p+=" "+lieu;
   if(ag.length)p+=", "+liste(ag);
@@ -1738,7 +1755,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 /* ════════ MISE À JOUR AUTOMATIQUE ════════ */
-const VERSION="2026.08.21i";
+const VERSION="2026.08.21j";
 $("#ver").textContent=VERSION;
 if("serviceWorker" in navigator){
   const avaitControleur=!!navigator.serviceWorker.controller;
