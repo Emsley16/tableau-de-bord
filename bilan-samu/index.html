@@ -165,16 +165,6 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
 .btn{width:100%;background:var(--acc);border:1px solid var(--acc);color:var(--bg);border-radius:8px;
   padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:11px}
 .btn[disabled]{opacity:.4}
-.micwrap{display:flex;gap:6px;align-items:flex-start}
-.micwrap>input,.micwrap>textarea{flex:1;min-width:0;margin-top:0!important}
-.micmini{flex:none;width:48px;align-self:stretch;min-height:42px;background:var(--s2);
-  border:1px solid var(--border);border-radius:8px;font-size:17px;cursor:pointer;padding:0}
-.micmini.rec{border-color:var(--red);background:var(--red-s)}
-#dicteebar{position:fixed;left:0;right:0;top:0;z-index:200;border:none;
-  background:var(--red);color:#fff;font-size:15px;font-weight:700;padding:14px 12px;
-  padding-top:calc(14px + env(safe-area-inset-top));cursor:pointer;width:100%}
-.mic{display:flex;align-items:center;justify-content:center;gap:8px}
-.mic.rec{border-color:var(--red);color:var(--red);background:var(--red-s)}
 .btn2{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:8px;
   padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:8px}
 input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;
@@ -210,6 +200,13 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 .tab{background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:8px;
   padding:11px 4px;font-size:13.5px;font-weight:600;cursor:pointer}
 .tab[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:700}
+.hi{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px 12px;margin-top:10px}
+.hi>span{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--acc);margin-bottom:5px}
+.hi>div{font-family:var(--mono);font-size:13px;line-height:1.5;word-break:break-word}
+.hi .hp{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);opacity:.78}
+.hi button{margin-top:9px}
+.hi.vide{color:var(--muted);font-style:italic;font-size:13px;background:none;border-style:dashed}
 .ver{text-align:center;font-size:11px;color:var(--muted);opacity:.62;padding:14px 0 4px;line-height:1.5}
 .ver b{font-weight:600;opacity:.85}
 .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--grn);color:#06120C;
@@ -263,10 +260,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 
     <div class="f"><label for="lieu">Adresse d'intervention</label>
       <input type="text" id="lieu" placeholder="au 12 rue des Vignes à Javrezac">
-      <div class="g2" style="margin-top:8px">
-        <button class="btn2 mic" id="micLieu" data-lab="Dicter l'adresse" data-cible="lieu">Dicter l'adresse</button>
-        <button class="btn2" id="geo">Me localiser</button>
-      </div>
+      <button class="btn2" id="geo" style="margin-top:8px">Me localiser</button>
       <span class="mini" id="geoinfo">Saisir la préposition : le texte est repris tel quel après « j'interviens ». La géolocalisation donne la position du téléphone, pas nécessairement celle de la victime — vérifier avant d'énoncer.</span></div>
 
     <div class="f"><span class="gl">Contexte du lieu</span>
@@ -290,6 +284,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
         <button class="chip" data-v="victime incarcérée" aria-pressed="false">Incarcérée</button>
         <button class="chip" data-v="accès difficile" aria-pressed="false">Accès difficile</button>
         <button class="chip" data-v="relevage difficile" aria-pressed="false">Relevage difficile</button>
+        <button class="chip" data-v="personne âgée" aria-pressed="false">Personne âgée</button>
         <button class="chip" data-v="personne isolée" aria-pressed="false">Personne isolée</button>
         <button class="chip" data-v="grossesse en cours" aria-pressed="false">Grossesse</button>
       </div>
@@ -326,7 +321,6 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
       </div>
       <div id="demlibbox" style="display:none">
         <input type="text" id="demlib" placeholder="Formulation libre" style="margin-top:8px">
-        <button class="btn2 mic" id="micDem" data-lab="Dicter la demande" data-cible="demlib">Dicter la demande</button>
       </div>
       <input type="text" id="demdet" placeholder="Précision : destination, protocole, motif" style="margin-top:8px">
       <div class="chips" id="delai" data-one style="margin-top:8px">
@@ -490,6 +484,14 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
     <div class="f"><label for="phurl">Point d'accès d'analyse</label>
       <input type="text" id="phurl" data-keep placeholder="https://…workers.dev">
       <span class="mini">Adresse de votre relais. Sans elle, seule la trame manuelle est disponible. L'image est redimensionnée avant envoi et n'est jamais conservée par l'outil.</span></div>
+  </div>
+</details>
+
+<details class="sec" id="s7">
+  <summary><span class="num">7</span><span class="st"><b>Historique</b><em>Les bilans archivés à l'ouverture précédente</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div id="hist"></div>
+    <button class="btn2" id="histvider" style="margin-top:11px">Vider l'historique</button>
   </div>
 </details>
 
@@ -951,7 +953,7 @@ function buildMotif(){
   $("#negatifs").innerHTML=M.neg.map((n,i)=>
     '<div class="neg" data-neg="'+i+'"><span>'+cap(n)+'</span>'+
     '<button data-st="0">—</button></div>').join("");
-  brancher();equiperMicros();
+  brancher();
 }
 function brancher(){
   $$(".chips[data-one]").forEach(g=>{if(g._b)return;g._b=1;
@@ -980,7 +982,6 @@ function buildPbs(){
     '</div>').join("");
   $$("#pbs input").forEach(i=>i.oninput=()=>{pbs[+i.dataset.pb][i.dataset.k]=i.value;rendre();});
   $$("#pbs button[data-del]").forEach(b=>b.onclick=()=>{pbs.splice(+b.dataset.del,1);buildPbs();rendre();});
-  if(typeof equiperMicros==="function")equiperMicros();
 }
 $("#addpb").onclick=()=>{pbs.push({p:"",a:""});buildPbs();};
 
@@ -1317,98 +1318,6 @@ function buildGlo(f){
 }
 $("#gsearch").oninput=e=>buildGlo(e.target.value);
 
-/* ════════ DICTÉE VOCALE ════════ */
-function dicter(btn){dicterEl($("#"+btn.dataset.cible),btn);}
-
-// Safari sur iOS fige régulièrement la reconnaissance vocale sans rendre la main.
-// Sur ces appareils, on bascule volontairement sur la dictée native du clavier.
-const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
-            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-function dicterEl(cible,btn){
-  if(!cible)return;
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!window.isSecureContext){toast("Dictée impossible hors https");cible.focus();return;}
-  if(!SR){toast("Dictée indisponible — micro du clavier");cible.focus();return;}
-  if(btn._r){arreterDictee();return;}
-
-  const mini=btn.classList.contains("micmini");
-  const r=new SR();r.lang="fr-FR";r.interimResults=false;r.continuous=true;r.maxAlternatives=1;
-
-  let clos=false;
-  const fin=()=>{
-    if(clos)return;clos=true;
-    clearTimeout(r._t);
-    btn._r=null;btn.classList.remove("rec");
-    if(!mini)btn.textContent=btn.dataset.lab;
-    const bar=$("#dicteebar");if(bar)bar.remove();
-    dicteeActive=null;
-    rendre();
-  };
-  r._fin=fin;
-  btn._r=r;dicteeActive=r;
-  btn.classList.add("rec");
-  if(!mini)btn.textContent="Arrêter la dictée";
-
-  // Bandeau d'arrêt toujours accessible, quoi qu'il arrive
-  const bar=document.createElement("button");
-  bar.id="dicteebar";bar.type="button";
-  bar.textContent="Dictée en cours — parlez, puis touchez ici pour arrêter";
-  bar.onclick=arreterDictee;
-  document.body.appendChild(bar);
-
-  // Filet de sécurité : arrêt forcé au bout de 20 secondes
-  r._t=setTimeout(()=>{try{r.abort();}catch(e){}fin();},120000);
-
-  r.onresult=e=>{
-    let t="";
-    for(let i=e.resultIndex;i<e.results.length;i++)
-      if(e.results[i].isFinal)t+=e.results[i][0].transcript;
-    if(t.trim())cible.value=(cible.value?cible.value+" ":"")+t.trim();
-  };
-  r.onerror=e=>{
-    if(e.error==="no-speech"){return;}
-    if(e.error!=="aborted"){
-      toast("Dictée : "+(e.error==="not-allowed"?"micro refusé":e.error));
-      if(IOS)cible.focus();
-    }
-    fin();};
-  r.onend=fin;
-  try{r.start();}catch(e){fin();}
-}
-
-let dicteeActive=null;
-function arreterDictee(){
-  const r=dicteeActive;if(!r)return;
-  try{r.abort();}catch(e){}
-  try{r.stop();}catch(e){}
-  if(r._fin)r._fin();
-}
-// Échappatoire clavier
-document.addEventListener("keydown",e=>{if(e.key==="Escape")arreterDictee();});
-
-$$(".mic").forEach(b=>b.onclick=()=>dicter(b));
-
-// Champs exclus : trop courts, numériques, ou déjà dotés d'un bouton dédié
-const SANS_MICRO=new Set(["lieu","demlib","cis","phurl","gsearch","poids","trc","temp","gly"]);
-function equiperMicros(){
-  $$("input[type=text],textarea").forEach(e=>{
-    if(e._mic||e.closest(".micwrap"))return;
-    if(e.id&&SANS_MICRO.has(e.id))return;
-    if(!e.id&&!e.dataset.pb)return;
-    e._mic=1;
-    const w=document.createElement("div");w.className="micwrap";
-    if(e.style.marginTop){w.style.marginTop=e.style.marginTop;}
-    if(e.style.marginBottom){w.style.marginBottom=e.style.marginBottom;e.style.marginBottom="";}
-    e.parentNode.insertBefore(w,e);w.appendChild(e);
-    const b=document.createElement("button");
-    b.type="button";b.className="micmini";b.textContent="🎤";
-    b.setAttribute("aria-label","Dicter ce champ");
-    b.onclick=()=>dicterEl(e,b);
-    w.appendChild(b);
-  });
-}
-
 /* ════════ GÉOLOCALISATION ════════ */
 $("#geo").onclick=()=>{
   const info=$("#geoinfo");
@@ -1601,22 +1510,25 @@ $("#copier").onclick=async()=>{
   catch(e){const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";
     ta.style.opacity="0";document.body.appendChild(ta);ta.select();
     try{document.execCommand("copy");toast("Copié");}catch(_){toast("Copie impossible");}ta.remove();}};
-$("#copamb").onclick=async()=>{
-  const t=phraseAmbiance();
+async function copier(t,msg){
   if(!t){toast("Rien à copier");return;}
-  try{await navigator.clipboard.writeText(t);toast("Phrase copiée");}
+  try{await navigator.clipboard.writeText(t);toast(msg||"Copié");}
   catch(e){const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";
     ta.style.opacity="0";document.body.appendChild(ta);ta.select();
-    try{document.execCommand("copy");toast("Phrase copiée");}catch(_){toast("Copie impossible");}ta.remove();}};
+    try{document.execCommand("copy");toast(msg||"Copié");}catch(_){toast("Copie impossible");}ta.remove();}
+}
+$("#copamb").onclick=()=>copier(phraseAmbiance(),"Phrase copiée");
 $("#imprimer").onclick=()=>window.print();
 $("#nouveau").onclick=()=>{
-  if(!confirm("Effacer les données de la victime ? L'indicatif est conservé."))return;
-  champs().forEach(e=>{if(!e.hasAttribute("data-keep"))e.value="";});
-  $$(".chips .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
-  $('#htype .chip[data-v=debut]').setAttribute("aria-pressed","true");
-  $('#chiffres .chip').setAttribute("aria-pressed","true");
-  $$(".neg button").forEach(b=>majNeg(b,0));
-  pbs=[{p:"",a:""}];buildPbs();
+  if(!confirm("Archiver ce bilan et repartir à zéro ?"))return;
+  const a=bAnnonce();
+  if(a&&a.replace(/\s+/g," ").trim().length>45){
+    const h=lireHist();
+    h.unshift({t:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),
+      a:a,p:phraseAmbiance()});
+    ecrireHist(h);
+  }
+  reinitialiser();afficherHist();
   rendre();vue("bilan");toast("Nouveau bilan");};
 $("#tout").onclick=()=>{
   if(!confirm("Effacer toutes les données, indicatif compris ?"))return;
@@ -1633,8 +1545,60 @@ dock.innerHTML='<div class="locks">'+
 document.body.appendChild(dock);
 $$(".tab").forEach(t=>t.onclick=()=>vue(t.dataset.v));
 
+/* ════════ HISTORIQUE ET REMISE À ZÉRO ════════ */
+const CLEH=CLE+".hist";
+function lireHist(){try{return JSON.parse(localStorage.getItem(CLEH)||"[]");}catch(e){return[];}}
+function ecrireHist(h){try{localStorage.setItem(CLEH,JSON.stringify(h.slice(0,25)));}catch(e){}}
+
+function afficherHist(){
+  const h=lireHist();
+  $("#hist").innerHTML = h.length
+    ? h.map((x,i)=>'<div class="hi"><span>'+esc(x.t)+'</span>'+
+        '<div>'+esc(x.a||"—")+'</div>'+
+        (x.p?'<div class="hp">'+esc(x.p)+'</div>':'')+
+        '<button class="btn2" data-hc="'+i+'">Copier l\'annonce</button></div>').join("")
+    : '<div class="hi vide">Aucun bilan archivé pour le moment.</div>';
+  $$("#hist button[data-hc]").forEach(b=>
+    b.onclick=()=>copier((lireHist()[+b.dataset.hc]||{}).a,"Annonce copiée"));
+}
+$("#histvider").onclick=()=>{
+  if(!confirm("Effacer tout l'historique ?"))return;
+  try{localStorage.removeItem(CLEH);}catch(e){}
+  afficherHist();toast("Historique vidé");
+};
+
+function reinitialiser(){
+  champs().forEach(e=>{if(!e.hasAttribute("data-keep"))e.value="";});
+  $$(".chips .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+  const hd=$('#htype .chip[data-v=debut]');if(hd)hd.setAttribute("aria-pressed","true");
+  const ch=$('#chiffres .chip');if(ch)ch.setAttribute("aria-pressed","true");
+  $$(".neg button").forEach(b=>majNeg(b,0));
+  pbs=[{p:"",a:""}];buildPbs();
+}
+
+// Une ouverture de l'application = un nouveau bilan.
+// Un simple rechargement en cours de session ne remet rien à zéro.
+function nouvelleSession(){
+  let memeSession=false;
+  try{
+    memeSession = sessionStorage.getItem("bilan.session")==="1";
+    sessionStorage.setItem("bilan.session","1");
+  }catch(e){}
+  if(memeSession)return;
+  const a=bAnnonce(),ph=phraseAmbiance();
+  if(a&&a.replace(/\s+/g," ").trim().length>45){
+    const h=lireHist();
+    h.unshift({
+      t:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),
+      a:a,p:ph
+    });
+    ecrireHist(h);
+  }
+  reinitialiser();
+}
+
 /* ════════ MISE À JOUR AUTOMATIQUE ════════ */
-const VERSION="2026.08.21c";
+const VERSION="2026.08.21d";
 $("#ver").textContent=VERSION;
 if("serviceWorker" in navigator){
   const avaitControleur=!!navigator.serviceWorker.controller;
@@ -1654,7 +1618,7 @@ if("serviceWorker" in navigator){
 /* init */
 buildMotifs();buildMotif();buildPbs();buildGlo("");
 $('#chiffres .chip').setAttribute("aria-pressed","true");
-charger();brancher();equiperMicros();
+charger();brancher();
 document.addEventListener("input",rendre);
 document.addEventListener("change",rendre);
 rendre();vue("bilan");
