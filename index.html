@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E1621">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bilan">
+<title>Bilan — Discours au médecin régulateur</title>
+<style>
+:root{
+  --bg:#0E1621;--surface:#16212E;--s2:#1E2C3C;--s3:#26374A;--border:#2A3B4F;
+  --text:#DCE6F0;--muted:#8FA3B8;
+  --acc:#FFB020;--acc-s:rgba(255,176,32,.14);
+  --red:#FF5A52;--red-s:rgba(255,90,82,.15);
+  --grn:#3ECF8E;--grn-s:rgba(62,207,142,.15);
+  --r:10px;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+html[data-t="jour"]{--bg:#E9EEF3;--surface:#fff;--s2:#F2F6FA;--s3:#E3EAF1;--border:#C6D2DE;
+  --text:#101E2C;--muted:#55697D;--acc:#A15A00;--acc-s:rgba(161,90,0,.10);
+  --red:#C42B21;--red-s:rgba(196,43,33,.10);--grn:#0F7A4E;--grn-s:rgba(15,122,78,.12)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans)}
+body{font-size:16px;line-height:1.45;padding-bottom:104px;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+header{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--border);
+  padding:calc(9px + env(safe-area-inset-top)) 14px 9px;display:flex;align-items:center;gap:10px}
+.brand{flex:1;min-width:0}
+.brand b{display:block;font-size:16px;font-weight:800;letter-spacing:.1em;color:var(--acc)}
+.brand span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:var(--r);
+  width:38px;height:38px;font-size:15px;cursor:pointer;flex:none}
+main{padding:12px 14px 0}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.sec>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:11px}
+.sec>summary::-webkit-details-marker{display:none}
+.num{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--acc);background:var(--acc-s);
+  border-radius:5px;padding:3px 7px;flex:none}
+.st{flex:1;min-width:0}
+.st b{display:block;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.st em{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:1px}
+.chev{color:var(--muted);font-size:12px;transition:transform .15s}
+.sec[open] .chev{transform:rotate(180deg)}
+.bd{padding:2px 14px 16px;border-top:1px solid var(--border)}
+.f{margin-top:14px}
+.f>label,.gl{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=time],input[type=number],select,textarea{width:100%;background:var(--s2);
+  border:1px solid var(--border);border-radius:8px;padding:10px 11px;color:var(--text)}
+textarea{resize:vertical;min-height:58px;line-height:1.4}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini{font-size:10.5px;color:var(--muted);margin-top:5px;display:block;line-height:1.35}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--s2);border:1px solid var(--border);border-radius:99px;padding:7px 11px;
+  font-size:13px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed=true]{background:var(--acc-s);border-color:var(--acc);color:var(--acc);font-weight:600}
+.lk{border-left:3px solid var(--red);padding-left:11px;margin-left:-14px}
+.lk.ok{border-left-color:var(--grn)}
+.tg{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--red);background:var(--red-s);
+  padding:2px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
+.lk.ok .tg{color:var(--grn);background:var(--grn-s)}
+/* motifs */
+.mgrid{display:grid;grid-template-columns:1fr;gap:8px}
+.mbtn{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:15px 16px;
+  text-align:left;cursor:pointer}
+.mbtn strong{display:block;font-size:18px;font-weight:700;letter-spacing:.01em}
+.mbtn em{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:3px}
+.mbtn[aria-pressed=true]{border-color:var(--acc);background:var(--acc-s)}
+.mbtn[aria-pressed=true] strong{color:var(--acc)}
+/* negatifs */
+.neg{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.neg:last-child{border-bottom:none}
+.neg span{flex:1;font-size:13.5px;min-width:0}
+.neg button{border:1px solid var(--border);background:var(--s2);color:var(--muted);border-radius:6px;
+  width:44px;padding:6px 0;font-size:12px;font-weight:700;cursor:pointer;flex:none}
+.neg button{width:80px}
+.neg button.st2{background:var(--acc-s);border-color:var(--acc);color:var(--acc)}
+.neg button.st1{background:var(--grn-s);border-color:var(--grn);color:var(--grn)}
+/* constantes */
+.cst{display:grid;grid-template-columns:1fr 92px 1fr;gap:8px;align-items:center;margin-top:9px}
+.cst label{font-size:12.5px;color:var(--muted)}
+.cst input{text-align:center;font-family:var(--mono)}
+.q{font-size:11.5px;font-weight:600;text-align:right;line-height:1.25}
+.q.n{color:var(--grn)}.q.a{color:var(--red)}.q.x{color:var(--muted);opacity:.5}
+.ped{background:var(--acc-s);border:1px solid var(--acc);border-radius:8px;padding:10px 12px;
+  margin-top:12px;font-size:12px;line-height:1.5}
+.ped b{color:var(--acc);display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:5px}
+.ped table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin-top:5px}
+.ped td,.ped th{padding:2px 4px;text-align:left;border-bottom:1px solid var(--border)}
+.ped th{color:var(--muted);font-weight:600}
+/* vittel */
+.vit{border:1px solid var(--border);background:var(--s2);border-radius:8px;padding:11px 12px;margin-top:12px;font-size:12.5px}
+.vit.on{border-color:var(--red);background:var(--red-s)}
+.vit b{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:5px;color:var(--muted)}
+.vit.on b{color:var(--red)}
+/* problemes */
+.pb{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px;margin-top:10px}
+.pb-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pb-h span{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)}
+.pb-h button{background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;font-weight:600}
+.pb input{margin-bottom:7px}.pb input:last-child{margin-bottom:0}
+.addp{width:100%;margin-top:9px;background:var(--s2);border:1px dashed var(--border);color:var(--muted);
+  border-radius:8px;padding:11px;font-size:13.5px;cursor:pointer}
+/* script */
+#v-msg,#v-glo{display:none;padding:14px}
+#v-msg.on,#v-glo.on{display:block}
+.gj{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:11px}
+.gj-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.gj-h b{font-family:var(--mono);font-size:25px;line-height:1}
+.gj-h span{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.bar{height:5px;background:var(--s3);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--grn)}
+.gj.w b{color:var(--acc)}.gj.w .bar i{background:var(--acc)}
+.gj.o b{color:var(--red)}.gj.o .bar i{background:var(--red)}
+.gj.k b{color:var(--grn)}
+.scr{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;font-family:var(--mono)}
+.blk{border-bottom:1px solid var(--border)}.blk:last-child{border-bottom:none}
+.blk-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:9px 13px 0;
+  font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--acc)}
+.blk-h i{font-style:normal;color:var(--muted);font-weight:400;letter-spacing:.04em}
+.blk-h i.over{color:var(--red);font-weight:700}
+.blk-c{padding:14px 13px;font-size:16px;line-height:1.68;white-space:pre-wrap;word-break:break-word}
+.amb{background:var(--surface);border:1px solid var(--acc);border-radius:var(--r);padding:13px;
+  font-family:var(--mono);font-size:15px;line-height:1.55;word-break:break-word}
+.amb.vide{color:var(--muted);opacity:.5;font-style:italic;border-color:var(--border)}
+.rhead{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  margin:18px 0 8px 2px}
+.res{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ri{padding:9px 13px;border-bottom:1px solid var(--border)}
+.ri:last-child{border-bottom:none}
+.ri span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:2px}
+.ri div{font-family:var(--mono);font-size:13.5px;line-height:1.45;word-break:break-word}
+.ri.vide{color:var(--muted);font-style:italic;font-size:13px}
+.blk.vide .blk-c{color:var(--muted);opacity:.5;font-style:italic}
+.glose{padding:0 13px 12px;font-family:var(--sans);font-size:12.5px;font-style:italic;
+  color:var(--muted);line-height:1.55;opacity:.82;border-top:1px dotted var(--border);margin:0 13px;
+  padding-left:0;padding-right:0;padding-top:8px}
+.glose b{font-style:normal;font-weight:600;color:var(--acc);opacity:.9}
+.glose2{font-size:12.5px;font-style:italic;color:var(--text);opacity:.72;line-height:1.5;margin-top:9px}
+.glose2 b{font-style:normal;font-weight:600;color:var(--acc);opacity:.95}
+.glose2 span{display:block;margin-bottom:4px}
+/* photo */
+.ck{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.4;cursor:pointer}
+.ck input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--acc)}
+.phimg{width:100%;border-radius:8px;border:1px solid var(--border);margin-top:9px;display:block}
+.phout{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;
+  margin-top:11px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+.phout.err{border-color:var(--red);color:var(--red)}
+.btn{width:100%;background:var(--acc);border:1px solid var(--acc);color:var(--bg);border-radius:8px;
+  padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:11px}
+.btn[disabled]{opacity:.4}
+.micwrap{display:flex;gap:6px;align-items:flex-start}
+.micwrap>input,.micwrap>textarea{flex:1;min-width:0;margin-top:0!important}
+.micmini{flex:none;width:48px;align-self:stretch;min-height:42px;background:var(--s2);
+  border:1px solid var(--border);border-radius:8px;font-size:17px;cursor:pointer;padding:0}
+.micmini.rec{border-color:var(--red);background:var(--red-s)}
+.mic{display:flex;align-items:center;justify-content:center;gap:8px}
+.mic.rec{border-color:var(--red);color:var(--red);background:var(--red-s)}
+.btn2{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:8px;
+  padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:8px}
+input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;
+  padding:10px;font-size:13px;color:var(--muted)}
+.after{margin-top:11px;background:var(--acc-s);border:1px solid var(--acc);border-radius:var(--r);
+  padding:11px 13px;font-size:13px;line-height:1.5}
+.after b{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);margin-bottom:4px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.acts button{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:13px 6px;
+  font-size:13.5px;font-weight:600;cursor:pointer}
+.acts button.pri{background:var(--acc);border-color:var(--acc);color:var(--bg)}
+.acts button.dgr{color:var(--red)}
+/* glossaire */
+#gsearch{margin-bottom:11px}
+.gcat{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);
+  margin:16px 0 7px}
+.gi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.gi b{font-size:16.5px}
+.gi p{font-size:15px;color:var(--text);opacity:.86;margin-top:4px;line-height:1.5}
+.gi .pg{display:block;margin-top:9px;padding:8px 11px;font-size:14.5px;line-height:1.5;
+  color:var(--text);background:var(--acc-s);border-left:3px solid var(--acc);border-radius:0 6px 6px 0}
+.gcat{font-size:12px}
+/* dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);
+  border-top:1px solid var(--border);padding:8px 14px calc(8px + env(safe-area-inset-bottom))}
+.locks{display:flex;gap:6px;margin-bottom:7px}
+.lo{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:var(--red-s);
+  border:1px solid var(--red);color:var(--red);border-radius:6px;padding:4px 2px;font-size:9.5px;
+  font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.lo.ok{background:var(--grn-s);border-color:var(--grn);color:var(--grn)}
+.lo::before{content:"○"}.lo.ok::before{content:"●"}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tab{background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:8px;
+  padding:11px 4px;font-size:13.5px;font-weight:600;cursor:pointer}
+.tab[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:700}
+.ver{text-align:center;font-size:11px;color:var(--muted);opacity:.62;padding:14px 0 4px;line-height:1.5}
+.ver b{font-weight:600;opacity:.85}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--grn);color:#06120C;
+  padding:10px 20px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:60}
+.toast.on{opacity:1}
+@media(min-width:720px){body{max-width:660px;margin:0 auto}
+  .dock{left:50%;transform:translateX(-50%);max-width:660px;border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{header,.dock,.acts,#v-bilan,#v-glo,.bar{display:none!important}
+  body{background:#fff;color:#000;padding:0}#v-msg{display:block!important;padding:0}
+  .scr,.blk,.after,.gj{border-color:#000;background:#fff;color:#000}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>BILAN · RÉGULATION</b><span id="sub">Choisir un motif de recours</span></div>
+  <button class="ib" id="theme" aria-label="Jour / nuit">☾</button>
+</header>
+
+<!-- ═══ BILAN ═══ -->
+<div id="v-bilan"><main>
+
+<details class="sec" id="s1" open>
+  <summary><span class="num">1</span><span class="st"><b>Annonce</b><em>Tout ce qui part dans les 30 premières secondes</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div class="f"><span class="gl">Motif de recours</span>
+      <div class="mgrid" id="motifs"></div></div>
+
+    <div class="f"><label for="titre">Phrase-titre</label>
+      <input type="text" id="titre" list="dl-titres" placeholder="douleur thoracique">
+      <datalist id="dl-titres"></datalist>
+      <span class="mini">Formulée en symptôme. C'est elle qui vous protège de l'interruption.</span></div>
+
+    <div class="f"><span class="gl">Engin et unité</span>
+      <div class="row">
+        <select id="engin" data-keep>
+          <option value="VSAV 1">VSAV 1</option>
+          <option value="VSAV 2">VSAV 2</option>
+          <option value="VSAV 3">VSAV 3</option>
+          <option value="VSAV 4">VSAV 4</option>
+          <option value="VSM">VSM</option>
+          <option value="VLSM">VLSM</option>
+          <option value="VTU">VTU</option>
+          <option value="VSR">VSR</option>
+        </select>
+        <input type="text" id="cis" data-keep value="Cognac" placeholder="Cognac">
+      </div>
+      <span class="mini">Conservés d'un bilan à l'autre.</span></div>
+
+    <div class="f"><label for="lieu">Adresse d'intervention</label>
+      <input type="text" id="lieu" placeholder="au 12 rue des Vignes à Javrezac">
+      <div class="g2" style="margin-top:8px">
+        <button class="btn2 mic" id="micLieu" data-lab="Dicter l'adresse" data-cible="lieu">Dicter l'adresse</button>
+        <button class="btn2" id="geo">Me localiser</button>
+      </div>
+      <span class="mini" id="geoinfo">Saisir la préposition : le texte est repris tel quel après « j'interviens ». La géolocalisation donne la position du téléphone, pas nécessairement celle de la victime — vérifier avant d'énoncer.</span></div>
+
+    <div class="f"><span class="gl">Contexte du lieu</span>
+      <div class="chips" id="ctxlieu" data-one>
+        <button class="chip" data-v="à son domicile" aria-pressed="false">Domicile</button>
+        <button class="chip" data-v="sur la voie publique" aria-pressed="false">Voie publique</button>
+        <button class="chip" data-v="sur son lieu de travail" aria-pressed="false">Lieu de travail</button>
+        <button class="chip" data-v="en EHPAD" aria-pressed="false">EHPAD</button>
+        <button class="chip" data-v="en établissement de soins" aria-pressed="false">Établissement de soins</button>
+        <button class="chip" data-v="dans un établissement recevant du public" aria-pressed="false">ERP</button>
+        <button class="chip" data-v="en milieu sportif" aria-pressed="false">Milieu sportif</button>
+        <button class="chip" data-v="en milieu naturel" aria-pressed="false">Milieu naturel</button>
+      </div>
+      <input type="text" id="ctxdet" placeholder="Précision : 2e étage sans ascenseur, accès par l'arrière…" style="margin-top:8px"></div>
+
+    <div class="f"><span class="gl">Élément aggravant</span>
+      <div class="chips" id="aggrav" data-multi>
+        <button class="chip" data-v="victime inconsciente" aria-pressed="false">Inconsciente</button>
+        <button class="chip" data-v="en détresse vitale" aria-pressed="false">Détresse vitale</button>
+        <button class="chip" data-v="avec hémorragie active" aria-pressed="false">Hémorragie active</button>
+        <button class="chip" data-v="victime incarcérée" aria-pressed="false">Incarcérée</button>
+        <button class="chip" data-v="accès difficile" aria-pressed="false">Accès difficile</button>
+        <button class="chip" data-v="relevage difficile" aria-pressed="false">Relevage difficile</button>
+        <button class="chip" data-v="personne isolée" aria-pressed="false">Personne isolée</button>
+        <button class="chip" data-v="grossesse en cours" aria-pressed="false">Grossesse</button>
+      </div>
+      <input type="text" id="aggravlib" placeholder="Autre élément aggravant" style="margin-top:8px">
+      <span class="mini">« Sous anticoagulant » s'ajoute seul si le terrain est renseigné.</span></div>
+
+    <div class="f"><span class="gl">Victime</span>
+      <div class="g3">
+        <input type="number" id="age" inputmode="numeric" placeholder="Âge">
+        <select id="ageu"><option value="ans">ans</option><option value="mois">mois</option></select>
+        <select id="sexe"><option value="">Sexe</option><option value="Homme">Homme</option><option value="Femme">Femme</option></select>
+      </div>
+      <input type="text" id="poids" inputmode="decimal" placeholder="Poids en kg (enfant, ou thérapeutique envisagée)" style="margin-top:8px">
+      <div id="pedbox"></div></div>
+
+    <div class="f lk" id="lk-h"><span class="gl">Heure de début<span class="tg">verrou</span></span>
+      <div class="row"><input type="time" id="heure">
+        <div class="chips" id="htype" data-one>
+          <button class="chip" data-v="debut" aria-pressed="true">Début connu</button>
+          <button class="chip" data-v="vu" aria-pressed="false">Dernier vu normal</button>
+        </div></div></div>
+
+    <div class="f"><label for="conclu">Ma conclusion, en une phrase</label>
+      <textarea id="conclu" placeholder="Douleur thoracique de présentation coronarienne chez un patient à haut risque, non calmée par le repos."></textarea>
+      <span class="mini">Une impression assumée, jamais un diagnostic affirmé.</span></div>
+
+    <div class="f lk" id="lk-d"><span class="gl">Ma demande<span class="tg">verrou</span></span>
+      <div class="chips" id="dem" data-one>
+        <button class="chip" data-v="un renfort médicalisé" aria-pressed="false">Renfort médicalisé</button>
+        <button class="chip" data-v="votre orientation et l'autorisation de transport" aria-pressed="false">Orientation et autorisation de transport</button>
+        <button class="chip" data-v="l'autorisation de laisser sur place" aria-pressed="false">Laisser sur place</button>
+        <button class="chip" data-v="un avis sur la conduite à tenir" aria-pressed="false">Avis</button>
+        <button class="chip" data-v="__" aria-pressed="false">Autre, je formule</button>
+      </div>
+      <div id="demlibbox" style="display:none">
+        <input type="text" id="demlib" placeholder="Formulation libre" style="margin-top:8px">
+        <button class="btn2 mic" id="micDem" data-lab="Dicter la demande" data-cible="demlib">Dicter la demande</button>
+      </div>
+      <input type="text" id="demdet" placeholder="Précision : destination, protocole, motif" style="margin-top:8px">
+      <div class="chips" id="delai" data-one style="margin-top:8px">
+        <button class="chip" data-v="immédiat" aria-pressed="false">Immédiat</button>
+        <button class="chip" data-v="" aria-pressed="false">Sans délai particulier</button>
+      </div></div>
+  </div>
+</details>
+
+<details class="sec" id="s2">
+  <summary><span class="num">2</span><span class="st"><b>Terrain</b><em>Les 3 premiers antécédents cochés passent dans l'annonce</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div class="f"><span class="gl">Antécédents ciblés</span>
+      <div class="chips" id="atcd-c"></div>
+      <input type="text" id="atcd" placeholder="Autres antécédents" style="margin-top:8px">
+      <div class="glose2" id="atcdef"></div></div>
+
+    <div class="f"><label for="ttt">Traitement en cours</label>
+      <input type="text" id="ttt" placeholder="Ramipril, atorvastatine"></div>
+
+    <div class="f lk" id="lk-a"><span class="gl">Anticoagulant ou antiagrégant<span class="tg">verrou</span></span>
+      <div class="chips" id="acg" data-one>
+        <button class="chip" data-v="oui" aria-pressed="false">Oui</button>
+        <button class="chip" data-v="non" aria-pressed="false">Non</button>
+        <button class="chip" data-v="inconnu" aria-pressed="false">Non déterminé</button>
+      </div></div>
+
+    <div class="f"><label for="allerg">Allergies</label>
+      <input type="text" id="allerg" placeholder="Aucune connue">
+      <div class="chips" style="margin-top:7px"><button class="chip" data-fill="allerg" data-v="Aucune connue">Aucune connue</button></div></div>
+
+    <div class="f"><label for="viecontexte">Autonomie et entourage</label>
+      <input type="text" id="viecontexte" placeholder="Autonome, vit seul"></div>
+
+    <div class="f"><span class="gl">Terrain modifiant l'interprétation</span>
+      <div class="chips" id="modif"></div>
+      <div class="glose2" id="modifdef"></div>
+      <span class="mini">Décale les seuils de qualification. Un BPCO à 90 % n'est pas désaturé ; un patient bêtabloqué ne tachycardise pas.</span></div>
+  </div>
+</details>
+
+<details class="sec" id="s3">
+  <summary><span class="num">3</span><span class="st"><b>Histoire</b><em>Pour répondre à ses questions, pas pour l'annonce</em></span><span class="chev">▼</span></summary>
+  <div class="bd"><div id="histoire"></div>
+    <div class="f"><span class="gl">Négatifs pertinents</span>
+      <span class="mini" style="margin:0 0 6px">Ce que vous avez cherché et écarté. C'est ce qui distingue une présentation de clinicien.</span>
+      <div id="negatifs"></div></div>
+    <div class="f"><label for="histlibre">Complément d'histoire</label>
+      <input type="text" id="histlibre" placeholder="Élément non couvert par la trame"></div>
+  </div>
+</details>
+
+<details class="sec" id="s4">
+  <summary><span class="num">4</span><span class="st"><b>Examen</b><em>Seules les anomalies remontent dans l'annonce</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div class="f"><span class="gl">Constantes</span>
+      <div class="cst"><label>Fréq. respiratoire</label><input type="number" id="fr" inputmode="numeric" placeholder="/min"><div class="q x" id="q-fr">—</div></div>
+      <div class="cst"><label>SpO₂</label><input type="number" id="spo2" inputmode="numeric" placeholder="%"><div class="q x" id="q-spo2">—</div></div>
+      <div class="cst"><label>Oxygène</label><input type="number" id="o2" inputmode="numeric" placeholder="L/min"><select id="disp" style="font-size:12px;padding:6px"><option value="">—</option><option value="masque à haute concentration">MHC</option><option value="masque simple">Masque</option><option value="lunettes">Lunettes</option><option value="insufflateur">Insufflateur</option></select></div>
+      <div class="cst"><label>Fréq. cardiaque</label><input type="number" id="fc" inputmode="numeric" placeholder="/min"><div class="q x" id="q-fc">—</div></div>
+      <div class="cst"><label>PA syst. / diast.</label><div class="row"><input type="number" id="pas" inputmode="numeric" placeholder="Sys"><input type="number" id="pad" inputmode="numeric" placeholder="Dia"></div><div class="q x" id="q-pa">—</div></div>
+      <div class="cst"><label>Recoloration</label><input type="text" id="trc" inputmode="decimal" placeholder="sec"><div class="q x" id="q-trc">—</div></div>
+      <div class="cst"><label>Température</label><input type="text" id="temp" inputmode="decimal" placeholder="°C"><div class="q x" id="q-temp">—</div></div>
+      <div class="cst"><label>Glycémie</label><input type="text" id="gly" inputmode="decimal" placeholder="g/L"><div class="q x" id="q-gly">—</div></div>
+      <div class="cst"><label>Douleur (EN)</label><input type="number" id="en" inputmode="numeric" placeholder="/10"><div class="q x" id="q-en">—</div></div>
+    </div>
+
+    <div class="f"><span class="gl">Glasgow — ouverture des yeux (Y)</span>
+      <select id="gy">
+        <option value="">— non évalué —</option>
+        <option value="4">Y4 · spontanée, les yeux sont déjà ouverts</option>
+        <option value="3">Y3 · à la demande verbale, quand je lui parle</option>
+        <option value="2">Y2 · à la stimulation douloureuse seulement</option>
+        <option value="1">Y1 · aucune ouverture, même à la douleur</option>
+      </select></div>
+    <div class="f"><span class="gl">Réponse verbale (V)</span>
+      <select id="gv">
+        <option value="">— non évalué —</option>
+        <option value="5">V5 · orientée, sait où il est, quel jour, qui il est</option>
+        <option value="4">V4 · confuse, parle mais se trompe ou divague</option>
+        <option value="3">V3 · mots inappropriés, sans lien avec la question</option>
+        <option value="2">V2 · sons incompréhensibles, gémissements</option>
+        <option value="1">V1 · aucun son</option>
+      </select></div>
+    <div class="f"><span class="gl">Réponse motrice (M)</span>
+      <select id="gm">
+        <option value="">— non évalué —</option>
+        <option value="6">M6 · obéit à un ordre simple</option>
+        <option value="5">M5 · localise la douleur, porte la main vers le point</option>
+        <option value="4">M4 · retrait, retire le membre sans localiser</option>
+        <option value="3">M3 · flexion anormale, membres repliés sur le tronc</option>
+        <option value="2">M2 · extension anormale, membres tendus en rotation</option>
+        <option value="1">M1 · aucun mouvement</option>
+      </select>
+      <div class="cst" style="grid-template-columns:1fr 92px 1fr;margin-top:10px"><label>Total</label>
+        <div style="font-family:var(--mono);font-size:19px;text-align:center;color:var(--acc)" id="gcs">—</div>
+        <div class="q x" id="q-gcs">—</div></div>
+      <span class="mini">Y3 se teste à la voix, Y2 uniquement après stimulation douloureuse. Si la victime ouvre les yeux quand vous l'appelez, c'est Y3. Le total va de 3 à 15 : un Glasgow à 0 n'existe pas.</span></div>
+
+    <div class="f"><span class="gl">Téguments</span>
+      <div class="chips" id="teg" data-multi>
+        <button class="chip" data-v="__norm" aria-pressed="false">Normalement colorés</button>
+        <button class="chip" data-v="pâle" aria-pressed="false">Pâleur</button>
+        <button class="chip" data-v="couvert de sueurs" aria-pressed="false">Sueurs</button>
+        <button class="chip" data-v="marbré" aria-pressed="false">Marbrures</button>
+        <button class="chip" data-v="cyanosé" aria-pressed="false">Cyanose</button>
+        <button class="chip" data-v="ictérique" aria-pressed="false">Ictère</button>
+      </div></div>
+
+    <div class="f"><span class="gl">Abdomen</span>
+      <div class="chips" id="abdo" data-one>
+        <button class="chip" data-v="__norm" aria-pressed="false">Souple, dépressible, indolore</button>
+        <button class="chip" data-v="sensible à la palpation" aria-pressed="false">Sensible</button>
+        <button class="chip" data-v="une défense localisée" aria-pressed="false">Défense</button>
+        <button class="chip" data-v="une contracture" aria-pressed="false">Contracture</button>
+        <button class="chip" data-v="météorisé" aria-pressed="false">Météorisé</button>
+      </div></div>
+
+    <div class="f"><label for="exlibre">Autre anomalie constatée</label>
+      <input type="text" id="exlibre" placeholder="Auscultation, lésion, déficit…"></div>
+
+    <div class="f"><div class="chips" id="chiffres" data-one>
+      <button class="chip" data-v="oui" aria-pressed="true">Bilan chiffré transmis en parallèle</button></div></div>
+
+    <div id="vitbox"></div>
+  </div>
+</details>
+
+<details class="sec" id="s5">
+  <summary><span class="num">5</span><span class="st"><b>Problèmes traités</b><em>Constaté, fait, obtenu — pour la réserve</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div class="f"><span class="gl">Problèmes traités</span>
+      <div id="pbs"></div>
+      <button class="addp" id="addpb">+ Ajouter un problème</button></div>
+
+
+  </div>
+</details>
+
+<details class="sec" id="s6">
+  <summary><span class="num">6</span><span class="st"><b>Photo</b><em>Aide à la lecture et à la description</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div class="f"><span class="gl">Nature de l'image</span>
+      <div class="chips" id="phmode" data-one>
+        <button class="chip" data-v="ordo" aria-pressed="true">Ordonnance</button>
+        <button class="chip" data-v="lesion" aria-pressed="false">Lésion</button>
+      </div>
+      <span class="mini" id="phhint"></span></div>
+
+    <div class="f"><span class="gl">Image</span>
+      <input type="file" id="phfile" accept="image/*" capture="environment">
+      <div id="phprev"></div></div>
+
+    <div class="f"><label class="ck"><input type="checkbox" id="phrgpd">
+      Je confirme qu'aucune donnée nominative n'est visible sur l'image — nom du patient, du prescripteur, numéro de sécurité sociale, visage, tatouage ou signe distinctif.</label></div>
+
+    <button class="btn" id="phgo">Analyser l'image</button>
+    <button class="btn2" id="phman">Afficher la trame de description manuelle</button>
+    <div id="phout"></div>
+
+    <div class="f"><label for="phurl">Point d'accès d'analyse</label>
+      <input type="text" id="phurl" data-keep placeholder="https://…workers.dev">
+      <span class="mini">Adresse de votre relais. Sans elle, seule la trame manuelle est disponible. L'image est redimensionnée avant envoi et n'est jamais conservée par l'outil.</span></div>
+  </div>
+</details>
+
+<div class="ver">Bilan · Régulation — version <b id="ver">—</b><br>Mise à jour automatique à chaque ouverture connectée</div>
+</main></div>
+
+<!-- ═══ MESSAGE ═══ -->
+<div id="v-msg">
+  <div class="gj" id="gj">
+    <div class="gj-h"><b id="duree">0:00</b><span id="gjl">durée totale estimée</span></div>
+    <div class="bar"><i id="barre"></i></div>
+  </div>
+  <div class="scr" id="scr"></div>
+  <div class="rhead">Phrase d'ambiance — à coller dans VSAV Intervention</div>
+  <div class="amb" id="amb"></div>
+  <button class="btn2" id="copamb">Copier la phrase</button>
+  <div class="rhead">Réserve — réponses prêtes à ses questions</div>
+  <div class="res" id="res"></div>
+  <div class="after"><b>Après la décision</b>
+    Je reformule la décision à voix haute, puis je note sur la fiche bilan : heure, indicatif du régulateur, décision, consignes de surveillance.</div>
+  <div class="acts">
+    <button class="pri" id="copier">Copier l'annonce</button>
+    <button id="imprimer">Imprimer</button>
+    <button id="nouveau">Nouveau bilan</button>
+    <button class="dgr" id="tout">Tout effacer</button>
+  </div>
+</div>
+
+<!-- ═══ GLOSSAIRE ═══ -->
+<div id="v-glo">
+  <input type="text" id="gsearch" placeholder="Rechercher un terme…">
+  <div id="glo"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const CLE="bilanreg.v1";
+let motif="malaise", pbs=[{p:"",a:""}];
+
+/* ════════ CONFIGURATION CLINIQUE ════════ */
+
+const MOTIFS={
+malaise:{nom:"Malaise",sous:"avec ou sans perte de connaissance",
+ titres:["malaise","malaise avec perte de connaissance","perte de connaissance brève","chute avec malaise"],
+ atcd:["hypertension artérielle","diabète","trouble du rythme cardiaque","insuffisance cardiaque","épilepsie connue","malaises à répétition","anémie connue","pacemaker ou défibrillateur implanté","éthylisme chronique","traitement psychotrope"],
+ hist:[
+  {id:"h_pc",l:"Perte de connaissance",t:"one",v:[["Aucune","pas de perte de connaissance"],["Malaise sans chute","lipothymie sans perte de connaissance"],["A perdu connaissance, revenue seule","perte de connaissance brève avec retour spontané"],["Perte de connaissance prolongée","perte de connaissance prolongée"],["Ne sait pas","perte de connaissance non déterminée"]]},
+  {id:"h_duree",l:"Durée",t:"one",v:[["Quelques secondes","durée de quelques secondes"],["Moins d'une minute","durée inférieure à une minute"],["Une à cinq minutes","durée d'une à cinq minutes"],["Plus de cinq minutes","durée supérieure à cinq minutes"],["Inconnue","durée non déterminée"]]},
+  {id:"h_pos",l:"Position au moment du malaise",t:"one",v:[["Debout","survenu en position debout"],["Assis","survenu en position assise"],["Couché","survenu en position couchée"],["En se levant","survenu au passage à la position debout"],["Pendant un effort","survenu pendant un effort"],["Après un effort","survenu au décours d'un effort"]]},
+  {id:"h_avant",l:"Juste avant",t:"multi",v:[["Sueurs","sueurs"],["Nausées","nausées"],["Vision qui se voile","voile visuel"],["Bourdonnements d'oreille","acouphènes"],["Cœur qui s'emballe","palpitations"],["Douleur dans la poitrine","douleur thoracique"],["Rien, chute d'emblée","aucun signe annonciateur, chute d'emblée"]]},
+  {id:"h_pdt",l:"Pendant, si témoin",t:"multi",v:[["Secousses des membres","mouvements convulsifs"],["Morsure de langue","morsure de langue"],["Perte d'urine","perte d'urine"],["Pâleur marquée","pâleur marquée"],["Visage bleu","cyanose du visage"],["Pas de témoin","épisode sans témoin"]]},
+  {id:"h_apres",l:"Après",t:"one",v:[["Reprise immédiate et complète","reprise immédiate et complète de la conscience"],["Confus quelques minutes","confusion transitoire au décours"],["Somnolent longtemps","somnolence prolongée au décours"],["Reste anormal","état non revenu à la normale"]]},
+  {id:"h_chute",l:"Chute associée",t:"one",v:[["Pas de chute","sans chute"],["Chute sans blessure","chute sans traumatisme"],["Chute avec blessure","chute avec traumatisme"],["Choc sur la tête","traumatisme crânien associé"]]},
+  {id:"h_ctx",l:"Contexte",t:"txt",ph:"chaleur, jeûne, station debout prolongée, émotion, médicament récent, alcool"}],
+ neg:["douleur dans la poitrine","essoufflement","mal de tête","faiblesse d'un côté du corps","fièvre","saignement visible","vomissements","épisode identique déjà survenu"]},
+
+circu:{nom:"Circulatoire",sous:"hémorragie, choc",
+ titres:["détresse circulatoire","hémorragie","suspicion de choc","hémorragie extériorisée"],
+ atcd:["hypertension artérielle","insuffisance cardiaque","antécédent hémorragique","cirrhose","insuffisance rénale ou dialyse","cancer","diabète","anémie connue"],
+ hist:[
+  {id:"h_saig",l:"Saignement visible",t:"one",v:[["Aucun","pas de saignement extériorisé"],["Visible, contrôlé","saignement extériorisé contrôlé"],["Visible, non contrôlé","hémorragie non contrôlée"]]},
+  {id:"h_saigs",l:"D'où vient le sang",t:"txt",ph:"plaie, nez, bouche, vomissements, selles, urines, voie génitale"},
+  {id:"h_qte",l:"Quantité estimée",t:"one",v:[["Quelques millilitres","perte estimée à quelques millilitres"],["Un verre","perte estimée à environ 200 millilitres"],["Un demi-litre","perte estimée à environ un demi-litre"],["Plus d'un demi-litre","perte estimée supérieure à un demi-litre"],["Impossible à estimer","quantité non estimable"]]},
+  {id:"h_pc",l:"Conscience",t:"one",v:[["N'a pas perdu connaissance","pas de perte de connaissance"],["Malaise sans chute","lipothymie sans perte de connaissance"],["A perdu connaissance, revenue seule","syncope avec retour spontané"],["Perte de connaissance prolongée","perte de connaissance prolongée"]]},
+  {id:"h_pos",l:"Position au moment du malaise",t:"one",v:[["Debout","survenu en position debout"],["Assis","survenu en position assise"],["Couché","survenu en position couchée"],["En se levant","survenu au passage à la position debout"]]},
+  {id:"h_inst",l:"Installation",t:"one",v:[["D'un coup","d'installation brutale"],["Progressivement","d'installation progressive"]]},
+  {id:"h_ctx",l:"Contexte",t:"txt",ph:"chaleur, effort, jeûne, diarrhées, vomissements, traitement récent"}],
+ neg:["douleur dans la poitrine","cœur qui s'emballe","essoufflement","fièvre","douleur du ventre","diarrhées ou vomissements","choc récent","soif inhabituelle"]},
+
+respi:{nom:"Respiratoire",sous:"essoufflement, asthme, BPCO",
+ titres:["détresse respiratoire","essoufflement","crise d'asthme","décompensation de BPCO","gêne respiratoire"],
+ atcd:["asthme","séjour antérieur en réanimation","BPCO","oxygénothérapie au long cours","ventilation non invasive à domicile","insuffisance cardiaque","embolie pulmonaire antérieure","tabagisme actif","cancer du poumon"],
+ hist:[
+  {id:"h_inst",l:"Installation",t:"one",v:[["D'un coup","d'installation brutale"],["En quelques heures","d'installation progressive sur quelques heures"],["En plusieurs jours","d'installation progressive sur plusieurs jours"]]},
+  {id:"h_par",l:"Comment il parle",t:"one",v:[["Phrases complètes","parle par phrases complètes"],["Phrases courtes","parle par phrases courtes"],["Mots isolés","parle par mots isolés"],["Ne parle pas","ne parle pas"]]},
+  {id:"h_pos",l:"Position",t:"one",v:[["Peut s'allonger","supporte la position allongée"],["Ne supporte pas d'être allongé","orthopnéique"],["Reste assis, penché en avant","position assise obligatoire, penché en avant"]]},
+  {id:"h_toux",l:"Toux",t:"one",v:[["Pas de toux","pas de toux"],["Toux sèche","toux sèche"],["Toux avec crachats","toux productive"]]},
+  {id:"h_bruit",l:"Ce que j'entends sans stéthoscope",t:"multi",v:[["Sifflement audible","sifflements audibles à distance"],["Respiration bruyante, encombrée","respiration bruyante et encombrée"],["Bruit aigu à l'inspiration","stridor"],["Gargouillement","gargouillement des voies aériennes"],["Respiration presque inaudible malgré l'effort","ventilation quasi inaudible malgré l'effort visible"],["Rien d'anormal","pas de bruit anormal audible"]]},
+  {id:"h_lutte",l:"Signes de lutte visibles",t:"multi",v:[["Creux au-dessus des clavicules","tirage sus-claviculaire"],["Creux entre les côtes","tirage intercostal"],["Ventre et thorax en opposition","balancement thoraco-abdominal"],["Narines qui battent","battement des ailes du nez"],["Aucun","pas de signe de lutte"]]},
+  {id:"h_ttt",l:"Traitement déjà pris",t:"txt",ph:"nombre de bouffées de salbutamol et effet obtenu"},
+  {id:"h_ctx",l:"Contexte",t:"txt",ph:"allergène, fausse route, exposition, entourage malade"}],
+ neg:["douleur dans la poitrine","fièvre","jambes gonflées","douleur d'un mollet","fausse route","contact avec une personne malade","crachats teintés de sang"]},
+
+neuro:{nom:"Neurologique",sous:"déficit, convulsion, céphalée",
+ titres:["déficit neurologique","trouble de la parole","crise convulsive","mal de tête brutal","trouble de la conscience","vertige"],
+ atcd:["fibrillation auriculaire","AVC ou AIT antérieur","hypertension artérielle","diabète","épilepsie connue","migraine","éthylisme chronique","démence","cancer"],
+ hist:[
+  {id:"h_def",l:"Force musculaire",t:"multi",v:[["Faiblesse du côté droit","déficit moteur de l'hémicorps droit"],["Faiblesse du côté gauche","déficit moteur de l'hémicorps gauche"],["Faiblesse d'un bras","déficit moteur du membre supérieur"],["Faiblesse d'une jambe","déficit moteur du membre inférieur"],["Force conservée partout","pas de déficit moteur"]]},
+  {id:"h_lang",l:"Parole",t:"one",v:[["Parle normalement","langage normal"],["Parole pâteuse, mal articulée","dysarthrie"],["Ne trouve pas ses mots","trouble de l'expression du langage"],["Ne comprend pas les consignes","trouble de la compréhension"],["Ne parle pas du tout","absence de parole"]]},
+  {id:"h_fac",l:"Visage",t:"one",v:[["Symétrique","pas d'asymétrie faciale"],["Coin de bouche tombant à droite","asymétrie faciale droite"],["Coin de bouche tombant à gauche","asymétrie faciale gauche"]]},
+  {id:"h_aut",l:"Autres signes observés",t:"multi",v:[["Vision trouble ou perdue","trouble visuel"],["Voit double","diplopie"],["Vertiges","vertige"],["Marche instable","instabilité à la marche"],["Mal de tête","céphalée"],["Vomissements","vomissements"],["Nuque raide","raideur de nuque"]]},
+  {id:"h_conv",l:"Convulsion",t:"one",v:[["Aucune","pas de convulsion"],["Secousses de tout le corps","crise convulsive généralisée"],["Secousses d'un seul membre ou d'un côté","crise convulsive focale"]]},
+  {id:"h_convd",l:"Détail de la crise",t:"txt",ph:"durée, morsure de langue, perte d'urine, somnolence après la crise"},
+  {id:"h_evo",l:"Depuis notre arrivée",t:"one",v:[["Inchangé","tableau stable"],["S'améliore","en régression"],["S'aggrave","en aggravation"]]}],
+ neg:["choc sur la tête","fièvre","nuque raide","alcool ou toxique","épisode identique déjà survenu","douleur dans la poitrine","perte de connaissance au début"]},
+
+trauma:{nom:"Traumatique",sous:"AVP, chute, plaie",
+ titres:["traumatisme","accident de la voie publique","chute","traumatisme crânien","plaie","brûlure"],
+ atcd:["âge supérieur à 65 ans","insuffisance cardiaque ou coronarienne","insuffisance respiratoire","grossesse au 2e ou 3e trimestre","trouble de la coagulation"],
+ hist:[
+  {id:"h_mec",l:"Mécanisme",t:"one",v:[["Accident voiture","accident de véhicule léger"],["Accident deux-roues","accident de deux-roues"],["Piéton renversé","piéton renversé"],["Chute de sa hauteur","chute de sa hauteur"],["Chute d'une hauteur","chute de hauteur"],["Écrasement","écrasement"],["Plaie par objet","plaie par objet"],["Agression","agression"],["Brûlure","brûlure"],["Explosion","explosion"]]},
+  {id:"h_mecd",l:"Détail du mécanisme",t:"txt",ph:"vitesse estimée, hauteur de chute, point d'impact, protections portées"},
+  {id:"h_cin",l:"Cinétique observée",t:"multi",v:[["Éjecté du véhicule","éjection du véhicule"],["Autre victime décédée dans le véhicule","autre victime décédée dans le même véhicule"],["Chute de plus de 6 mètres","chute de plus de 6 mètres"],["Projeté ou écrasé","victime projetée ou écrasée"],["Véhicule très déformé","déformation importante du véhicule"],["Pas de casque","absence de casque"],["Pas de ceinture","absence de ceinture"],["Souffle d'explosion","effet de souffle"]]},
+  {id:"h_les",l:"Lésions constatées",t:"txt",ph:"par région : tête, thorax, ventre, bassin, membres"},
+  {id:"h_lesv",l:"Lésions à risque observées",t:"multi",v:[["Plaie profonde à la tête, au cou, au thorax, au ventre ou au bassin","traumatisme pénétrant tête, cou, thorax, abdomen ou bassin"],["Portion de thorax qui bouge à contretemps","volet thoracique"],["Brûlure étendue","brûlure étendue"],["Bassin douloureux ou instable","suspicion de fracture du bassin"],["Douleur du dos avec fourmillements ou faiblesse","suspicion d'atteinte médullaire"],["Membre arraché","amputation"],["Membre froid, pâle, sans pouls","ischémie aiguë de membre"]]},
+  {id:"h_pci",l:"Conscience au moment des faits",t:"one",v:[["N'a pas perdu connaissance","pas de perte de connaissance"],["A perdu connaissance","perte de connaissance initiale"],["Ne se souvient pas des faits","amnésie des faits"]]},
+  {id:"h_imm",l:"Immobilisation réalisée",t:"multi",v:["collier cervical","matelas immobilisateur","attelle","garrot","pansement compressif",["Aucune","aucune immobilisation"]]}],
+ neg:["perte de connaissance","vomissements","douleur du dos ou de la nuque","fourmillements ou faiblesse d'un membre","douleur du ventre","saignement visible"]},
+
+cardio:{nom:"Cardio-thoracique",sous:"douleur, palpitations",
+ titres:["douleur thoracique","palpitations","malaise avec douleur thoracique","gêne dans la poitrine"],
+ atcd:["coronaropathie","hypertension artérielle","diabète","dyslipidémie","tabagisme actif","hérédité coronarienne","fibrillation auriculaire","insuffisance cardiaque","artériopathie"],
+ hist:[
+  {id:"h_siege",l:"Où la douleur se situe",t:"one",v:[["Milieu de la poitrine","rétrosternale"],["Côté gauche de la poitrine","précordiale"],["Creux de l'estomac","épigastrique"],["Bas du thorax à droite","basithoracique droite"],["Bas du thorax à gauche","basithoracique gauche"],["Dans le dos","dorsale"]]},
+  {id:"h_type",l:"Comment il la décrit",t:"one",v:[["Serrement, étau","constrictive"],["Brûlure","à type de brûlure"],["Coup de poignard","en coup de poignard"],["Battements","pulsatile"],["Traverse d'avant en arrière","transfixiante"],["Augmentée en respirant à fond","pleurale"]]},
+  {id:"h_irr",l:"Où elle part",t:"multi",v:[["Mâchoire","à la mâchoire"],["Bras gauche","au bras gauche"],["Bras droit","au bras droit"],["Dos","dans le dos"],["Estomac","à l'épigastre"],["Nulle part","__aucune"]]},
+  {id:"h_inst",l:"Installation",t:"one",v:[["D'un coup","d'installation brutale"],["Progressivement","d'installation progressive"]]},
+  {id:"h_circ",l:"Circonstance",t:"one",v:[["Au repos","survenue au repos"],["Pendant un effort","survenue à l'effort"],["Après un effort","survenue au décours d'un effort"],["Au réveil","survenue au réveil"],["Après une émotion","survenue en contexte émotionnel"]]},
+  {id:"h_evo",l:"Évolution",t:"one",v:[["Continue","permanente"],["Par crises","intermittente"],["Diminue","en régression"],["Augmente","croissante"]]},
+  {id:"h_mod",l:"Ce qui la modifie",t:"multi",v:[["Ne change pas avec la position","non modifiée par la position"],["Augmente en respirant à fond","augmentée à l'inspiration"],["Se reproduit quand j'appuie","reproduite à la palpation"],["Calmée par le repos","calmée par le repos"],["Calmée par la trinitrine","calmée par la trinitrine"],["Pas calmée par la trinitrine","non calmée par la trinitrine"]]}],
+ neg:["essoufflement","cœur qui s'emballe","malaise ou perte de connaissance","nausées ou vomissements","fièvre","toux","douleur d'un mollet","immobilisation ou long voyage récent","choc sur le thorax"]},
+
+autre:{nom:"Autre motif",sous:"trame générique",
+ titres:["malaise","douleur du ventre","intoxication","fièvre","altération de l'état général","vomissements"],
+ atcd:["hypertension artérielle","diabète","insuffisance rénale","cancer","immunodépression","éthylisme chronique","trouble psychiatrique"],
+ hist:[
+  {id:"h_inst",l:"Installation",t:"one",v:[["D'un coup","d'installation brutale"],["Progressivement","d'installation progressive"]]},
+  {id:"h_siege",l:"Où cela se situe",t:"txt",ph:"localisation du symptôme"},
+  {id:"h_type",l:"Comment il le décrit",t:"txt",ph:"ce que dit la victime, avec ses mots"},
+  {id:"h_evo",l:"Évolution",t:"one",v:[["Continue","permanente"],["Par crises","intermittente"],["Diminue","en régression"],["Augmente","croissante"]]},
+  {id:"h_fac",l:"Ce qui déclenche ou calme",t:"txt",ph:"facteur déclenchant, aggravant, calmant"},
+  {id:"h_ctx",l:"Contexte",t:"txt",ph:"circonstances, épisodes antérieurs"}],
+ neg:["fièvre","douleur dans la poitrine","essoufflement","vomissements","trouble du transit","perte de connaissance","choc récent"]}
+};
+
+const MODIFS=[
+ {id:"bpco",l:"BPCO / O₂ au long cours"},
+ {id:"beta",l:"Bêtabloquant"},
+ {id:"hta",l:"Hypertendu chronique"},
+ {id:"grossesse",l:"Grossesse"}
+];
+
+/* ════════ NORMES ET QUALIFICATION ════════ */
+
+function estPedia(){const a=+val("age");if(!a)return false;
+  return $("#ageu").value==="mois" ? true : a<15;}
+
+const PEDNORM=[
+ {l:"< 1 an",fr:"30–40",fc:"110–160",pas:"> 70"},
+ {l:"1–2 ans",fr:"25–35",fc:"100–150",pas:"> 75"},
+ {l:"2–5 ans",fr:"25–30",fc:"95–140",pas:"> 75"},
+ {l:"5–12 ans",fr:"20–25",fc:"80–120",pas:"> 80"},
+ {l:"> 12 ans",fr:"12–20",fc:"60–100",pas:"> 90"}
+];
+
+function mod(id){return $("#modif .chip[data-v='"+id+"']")?.getAttribute("aria-pressed")==="true";}
+
+// renvoie {mot, anormal, dire}
+function qual(par,v){
+  if(v===""||v===null||isNaN(v))return null;
+  v=+v;
+  switch(par){
+  case"fr":
+    if(v>=12&&v<=20)return{m:"eupnéique",a:false};
+    if(v>20&&v<=24)return{m:"discrètement polypnéique à "+v,a:true};
+    if(v>24)return{m:"polypnéique à "+v,a:true};
+    if(v>=8)return{m:"bradypnéique à "+v,a:true};
+    return{m:"bradypnéique à "+v+", en défaillance ventilatoire",a:true};
+  case"spo2":{
+    const o2=val("o2"), sup=o2?("sous "+o2+" litres"+($("#disp").value?" au "+$("#disp").value:"")):"en air ambiant";
+    if(mod("bpco")){
+      if(v>=88&&v<=92)return{m:"saturé à "+v+" % "+sup+", dans sa cible de BPCO",a:false};
+      if(v>92&&o2)return{m:"saturé à "+v+" % "+sup+", au-dessus de la cible de 88 à 92 %",a:true};
+      if(v<88)return{m:"désaturé à "+v+" % "+sup,a:true};
+      return{m:"saturé à "+v+" % "+sup,a:false};
+    }
+    if(v>=95)return{m:"bien saturé "+sup,a:false};
+    if(v>=90)return{m:"désaturé à "+v+" % "+sup,a:true};
+    return{m:"profondément désaturé à "+v+" % "+sup,a:true};}
+  case"fc":{
+    const b=mod("beta")?", sous bêtabloquant":"";
+    if(v>=60&&v<=100)return{m:"normocarde"+b,a:!!b};
+    if(v>100&&v<=120)return{m:"tachycarde à "+v+b,a:true};
+    if(v>120)return{m:"tachycarde à "+v+b,a:true};
+    if(v>=40)return{m:"bradycarde à "+v+b,a:true};
+    return{m:"bradycarde à "+v+b,a:true};}
+  case"gcs":
+    if(v===15)return{m:"conscient et orienté",a:false};
+    if(v>=13)return{m:"conscient, Glasgow "+v,a:true};
+    if(v>=9)return{m:"troubles de la conscience, Glasgow "+v,a:true};
+    return{m:"comateux, Glasgow "+v,a:true};
+  case"trc":
+    if(v<2)return{m:"recoloration immédiate",a:false};
+    return{m:"recoloration allongée à "+fr2(v)+" secondes",a:true};
+  case"temp":
+    if(v<35)return{m:"en hypothermie à "+fr2(v)+" degrés",a:true};
+    if(v<37.6)return{m:"apyrétique",a:false};
+    if(v<38)return{m:"subfébrile à "+fr2(v)+" degrés",a:true};
+    return{m:"fébrile à "+fr2(v)+" degrés",a:true};
+  case"gly":
+    if(v<0.5)return{m:"hypoglycémie sévère à "+fr2(v)+" gramme par litre",a:true};
+    if(v<0.7)return{m:"hypoglycémie à "+fr2(v)+" gramme par litre",a:true};
+    if(v<=1.4)return{m:"glycémie normale",a:false};
+    if(v<=2.5)return{m:"hyperglycémie à "+fr2(v)+" gramme par litre",a:true};
+    return{m:"hyperglycémie franche à "+fr2(v)+" gramme par litre",a:true};
+  case"en":
+    if(v===0)return{m:"indolore",a:false};
+    if(v<=3)return{m:"douleur légère cotée "+v+" sur 10",a:true};
+    if(v<=6)return{m:"douleur modérée cotée "+v+" sur 10",a:true};
+    return{m:"douleur sévère cotée "+v+" sur 10",a:true};
+  }
+  return null;
+}
+
+function qualPA(){
+  const s=+val("pas"), d=+val("pad");
+  if(!s)return null;
+  const txt=s+" sur "+(d||"?");
+  if(s<90)return{m:"hypotendu à "+txt,a:true};
+  if(s<100)return{m:"hypotendu à "+txt,a:true};
+  if(mod("hta")&&s<120)return{m:"tension à "+txt+", soit une hypotension relative pour son terrain",a:true};
+  if(s>=180||d>=110)return{m:"poussée hypertensive à "+txt,a:true};
+  if(s<140&&(!d||d<90))return{m:"normotendu",a:false};
+  return{m:"tension à "+txt,a:true};
+}
+
+/* ════════ GLOSSAIRE ════════ */
+const GLO=[
+["Ventilation",[
+ ["Eupnéique","Ventilation normale en fréquence et en amplitude, sans effort. Adulte : 12 à 20 cycles par minute.",""],
+ ["Polypnéique","Fréquence ventilatoire augmentée, au-delà de 20 par minute. C'est un signe, mesuré.","Ne pas confondre avec dyspnée : la polypnée se compte, la dyspnée se ressent."],
+ ["Tachypnéique","Ventilation rapide et superficielle. Souvent employé comme synonyme de polypnée ; en toute rigueur, la tachypnée qualifie aussi l'amplitude réduite.",""],
+ ["Bradypnéique","Fréquence inférieure à 12 par minute. En dessous de 8, défaillance ventilatoire.",""],
+ ["Dyspnéique","Gêne respiratoire ressentie et exprimée par la victime. C'est un symptôme, subjectif.","Une victime peut être dyspnéique à 16 cycles et polypnéique à 28 sans se plaindre. Le mot que vous choisissez indique au régulateur la nature de l'information."],
+ ["Orthopnéique","Dyspnée imposant la position assise ou demi-assise. Se quantifie par le nombre d'oreillers nécessaires pour dormir.",""],
+ ["Apnéique","Arrêt de la ventilation.",""],
+ ["Tirage","Dépression des parties molles à l'inspiration — sus-claviculaire, intercostal, sus-sternal. Signe de lutte.",""],
+ ["Balancement thoraco-abdominal","Mouvement en opposition du thorax et de l'abdomen. Signe d'épuisement, gravité majeure.",""],
+ ["Silence auscultatoire","Absence de bruit à l'auscultation chez un asthmatique en crise. Signe de gravité extrême.","Une crise d'asthme qui « ne siffle plus » ne s'est pas améliorée : elle ne mobilise plus d'air."],
+ ["Stridor","Bruit inspiratoire aigu, signe d'obstruction des voies aériennes hautes.",""]]],
+["Circulation",[
+ ["Normocarde","Fréquence cardiaque entre 60 et 100 par minute chez l'adulte.","Sous bêtabloquant, l'absence de tachycardie ne signe pas la bonne tolérance : la fréquence ne peut pas être utilisée comme marqueur."],
+ ["Tachycarde","Fréquence supérieure à 100 par minute.",""],
+ ["Bradycarde","Fréquence inférieure à 60 par minute.",""],
+ ["Normotendu","Pression systolique entre 100 et 139, diastolique entre 60 et 89 mmHg.","Valeur relative au terrain : 110/70 chez un hypertendu chronique habituellement à 160 est une hypotension relative."],
+ ["Hypotendu","Systolique inférieure à 100 mmHg. En dessous de 90, critère de gravité — et critère de Vittel en traumatologie.",""],
+ ["Marbrures","Réseau cutané violacé traduisant l'hypoperfusion périphérique. Signe précoce.","Toujours préciser la localisation et l'extension : genoux, puis cuisses, puis tronc. C'est la progression qui informe."],
+ ["Recoloration cutanée","Temps de retour de la coloration après pression. Allongé au-delà de 2 secondes.","Le seuil a été abaissé de 3 à 2 secondes dans le référentiel 2026."],
+ ["Pouls filant","Pouls perçu faible, rapide et difficile à compter. Signe de bas débit.",""]]],
+["Neurologique",[
+ ["Conscient","La victime ouvre les yeux, spontanément ou à la stimulation.","Conscient n'est pas orienté. L'orientation se vérifie sur le temps, l'espace et la personne."],
+ ["Orienté","Répond correctement sur le temps, le lieu et son identité.",""],
+ ["Obnubilé","Vigilance diminuée, réveillable, réponses lentes et incomplètes.",""],
+ ["Confus","Vigilance conservée mais désorientation et propos incohérents.",""],
+ ["Comateux","Non réveillable. Glasgow inférieur ou égal à 8.",""],
+ ["Glasgow — ouverture des yeux","Y4 spontanée, les yeux sont déjà ouverts. Y3 à la demande verbale, quand je lui parle. Y2 à la stimulation douloureuse seulement. Y1 aucune ouverture.","La confusion la plus fréquente porte sur Y3 et Y2 : si la victime ouvre les yeux parce que vous l'appelez, c'est Y3. Y2 suppose qu'elle n'a pas répondu à la voix."],
+ ["Glasgow — réponse verbale","V5 orientée, sait où il est, quel jour et qui il est. V4 confuse, parle mais se trompe. V3 mots inappropriés, sans lien avec la question. V2 sons incompréhensibles. V1 aucun son.","V5 exige les trois orientations : temps, lieu, personne. Une seule erreur fait basculer en V4."],
+ ["Glasgow — réponse motrice","M6 obéit à un ordre simple. M5 localise la douleur et porte la main vers le point. M4 retrait sans localiser. M3 flexion anormale, membres repliés. M2 extension anormale, membres tendus. M1 aucun mouvement.","C'est la composante la plus prédictive. Le total va de 3 à 15 : un Glasgow à 0 n'existe pas."],
+ ["Aphasie","Trouble du langage lui-même : expression, compréhension, ou les deux.","Ne pas confondre avec la dysarthrie : dans l'aphasie, c'est le langage qui est atteint, pas l'articulation."],
+ ["Dysarthrie","Trouble de l'articulation. Le langage est construit correctement mais mal prononcé.",""],
+ ["Hémiparésie","Diminution de la force d'un hémicorps. Déficit partiel.",""],
+ ["Hémiplégie","Paralysie complète d'un hémicorps.",""],
+ ["Mydriase / myosis","Pupilles dilatées / pupilles resserrées.",""],
+ ["Anisocorie","Asymétrie de taille entre les deux pupilles.",""],
+ ["Phase post-critique","Période de confusion et de somnolence suivant une crise convulsive.",""],
+ ["Lipothymie","Malaise avec sensation de perte imminente de connaissance, sans perte complète.","Ne pas confondre avec la syncope, qui comporte une perte de connaissance brève avec retour spontané."]]],
+["Abdomen",[
+ ["Souple","Paroi abdominale non contractée à la palpation.",""],
+ ["Dépressible","La paroi se laisse enfoncer sans résistance.",""],
+ ["Défense","Contraction de la paroi à la palpation, vaincue par une palpation douce et progressive. Réaction volontaire.","Défense et contracture n'ont pas la même signification chirurgicale. Le mot que vous employez oriente la décision."],
+ ["Contracture","Rigidité permanente et invincible de la paroi. Ne cède pas à la palpation douce. Urgence chirurgicale.",""],
+ ["Météorisé","Abdomen distendu par les gaz, tympanique à la percussion.",""],
+ ["Douleur à la décompression","Douleur ressentie au relâchement brutal de la palpation. Signe d'irritation péritonéale.",""]]],
+["Général et téguments",[
+ ["Apyrétique","Température inférieure à 37,5 °C.",""],
+ ["Fébrile","Température supérieure ou égale à 38 °C.",""],
+ ["Hypothermie","Température centrale inférieure à 35 °C.",""],
+ ["Algique","Douloureux. Se quantifie par l'échelle numérique de 0 à 10.",""],
+ ["Sudation profuse","Sueurs abondantes. Associées à la pâleur, évoquent une réaction neurovégétative.",""],
+ ["Cyanose","Coloration bleutée des téguments et des muqueuses. Signe tardif d'hypoxie.",""],
+ ["Ictère","Coloration jaune des téguments et des conjonctives.",""],
+ ["Asthénie","Fatigue anormale, non améliorée par le repos.",""]]],
+["Douleur",[
+ ["Constrictive","Sensation de serrement, d'étau. Évocatrice d'une origine coronarienne.",""],
+ ["Transfixiante","Traversant le corps d'avant en arrière.",""],
+ ["Pleurale","Augmentée par l'inspiration profonde et la toux.",""],
+ ["Pulsatile","Battant au rythme du pouls.",""],
+ ["Irradiation","Trajet secondaire emprunté par la douleur à partir de son siège principal.",""],
+ ["Échelle numérique","Auto-évaluation de 0 à 10. Légère 1 à 3, modérée 4 à 6, sévère 7 à 10.","Toujours une auto-évaluation par la victime. Une cotation attribuée par le secouriste n'a pas de valeur."]]]
+];
+
+/* ════════ GLOSES — vérification du sens des termes employés ════════ */
+const GLOSE=[
+ ["eupnéique","eupnéique","ventilation normale, 12 à 20 par minute"],
+ ["polypnéique","polypnéique","fréquence ventilatoire supérieure à 20"],
+ ["bradypnéique","bradypnéique","fréquence ventilatoire inférieure à 12"],
+ ["dyspné","dyspnéique","gêne respiratoire ressentie par la victime — symptôme, pas une mesure"],
+ ["orthopnéique","orthopnéique","dyspnée imposant la position assise"],
+ ["bien saturé","bien saturé","saturation supérieure ou égale à 95 %"],
+ ["désaturé","désaturé","saturation inférieure à 95 % en air ambiant"],
+ ["normocarde","normocarde","fréquence cardiaque entre 60 et 100"],
+ ["tachycarde","tachycarde","fréquence cardiaque supérieure à 100"],
+ ["bradycarde","bradycarde","fréquence cardiaque inférieure à 60"],
+ ["normotendu","normotendu","systolique 100 à 139, diastolique 60 à 89"],
+ ["hypotendu","hypotendu","systolique inférieure à 100"],
+ ["poussée hypertensive","poussée hypertensive","systolique ≥ 180 ou diastolique ≥ 110"],
+ ["marbr","marbrures","réseau cutané violacé, signe précoce d'hypoperfusion"],
+ ["recoloration allongée","recoloration allongée","retour de coloration au-delà de 2 secondes"],
+ ["conscient et orienté","orienté","répond juste sur le temps, le lieu et son identité"],
+ ["comateux","comateux","non réveillable, Glasgow ≤ 8"],
+ ["aphasie","aphasie","trouble du langage lui-même, expression ou compréhension"],
+ ["dysarthrie","dysarthrie","trouble de l'articulation, langage construit correctement"],
+ ["hémiparésie","hémiparésie","diminution de force d'un hémicorps"],
+ ["hémiplégie","hémiplégie","paralysie complète d'un hémicorps"],
+ ["ataxie","ataxie","trouble de la coordination et de l'équilibre"],
+ ["post-critique","phase post-critique","confusion et somnolence suivant une crise convulsive"],
+ ["lipothymie","lipothymie","malaise sans perte de connaissance complète"],
+ ["syncope","syncope","perte de connaissance brève avec retour spontané"],
+ ["dépressible","souple et dépressible","paroi abdominale non contractée, sans douleur provoquée"],
+ ["défense","défense","contraction vaincue par une palpation douce — réaction volontaire"],
+ ["contracture","contracture","rigidité permanente et invincible — urgence chirurgicale"],
+ ["météorisé","météorisé","abdomen distendu par les gaz"],
+ ["apyrétique","apyrétique","température inférieure à 37,5 degrés"],
+ ["fébrile","fébrile","température supérieure ou égale à 38 degrés"],
+ ["hypothermie","hypothermie","température centrale inférieure à 35 degrés"],
+ ["cyanos","cyanose","coloration bleutée, signe tardif d'hypoxie"],
+ ["ictériqu","ictère","coloration jaune des téguments et des conjonctives"],
+ ["constrictive","constrictive","sensation de serrement, d'étau"],
+ ["transfixiante","transfixiante","traversant le corps d'avant en arrière"],
+ ["pleurale","pleurale","augmentée par l'inspiration profonde et la toux"],
+ ["pulsatile","pulsatile","battant au rythme du pouls"],
+ ["tirage","tirage","dépression des parties molles à l'inspiration, signe de lutte"],
+ ["balancement thoraco-abdominal","balancement thoraco-abdominal","thorax et abdomen en opposition — épuisement"],
+ ["silence auscultatoire","silence auscultatoire","plus de bruit chez l'asthmatique — gravité extrême"],
+ ["stridor","stridor","bruit inspiratoire aigu, obstruction des voies aériennes hautes"],
+ ["sibilants","sibilants","sifflements expiratoires, obstruction bronchique"],
+ ["crépitants","crépitants","bruits fins inspiratoires, atteinte alvéolaire"],
+ ["ronchi","ronchi","bruits ronflants, encombrement bronchique"],
+ ["vittel","critères de Vittel","grille de triage orientant vers un centre de traumatologie"],
+ ["amnésie","amnésie des faits","absence de souvenir de l'événement"],
+ ["mydriase","mydriase","pupilles dilatées"],
+ ["myosis","myosis","pupilles resserrées"],
+ ["anisocorie","anisocorie","asymétrie de taille entre les deux pupilles"]
+];
+function gloses(t){
+  t=(t||"").toLowerCase();const out=[],vus=new Set();
+  GLOSE.forEach(([k,lab,d])=>{if(t.includes(k)&&!vus.has(lab)){vus.add(lab);out.push(lab+" : "+d);}});
+  return out;
+}
+
+/* ════════ EXPLICATION DES ANTÉCÉDENTS ════════ */
+const ATCDEF={
+ "coronaropathie":"maladie des artères qui irriguent le cœur — antécédent d'infarctus, de stent ou de pontage",
+ "hypertension artérielle":"tension habituellement élevée, traitée au long cours",
+ "dyslipidémie":"excès de cholestérol ou de triglycérides dans le sang",
+ "hérédité coronarienne":"infarctus ou mort subite chez un parent proche avant 55 ans chez l'homme, 65 ans chez la femme",
+ "fibrillation auriculaire":"trouble du rythme cardiaque irrégulier, expose à la formation de caillots — presque toujours associé à un anticoagulant",
+ "insuffisance cardiaque":"le cœur n'assure plus un débit suffisant — essoufflement, jambes gonflées",
+ "artériopathie":"rétrécissement des artères des membres, douleur à la marche",
+ "BPCO":"bronchite chronique obstructive, souffle réduit en permanence — la saturation habituelle est plus basse que la normale",
+ "asthme":"crises réversibles de rétrécissement des bronches",
+ "séjour antérieur en réanimation":"marqueur majeur de gravité potentielle chez un asthmatique ou un BPCO",
+ "oxygénothérapie au long cours":"oxygène à domicile en permanence, signe une insuffisance respiratoire chronique",
+ "ventilation non invasive à domicile":"appareil d'assistance respiratoire nocturne",
+ "embolie pulmonaire antérieure":"caillot ayant déjà migré vers les poumons, risque de récidive",
+ "cancer du poumon":"favorise les caillots, les épanchements et les hémorragies",
+ "AVC ou AIT antérieur":"accident vasculaire cérébral constitué, ou déficit transitoire régressif en moins de 24 heures",
+ "épilepsie connue":"crises convulsives récidivantes déjà diagnostiquées",
+ "éthylisme chronique":"consommation d'alcool prolongée — risque de sevrage, de chute et de trouble de la coagulation",
+ "démence":"altération durable des fonctions cognitives, modifie l'interprétation de la confusion",
+ "migraine":"céphalées récidivantes, parfois accompagnées de troubles visuels",
+ "diabète":"glycémie anormalement élevée — risque d'hypoglycémie sous traitement",
+ "insuffisance rénale":"reins qui filtrent mal, modifie l'élimination des médicaments",
+ "insuffisance rénale ou dialyse":"reins qui ne filtrent plus, séances d'épuration régulières",
+ "cirrhose":"foie détruit et fibrosé — trouble de la coagulation et risque hémorragique",
+ "antécédent hémorragique":"saignement digestif, ulcère ou hémorragie ayant déjà nécessité une hospitalisation",
+ "anémie connue":"taux d'hémoglobine bas, mauvaise tolérance à toute perte de sang supplémentaire",
+ "cancer":"favorise les caillots, les hémorragies et l'immunodépression",
+ "immunodépression":"défenses affaiblies — traitement, chimiothérapie, greffe ou maladie",
+ "trouble psychiatrique":"pathologie mentale suivie, à distinguer d'une confusion d'origine organique",
+ "tabagisme actif":"facteur de risque cardiovasculaire et respiratoire majeur",
+ "trouble de la coagulation":"le sang coagule mal — hémophilie, maladie hépatique ou traitement",
+ "grossesse au 2e ou 3e trimestre":"au-delà de 14 semaines, la position couchée sur le dos peut comprimer les gros vaisseaux",
+ "insuffisance cardiaque ou coronarienne":"cœur fragile, mauvaise tolérance au choc et à l'hémorragie",
+ "insuffisance respiratoire":"réserve respiratoire réduite en permanence",
+ "âge supérieur à 65 ans":"critère de terrain retenu par la grille de Vittel en traumatologie"
+};
+const MODDEF={
+ bpco:"la saturation cible d'un BPCO est de 88 à 92 %. À 90 %, il n'est pas désaturé.",
+ beta:"le bêtabloquant empêche le cœur d'accélérer. Une fréquence normale ne prouve pas que la victime tolère bien son état.",
+ hta:"un hypertendu chronique vit à une tension haute. 110 sur 70 constitue chez lui une hypotension relative.",
+ grossesse:"à partir du 2e trimestre, éviter le décubitus dorsal strict et signaler le terme au régulateur."
+};
+function defsHTML(items,dict){
+  const v=items.map(k=>dict[k]?"<span><b>"+cap(k)+"</b> — "+dict[k]+"</span>":"").filter(Boolean);
+  return v.join("");
+}
+
+/* ════════ UTILITAIRES ════════ */
+const val=id=>($("#"+id)?.value||"").trim().replace(",",".");
+const raw=id=>($("#"+id)?.value||"").trim();
+const fr2=n=>String(n).replace(".",",");
+const one=id=>{const b=$("#"+id+" .chip[aria-pressed=true]");return b?b.dataset.v:"";};
+const multi=id=>$$("#"+id+" .chip[aria-pressed=true]").map(b=>b.dataset.v);
+const pt=s=>{s=(s||"").trim();return s?(/[.!?]$/.test(s)?s:s+"."):"";};
+const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+const liste=a=>{a=a.filter(Boolean);if(!a.length)return"";if(a.length===1)return a[0];
+  return a.slice(0,-1).join(", ")+" et "+a[a.length-1];};
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+/* ════════ RENDU DES FORMULAIRES ════════ */
+function chipsHTML(id,vals,type){
+  return '<div class="chips" id="'+id+'" data-'+(type==="one"?"one":"multi")+'">'+
+    vals.map(v=>{const lab=Array.isArray(v)?v[0]:v,out=Array.isArray(v)?v[1]:v;
+      return '<button class="chip" data-v="'+out.replace(/"/g,"&quot;")+'" aria-pressed="false">'+
+        cap(lab)+'</button>';}).join("")+'</div>';
+}
+function buildMotifs(){
+  $("#motifs").innerHTML=Object.entries(MOTIFS).map(([k,m])=>
+    '<button class="mbtn" data-m="'+k+'" aria-pressed="'+(k===motif)+'"><strong>'+m.nom+'</strong><em>'+m.sous+'</em></button>').join("");
+  $$("#motifs .mbtn").forEach(b=>b.onclick=()=>{motif=b.dataset.m;buildMotif();rendre();});
+}
+function buildMotif(){
+  const M=MOTIFS[motif];
+  $$("#motifs .mbtn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===motif)));
+  $("#dl-titres").innerHTML=M.titres.map(t=>'<option value="'+t+'">').join("");
+  $("#atcd-c").outerHTML=chipsHTML("atcd-c",M.atcd,"multi");
+  $("#modif").outerHTML='<div class="chips" id="modif" data-multi">'+
+    MODIFS.map(m=>'<button class="chip" data-v="'+m.id+'" aria-pressed="false">'+m.l+'</button>').join("")+'</div>';
+  $("#modif").setAttribute("data-multi","");
+  $("#histoire").innerHTML=M.hist.map(f=>{
+    if(f.t==="txt")return '<div class="f"><label for="'+f.id+'">'+f.l+'</label><input type="text" id="'+f.id+'" placeholder="'+(f.ph||"")+'"></div>';
+    return '<div class="f"><span class="gl">'+f.l+'</span>'+chipsHTML(f.id,f.v,f.t)+'</div>';
+  }).join("");
+  $("#negatifs").innerHTML=M.neg.map((n,i)=>
+    '<div class="neg" data-neg="'+i+'"><span>'+cap(n)+'</span>'+
+    '<button data-st="0">—</button></div>').join("");
+  brancher();equiperMicros();
+}
+function brancher(){
+  $$(".chips[data-one]").forEach(g=>{if(g._b)return;g._b=1;
+    g.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;
+      const on=b.getAttribute("aria-pressed")==="true";
+      g.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed",on?"false":"true");rendre();});});
+  $$(".chips[data-multi]").forEach(g=>{if(g._b)return;g._b=1;
+    g.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;
+      b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true");rendre();});});
+  $$(".neg").forEach(r=>{if(r._b)return;r._b=1;
+    r.addEventListener("click",e=>{const b=r.querySelector("button");if(!b)return;
+      const st=(+b.dataset.st+1)%3;majNeg(b,st);rendre();});});
+  $$(".chip[data-fill]").forEach(b=>b.onclick=()=>{$("#"+b.dataset.fill).value=b.dataset.v;rendre();});
+}
+function majNeg(b,st){if(!b)return;b.dataset.st=String(st);
+  b.textContent=st===2?"Présent":st===1?"Absent":"—";
+  b.className=st===2?"st2":st===1?"st1":"";}
+
+function buildPbs(){
+  $("#pbs").innerHTML=pbs.map((p,i)=>
+    '<div class="pb"><div class="pb-h"><span>Problème '+(i+1)+'</span>'+
+    (pbs.length>1?'<button data-del="'+i+'">Supprimer</button>':'')+'</div>'+
+    '<input type="text" data-pb="'+i+'" data-k="p" placeholder="Ce que j\'ai constaté" value="'+esc(p.p).replace(/"/g,"&quot;")+'">'+
+    '<input type="text" data-pb="'+i+'" data-k="a" placeholder="Ce que j\'ai fait" value="'+esc(p.a).replace(/"/g,"&quot;")+'">'+
+    '</div>').join("");
+  $$("#pbs input").forEach(i=>i.oninput=()=>{pbs[+i.dataset.pb][i.dataset.k]=i.value;rendre();});
+  $$("#pbs button[data-del]").forEach(b=>b.onclick=()=>{pbs.splice(+b.dataset.del,1);buildPbs();rendre();});
+  if(typeof equiperMicros==="function")equiperMicros();
+}
+$("#addpb").onclick=()=>{pbs.push({p:"",a:""});buildPbs();};
+
+/* ════════ CONSTRUCTION DU DISCOURS ════════ */
+
+function sujet(articule){
+  const s=raw("sexe"),a=+val("age"),u=$("#ageu").value,at=ageTxt();
+  let n;
+  if(u==="mois"||(a&&a<2)) n="nourrisson";
+  else if(a&&a<15) n = s==="Femme"?"fille":s==="Homme"?"garçon":"enfant";
+  else n = s==="Femme"?"femme":s==="Homme"?"homme":"victime";
+  const fem=(n==="femme"||n==="fille"||n==="victime");
+  const art=articule?((fem?"une ":"un ")):"";
+  return art+(articule?n:cap(n))+(at?" de "+at:"");
+}
+function ageTxt(){const a=val("age");if(!a)return"";
+  return a+" "+($("#ageu").value==="mois"?"mois":"ans");}
+
+function hDire(){const h=raw("heure");if(!h)return"";
+  const[hh,mm]=h.split(":");return mm==="00"?(+hh)+" heures":(+hh)+" heures "+(+mm);}
+
+function histoire(){
+  const M=MOTIFS[motif],G=id=>{const f=M.hist.find(x=>x.id===id);if(!f)return"";
+    return f.t==="txt"?raw(id):f.t==="one"?one(id):multi(id);};
+  const seg=[];
+  if(motif==="cardio"){
+    const d=["douleur"];
+    if(G("h_siege"))d.push(G("h_siege"));
+    if(G("h_type"))d.push(G("h_type"));
+    const ir=G("h_irr")||[],irr=ir.filter(x=>x!=="__aucune");
+    if(irr.length)d.push("irradiant "+liste(irr));
+    else if(ir.length)d.push("sans irradiation");
+    seg.push(d.join(", "));
+    if(G("h_inst"))seg.push(G("h_inst"));
+    if(G("h_circ"))seg.push(G("h_circ"));
+    if(G("h_evo"))seg.push(G("h_evo"));
+    const m=G("h_mod")||[];if(m.length)seg.push(liste(m));
+  } else if(motif==="malaise"){
+    if(G("h_pc"))seg.push(G("h_pc"));
+    if(G("h_duree")&&G("h_pc")&&G("h_pc")!=="pas de perte de connaissance")seg.push(G("h_duree"));
+    if(G("h_pos"))seg.push(G("h_pos"));
+    const av=G("h_avant")||[];
+    if(av.length)seg.push(av.length===1&&av[0].startsWith("aucun")?av[0]:"précédé de "+liste(av));
+    const pd=(G("h_pdt")||[]).filter(x=>x!=="épisode sans témoin");
+    if(pd.length)seg.push("pendant l'épisode : "+liste(pd));
+    else if((G("h_pdt")||[]).length)seg.push("épisode sans témoin");
+    if(G("h_apres"))seg.push(G("h_apres"));
+    if(G("h_chute"))seg.push(G("h_chute"));
+    if(G("h_ctx"))seg.push(G("h_ctx"));
+  } else if(motif==="circu"){
+    if(G("h_saig"))seg.push(G("h_saig"));
+    if(G("h_saigs"))seg.push("origine : "+G("h_saigs"));
+    if(G("h_qte"))seg.push(G("h_qte"));
+    if(G("h_pc"))seg.push(G("h_pc"));
+    if(G("h_pos"))seg.push(G("h_pos"));
+    if(G("h_inst"))seg.push(G("h_inst"));
+    if(G("h_ctx"))seg.push(G("h_ctx"));
+  } else if(motif==="neuro"){
+    const df=(G("h_def")||[]).filter(x=>x!=="pas de déficit moteur");
+    if(df.length)seg.push(liste(df));
+    else if((G("h_def")||[]).length)seg.push("pas de déficit moteur");
+    if(G("h_lang"))seg.push(G("h_lang"));
+    if(G("h_fac"))seg.push(G("h_fac"));
+    const au=G("h_aut")||[];if(au.length)seg.push("associés : "+liste(au));
+    if(G("h_conv")&&G("h_conv")!=="pas de convulsion")seg.push(G("h_conv"));
+    if(G("h_convd"))seg.push(G("h_convd"));
+    if(G("h_evo"))seg.push(G("h_evo"));
+  } else if(motif==="respi"){
+    if(G("h_inst"))seg.push("gêne respiratoire "+G("h_inst"));
+    if(G("h_par"))seg.push(G("h_par"));
+    if(G("h_pos"))seg.push(G("h_pos"));
+    if(G("h_toux"))seg.push(G("h_toux"));
+    const br=(G("h_bruit")||[]).filter(x=>x!=="pas de bruit anormal audible");
+    if(br.length)seg.push("bruits perçus sans stéthoscope : "+liste(br));
+    else if((G("h_bruit")||[]).length)seg.push("pas de bruit anormal audible");
+    const lu=(G("h_lutte")||[]).filter(x=>x!=="pas de signe de lutte");
+    if(lu.length)seg.push("signes de lutte : "+liste(lu));
+    else if((G("h_lutte")||[]).length)seg.push("pas de signe de lutte");
+    if(G("h_ttt"))seg.push(G("h_ttt"));
+    if(G("h_ctx"))seg.push(G("h_ctx"));
+  } else if(motif==="trauma"){
+    if(G("h_mec"))seg.push(G("h_mec"));
+    if(G("h_mecd"))seg.push(G("h_mecd"));
+    const ci=G("h_cin")||[];if(ci.length)seg.push("cinétique : "+liste(ci));
+    if(G("h_pci"))seg.push(G("h_pci"));
+    if(G("h_les"))seg.push("lésions constatées : "+G("h_les"));
+    const lv=G("h_lesv")||[];if(lv.length)seg.push("lésions à risque : "+liste(lv));
+    const im=(G("h_imm")||[]).filter(x=>x!=="aucune immobilisation");
+    if(im.length)seg.push("immobilisation : "+liste(im));
+  } else {
+    if(G("h_inst"))seg.push(G("h_inst"));
+    if(G("h_siege"))seg.push(G("h_siege"));
+    if(G("h_type"))seg.push(G("h_type"));
+    if(G("h_evo"))seg.push(G("h_evo"));
+    if(G("h_fac"))seg.push(G("h_fac"));
+    if(G("h_ctx"))seg.push(G("h_ctx"));
+  }
+  const s=seg.filter(Boolean).join(", ");
+  return s?pt(s):"";
+}
+
+function examenParts(){
+  const ped=estPedia(),norm=[],ano=[],chif=[];
+  const g=gcsTot(),o2=val("o2"),disp=$("#disp").value;
+  const sup=o2?("sous "+o2+" L/min"+(disp?" au "+disp:"")):"en air ambiant";
+  if(g)chif.push("Glasgow "+g+" ("+raw("gy")+"-"+raw("gv")+"-"+raw("gm")+")");
+  if(val("fr"))chif.push("FR "+val("fr"));
+  if(val("spo2"))chif.push("SpO₂ "+val("spo2")+" % "+sup);
+  if(val("fc"))chif.push("FC "+val("fc")+(one("rythme")?" "+one("rythme"):""));
+  if(val("pas"))chif.push("PA "+val("pas")+"/"+(val("pad")||"?"));
+  if(val("trc"))chif.push("TRC "+fr2(val("trc"))+" s");
+  if(val("temp"))chif.push("T "+fr2(val("temp"))+" °C");
+  if(val("gly"))chif.push("Glycémie "+fr2(val("gly"))+" g/L");
+  if(val("en"))chif.push("EN "+val("en")+"/10");
+
+  if(ped){
+    // Pédiatrie : aucune qualification, chiffres bruts
+    if(val("fr"))ano.push("fréquence respiratoire "+val("fr"));
+    if(val("fc"))ano.push("fréquence cardiaque "+val("fc"));
+    if(val("spo2"))ano.push("saturation "+val("spo2")+" % "+sup);
+    if(val("pas"))ano.push("tension "+val("pas")+" sur "+(val("pad")||"?"));
+    if(g)ano.push("Glasgow "+g);
+  } else {
+    const push=q=>{if(!q)return;(q.a?ano:norm).push(q.m);};
+    push(qual("gcs",g));push(qual("fr",val("fr")));push(qual("spo2",val("spo2")));
+    push(qual("fc",val("fc")));push(qualPA());push(qual("trc",val("trc")));
+    push(qual("temp",val("temp")));push(qual("gly",val("gly")));push(qual("en",val("en")));
+  }
+  const tg=multi("teg");
+  if(tg.includes("__norm"))norm.push("téguments normalement colorés");
+  tg.filter(x=>x!=="__norm").forEach(x=>ano.push(x));
+  const ab=one("abdo");
+  if(ab==="__norm")norm.push("abdomen souple, dépressible et indolore");
+  else if(ab)ano.push("abdomen présentant "+ab);
+  if(raw("exlibre"))ano.push(raw("exlibre"));
+  return{norm,ano,chif,ped};
+}
+
+/* ANNONCE — 25 s, ce qu'on dit sans être interrompu */
+function bAnnonce(){
+  const p=[],E=examenParts();
+  // 1. identification et adresse
+  const e=raw("engin"),c=raw("cis"),l=raw("lieu");
+  const id=[];
+  if(e||c)id.push("Régulation, "+[e,c].filter(Boolean).join(" "));
+  if(l)id.push((id.length?"":"Régulation, ")+"j'interviens "+l);
+  if(id.length)p.push(pt(id.join(", ")));
+  // 2. qui, pourquoi, depuis quand
+  const t=raw("titre"),h=hDire();
+  const q=[];
+  if(raw("sexe")||val("age"))q.push(sujet(false));
+  if(t)q.push(t);
+  if(h)q.push(one("htype")==="vu"?"heure de début inconnue, vue sans signe à "+h:"depuis "+h);
+  if(q.length)p.push(pt(q.join(", ")));
+  // 3. terrain déterminant : 3 éléments maximum
+  const ter=multi("atcd-c").slice(0,3);
+  if(one("acg")==="oui")ter.push("sous anticoagulant ou antiagrégant");
+  if(ter.length)p.push(pt(cap(liste(ter))));
+  // 4. le saillant
+  const sail=[];
+  if(E.ano.length)sail.push(cap(liste(E.ano.slice(0,3))));
+  else if(E.norm.length&&!E.ped)sail.push("Constantes conservées, examen sans particularité");
+  if(E.ano.length&&E.norm.length&&!E.ped)sail.push("par ailleurs constantes conservées");
+  const v=vittel();
+  if(v.length)sail.push(v.length+" critère"+(v.length>1?"s":"")+" de Vittel");
+  if(sail.length)p.push(pt(sail.join(", ")));
+  // 5. conclusion courte et demande
+  if(raw("conclu"))p.push(pt(raw("conclu").replace(/^ma conclusion\s*:?\s*/i,"")));
+  const d=demandeTxt();
+  if(d)p.push(d);
+  return p.join(" ");
+}
+
+function demandeTxt(){
+  const d=one("dem");if(!d)return"";
+  let q=d==="__"?raw("demlib"):d;if(!q)return"";
+  if(raw("demdet"))q+=" "+raw("demdet");
+  const dl=one("delai");
+  return pt("Je demande "+q+(dl?", "+dl:""));
+}
+
+/* PHRASE D'AMBIANCE — une ligne : nature, sujet, lieu, aggravant */
+function phraseAmbiance(){
+  const nat=raw("titre");
+  if(!nat&&!raw("sexe")&&!val("age"))return"";
+  const lieu=[one("ctxlieu"),raw("ctxdet")].filter(Boolean).join(", ");
+  let ag=multi("aggrav").slice();
+  if(one("acg")==="oui"&&!ag.includes("sous anticoagulant"))ag.push("sous anticoagulant");
+  if(raw("aggravlib"))ag.push(raw("aggravlib"));
+  let p=cap(nat||"intervention");
+  if(raw("sexe")||val("age"))p+=" chez "+sujet(true);
+  if(lieu)p+=" "+lieu;
+  if(ag.length)p+=", "+liste(ag);
+  return pt(p);
+}
+
+/* RÉSERVE — réponses prêtes aux questions du régulateur */
+function reserve(){
+  const R=[],E=examenParts(),M=MOTIFS[motif];
+  const add=(q,r)=>{if(r&&String(r).trim())R.push({q,r:String(r).trim()});};
+  const h=raw("heure");
+  add("Depuis quand exactement",h?(one("htype")==="vu"?"Dernière vue sans signe à "+hDire():"Début à "+hDire()):"");
+  add("Antécédents",liste(multi("atcd-c").concat(raw("atcd")?[raw("atcd")]:[])));
+  add("Traitement",raw("ttt"));
+  const g=one("acg");
+  add("Anticoagulant / antiagrégant",g==="oui"?"OUI":g==="non"?"Non":g==="inconnu"?"Non déterminé":"");
+  add("Allergies",raw("allerg"));
+  add("Dernier repas",raw("dernierrepas"));
+  add("Autonomie, entourage",raw("viecontexte"));
+  add("Poids",raw("poids")?raw("poids")+" kg":"");
+  add("Constantes",E.chif.join("  ·  "));
+  add("Histoire détaillée",histoire());
+  const oui=[],non=[];
+  $$(".neg").forEach((r,i)=>{const st=r.querySelector("button").dataset.st;
+    if(st==="2")oui.push(M.neg[i]);else if(st==="1")non.push(M.neg[i]);});
+  add("Signes présents",liste(oui));
+  add("Signes recherchés et absents",non.join(", "));
+  add("Examen normal",liste(E.norm));
+  add("Anomalies",liste(E.ano));
+  const act=pbs.filter(x=>x.p||x.a).map(x=>
+    [x.p,x.a?"→ "+x.a:""].filter(Boolean).join(" ")).join("  |  ");
+  add("Ce que j'ai fait",act);
+  const v=vittel();
+  add("Critères de Vittel",liste(v));
+  add("Complément",raw("histlibre"));
+  add("Bilan chiffré",one("chiffres")==="oui"?"Transmis en parallèle":"");
+  return R;
+}
+
+function gcsTot(){const y=+raw("gy"),v=+raw("gv"),m=+raw("gm");
+  return(y&&v&&m)?y+v+m:"";}
+
+function vittel(){
+  if(motif!=="trauma")return[];
+  const c=[],g=gcsTot();
+  if(g&&g<13)c.push("Glasgow inférieur à 13");
+  if(val("pas")&&+val("pas")<90)c.push("pression systolique inférieure à 90");
+  if(val("spo2")&&+val("spo2")<90)c.push("saturation inférieure à 90 %");
+  (multi("h_cin")||[]).forEach(x=>c.push(x));
+  (multi("h_lesv")||[]).forEach(x=>c.push(x));
+  multi("atcd-c").forEach(x=>{
+    if(["âge supérieur à 65 ans","insuffisance cardiaque ou coronarienne","insuffisance respiratoire","grossesse au 2e ou 3e trimestre","trouble de la coagulation"].includes(x))c.push(x);});
+  if(one("acg")==="oui")c.push("traitement anticoagulant");
+  return[...new Set(c)];
+}
+
+function blocs(){return[{n:"Annonce",t:bAnnonce(),max:30}];}
+const secs=t=>Math.round((t||"").trim().split(/\s+/).filter(Boolean).length/130*60);
+const mmss=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+
+/* ════════ RENDU ════════ */
+function rendre(){
+  // Glasgow + qualifications visibles
+  const g=gcsTot();
+  $("#gcs").textContent=g||"—";
+  const ped=estPedia();
+  const setq=(id,q)=>{const e=$("#q-"+id);if(!e)return;
+    if(ped){e.className="q x";e.textContent="chiffre imposé";return;}
+    if(!q){e.className="q x";e.textContent="—";return;}
+    e.className="q "+(q.a?"a":"n");e.textContent=q.m;};
+  setq("fr",qual("fr",val("fr")));setq("spo2",qual("spo2",val("spo2")));
+  setq("fc",qual("fc",val("fc")));setq("pa",qualPA());
+  setq("trc",qual("trc",val("trc")));setq("temp",qual("temp",val("temp")));
+  setq("gly",qual("gly",val("gly")));setq("en",qual("en",val("en")));
+  setq("gcs",g?qual("gcs",g):null);
+
+  // Pédiatrie
+  $("#pedbox").innerHTML=ped?
+   '<div class="ped"><b>Mode pédiatrique — qualification désactivée</b>'+
+   'Les normes varient trop selon l\'âge pour être qualifiées sans risque. Le message énoncera les chiffres bruts.'+
+   '<table><tr><th>Âge</th><th>FR</th><th>FC</th><th>PAS</th></tr>'+
+   PEDNORM.map(n=>'<tr><td>'+n.l+'</td><td>'+n.fr+'</td><td>'+n.fc+'</td><td>'+n.pas+'</td></tr>').join("")+
+   '</table></div>':"";
+
+  // Vittel
+  const v=vittel();
+  $("#vitbox").innerHTML=motif==="trauma"?
+   '<div class="vit'+(v.length?" on":"")+'"><b>Critères de Vittel</b>'+
+   (v.length?v.length+" critère"+(v.length>1?"s":"")+" présent"+(v.length>1?"s":"")+" : "+liste(v)+"."
+    :"Aucun critère renseigné à ce stade.")+'</div>':"";
+
+  // Annonce
+  const A=bAnnonce(),gl=A?gloses(A):[];
+  $("#scr").innerHTML='<div class="blk'+(A?"":" vide")+'">'+
+    '<div class="blk-c">'+(A?esc(A):"à compléter")+'</div>'+
+    (gl.length?'<div class="glose">'+gl.map(x=>{const i=x.indexOf(" : ");
+      return '<b>'+esc(x.slice(0,i))+'</b>'+esc(x.slice(i));}).join(" · ")+'</div>':"")+'</div>';
+
+  const tot=secs(A);
+  $("#duree").textContent=mmss(tot);
+  const j=$("#gj");j.className="gj";
+  $("#barre").style.width=Math.min(100,tot/30*100)+"%";
+  if(tot===0){}
+  else if(tot<=30){j.classList.add("k");$("#gjl").textContent="annonce · cible 30 s";}
+  else if(tot<=40){j.classList.add("w");$("#gjl").textContent="annonce · au-delà de la cible";}
+  else{j.classList.add("o");$("#gjl").textContent="annonce · trop longue, vous serez coupé";}
+
+  // Phrase d'ambiance
+  const PA=phraseAmbiance();
+  $("#amb").className="amb"+(PA?"":" vide");
+  $("#amb").textContent=PA||"à compléter";
+
+  // Réserve
+  const R=reserve();
+  $("#res").innerHTML=R.length
+    ? R.map(x=>'<div class="ri"><span>'+esc(x.q)+'</span><div>'+esc(x.r)+'</div></div>').join("")
+    : '<div class="ri vide">Rien en réserve pour l\'instant.</div>';
+
+  $("#demlibbox").style.display=one("dem")==="__"?"block":"none";
+  const ad=$("#atcdef");if(ad)ad.innerHTML=defsHTML(multi("atcd-c"),ATCDEF);
+  const md=$("#modifdef");if(md)md.innerHTML=defsHTML(multi("modif"),MODDEF);
+  $("#sub").textContent=MOTIFS[motif].nom+(raw("titre")?" — "+raw("titre"):"");
+  majHint();verrous();sauver();
+}
+function verrous(){
+  const h=!!raw("heure"),a=!!one("acg"),dv=one("dem"),
+        d=!!dv&&(dv!=="__"||!!raw("demlib"));
+  $("#lk-h").classList.toggle("ok",h);$("#lk-a").classList.toggle("ok",a);$("#lk-d").classList.toggle("ok",d);
+  $("#v-h").classList.toggle("ok",h);$("#v-a").classList.toggle("ok",a);$("#v-d").classList.toggle("ok",d);
+}
+
+/* ════════ GLOSSAIRE ════════ */
+function buildGlo(f){
+  f=(f||"").toLowerCase();
+  $("#glo").innerHTML=GLO.map(([cat,items])=>{
+    const vis=items.filter(([t,d,p])=>!f||(t+" "+d+" "+p).toLowerCase().includes(f));
+    if(!vis.length)return"";
+    return '<div class="gcat">'+cat+'</div>'+vis.map(([t,d,p])=>
+      '<div class="gi"><b>'+t+'</b><p>'+d+'</p>'+(p?'<span class="pg">À retenir — '+p+'</span>':'')+'</div>').join("");
+  }).join("");
+}
+$("#gsearch").oninput=e=>buildGlo(e.target.value);
+
+/* ════════ DICTÉE VOCALE ════════ */
+function dicter(btn){dicterEl($("#"+btn.dataset.cible),btn);}
+function dicterEl(cible,btn){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!cible){return;}
+  if(!window.isSecureContext){toast("Dictée impossible hors https — utiliser le micro du clavier");return;}
+  if(!SR){toast("Dictée indisponible — utiliser le micro du clavier");return;}
+  if(btn._r){btn._r.stop();return;}
+  const r=new SR();r.lang="fr-FR";r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+  const mini=btn.classList.contains("micmini");
+  btn._r=r;btn.classList.add("rec");if(!mini)btn.textContent="Arrêter la dictée";
+  const fin=()=>{btn._r=null;btn.classList.remove("rec");if(!mini)btn.textContent=btn.dataset.lab;rendre();};
+  r.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
+    cible.value=t.trim();rendre();};
+  r.onerror=e=>{toast("Dictée : "+(e.error==="not-allowed"?"micro refusé":e.error));fin();};
+  r.onend=fin;
+  try{r.start();}catch(e){fin();}
+}
+$$(".mic").forEach(b=>b.onclick=()=>dicter(b));
+
+// Champs exclus : trop courts, numériques, ou déjà dotés d'un bouton dédié
+const SANS_MICRO=new Set(["lieu","demlib","cis","phurl","gsearch","poids","trc","temp","gly"]);
+function equiperMicros(){
+  $$("input[type=text],textarea").forEach(e=>{
+    if(e._mic||e.closest(".micwrap"))return;
+    if(e.id&&SANS_MICRO.has(e.id))return;
+    if(!e.id&&!e.dataset.pb)return;
+    e._mic=1;
+    const w=document.createElement("div");w.className="micwrap";
+    if(e.style.marginTop){w.style.marginTop=e.style.marginTop;}
+    if(e.style.marginBottom){w.style.marginBottom=e.style.marginBottom;e.style.marginBottom="";}
+    e.parentNode.insertBefore(w,e);w.appendChild(e);
+    const b=document.createElement("button");
+    b.type="button";b.className="micmini";b.textContent="🎤";
+    b.setAttribute("aria-label","Dicter ce champ");
+    b.onclick=()=>dicterEl(e,b);
+    w.appendChild(b);
+  });
+}
+
+/* ════════ GÉOLOCALISATION ════════ */
+$("#geo").onclick=()=>{
+  const info=$("#geoinfo");
+  if(!window.isSecureContext){info.textContent="Géolocalisation bloquée : la page doit être ouverte depuis une adresse https, pas depuis un fichier local. Utiliser le lien GitHub Pages.";return;}
+  if(!navigator.geolocation){info.textContent="Géolocalisation indisponible sur cet appareil.";return;}
+  info.textContent="Localisation en cours…";
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const la=pos.coords.latitude,lo=pos.coords.longitude,ac=Math.round(pos.coords.accuracy||0);
+    try{
+      const r=await fetch("https://api-adresse.data.gouv.fr/reverse/?lon="+lo+"&lat="+la);
+      const j=await r.json(),f=j.features&&j.features[0];
+      if(f&&f.properties){
+        const q=f.properties;
+        const voie=q.housenumber?("au "+q.housenumber+" "+q.street):(q.street||q.name||"");
+        $("#lieu").value=(voie?voie:"")+(q.city?" à "+q.city:"");
+        info.textContent="Adresse issue de la Base Adresse Nationale, précision GPS "+ac+" m. C'est la position du téléphone : vérifier avant d'énoncer.";
+      } else {
+        $("#lieu").value="aux coordonnées "+la.toFixed(5)+" "+lo.toFixed(5);
+        info.textContent="Aucune adresse trouvée, coordonnées reportées. Précision "+ac+" m.";
+      }
+    }catch(e){
+      $("#lieu").value="aux coordonnées "+la.toFixed(5)+" "+lo.toFixed(5);
+      info.textContent="Service d'adresse injoignable, coordonnées reportées. Précision "+ac+" m.";
+    }
+    rendre();
+  },err=>{
+    info.textContent="Localisation impossible : "+(err.code===1?"autorisation refusée — vérifier les réglages de localisation du navigateur":err.code===3?"délai dépassé, réessayer à l'extérieur":"position indisponible")+". La dictée reste disponible.";
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+};
+
+/* ════════ MODE PHOTO ════════ */
+let phData=null;
+
+const TRAMES={
+ordo:"TRAME DE LECTURE D'ORDONNANCE\n\n"+
+"1. Molécules à repérer en priorité pour le régulateur\n"+
+"— Anticoagulants oraux : apixaban, rivaroxaban, dabigatran, edoxaban, warfarine, fluindione\n"+
+"— Antiagrégants : aspirine, clopidogrel, ticagrelor, prasugrel\n"+
+"— Bêtabloquants : bisoprolol, aténolol, métoprolol, propranolol, nébivolol, sotalol\n"+
+"— Antiarythmiques : amiodarone, flécaïnide, digoxine\n"+
+"— Antidiabétiques et insulines : metformine, gliclazide, insulines lentes et rapides\n"+
+"— Corticoïdes et immunosuppresseurs\n"+
+"— Opioïdes, benzodiazépines, antiépileptiques\n"+
+"— Diurétiques, IEC et sartans\n\n"+
+"2. Ce que je relève sur chaque ligne\n"+
+"— Nom de la molécule, dosage, nombre de prises par jour\n"+
+"— Date de l'ordonnance et durée du traitement\n"+
+"— Prescripteur : généraliste ou spécialiste\n\n"+
+"3. Ce que je vérifie auprès de la victime\n"+
+"— Le traitement est-il réellement pris, et depuis quand\n"+
+"— Dernière prise du jour\n"+
+"— Traitement récemment modifié ou arrêté\n"+
+"— Automédication non prescrite",
+lesion:"TRAME DE DESCRIPTION D'UNE LÉSION\n\n"+
+"1. Ce que je décris — sans conclure\n"+
+"— Siège précis et latéralité\n"+
+"— Type : plaie franche, contuse, délabrante, punctiforme, abrasion, brûlure\n"+
+"— Dimensions estimées en centimètres\n"+
+"— Berges : nettes ou contuses, régulières ou déchiquetées\n"+
+"— Profondeur apparente : superficielle, atteignant le tissu sous-cutané, laissant voir un plan profond\n"+
+"— Souillure visible : terre, gravier, graisse, fragment vestimentaire\n"+
+"— Saignement : absent, en nappe, actif, pulsatile\n"+
+"— Corps étranger visible\n\n"+
+"2. Ce que je vérifie de mes mains — la photo ne le donne pas\n"+
+"— Pouls, chaleur et coloration en aval\n"+
+"— Sensibilité et motricité en aval\n"+
+"— Délai écoulé depuis le fait\n"+
+"— Statut vaccinal antitétanique\n"+
+"— Anticoagulant, diabète, immunodépression\n\n"+
+"3. Ce que je demande au régulateur\n"+
+"— Orientation et délai acceptable\n"+
+"— Conduite à tenir sur le pansement et l'immobilisation\n"+
+"— Nécessité d'un avis chirurgical\n\n"+
+"Je ne me prononce ni sur la suturabilité ni sur le geste à réaliser : ce n'est pas ma décision."
+};
+
+function phm(){return one("phmode")||"ordo";}
+function majHint(){
+  $("#phhint").textContent = phm()==="ordo"
+    ? "Cadrer uniquement le bloc de prescription. Masquer l'en-tête nominatif."
+    : "L'analyse produit une description, jamais un avis sur la conduite à tenir.";
+}
+function phOut(txt,err){
+  const d=$("#phout");
+  d.className="phout"+(err?" err":"");
+  d.textContent=txt;
+  if(!err&&txt&&!txt.startsWith("TRAME")){
+    const b=document.createElement("button");
+    b.className="btn2";
+    b.textContent = phm()==="ordo" ? "Insérer dans « Traitement en cours »" : "Insérer dans l'examen";
+    b.onclick=()=>{
+      const cible = phm()==="ordo" ? "ttt" : (motif==="trauma"?"h_les":"exlibre");
+      const e=$("#"+cible);
+      if(!e){toast("Champ indisponible pour ce motif");return;}
+      e.value=(e.value?e.value+" — ":"")+txt.replace(/\s+/g," ").trim();
+      rendre();toast("Inséré");
+    };
+    d.after(b);
+  }
+}
+$("#phman").onclick=()=>{phOut(TRAMES[phm()],false);};
+
+$("#phfile").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0];
+  $("#phprev").innerHTML="";phData=null;
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1400,sc=Math.min(1,max/Math.max(img.width,img.height));
+      const cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      const url=cv.toDataURL("image/jpeg",.8);
+      phData=url.split(",")[1];
+      $("#phprev").innerHTML='<img class="phimg" src="'+url+'" alt="Aperçu">';
+    };
+    img.src=r.result;
+  };
+  r.readAsDataURL(f);
+});
+
+$("#phgo").onclick=async()=>{
+  const url=raw("phurl");
+  if(!url){phOut("Aucun point d'accès configuré. La trame de description manuelle reste disponible ci-dessous.",true);return;}
+  if(!phData){phOut("Aucune image sélectionnée.",true);return;}
+  if(!$("#phrgpd").checked){phOut("Confirmation de non-identification requise avant tout envoi.",true);return;}
+  const b=$("#phgo");b.disabled=true;b.textContent="Analyse en cours…";
+  phOut("",false);
+  try{
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({mode:phm(),media_type:"image/jpeg",image:phData})});
+    if(!r.ok)throw new Error("Réponse "+r.status);
+    const j=await r.json();
+    phOut((j.text||"Réponse vide.").trim(),false);
+  }catch(err){
+    phOut("Analyse impossible : "+err.message+". Vérifier le point d'accès et la connexion. La trame manuelle reste disponible.",true);
+  }
+  b.disabled=false;b.textContent="Analyser l'image";
+};
+
+/* ════════ PERSISTANCE ════════ */
+const champs=()=>$$("input,textarea,select").filter(e=>e.id&&e.id!=="gsearch"&&e.type!=="file"&&e.type!=="checkbox");
+function sauver(){try{
+  const d={motif,pbs,v:{},one:{},multi:{},neg:{}};
+  champs().forEach(e=>d.v[e.id]=e.value);
+  $$(".chips[data-one]").forEach(g=>d.one[g.id]=one(g.id));
+  $$(".chips[data-multi]").forEach(g=>d.multi[g.id]=multi(g.id));
+  $$(".neg").forEach((r,i)=>{const b=r.querySelector("button");if(b&&b.dataset.st!=="0")d.neg[i]=b.dataset.st;});
+  localStorage.setItem(CLE,JSON.stringify(d));}catch(e){}}
+function charger(){try{
+  const t=localStorage.getItem(CLE+".theme");theme(t||"nuit");
+  const d=JSON.parse(localStorage.getItem(CLE)||"null");if(!d)return;
+  if(d.motif&&MOTIFS[d.motif])motif=d.motif;
+  if(Array.isArray(d.pbs)&&d.pbs.length)pbs=d.pbs;
+  buildMotif();buildPbs();
+  champs().forEach(e=>{if(d.v&&d.v[e.id]!==undefined)e.value=d.v[e.id];});
+  Object.entries(d.one||{}).forEach(([g,v])=>{const x=$("#"+g);if(!x)return;
+    x.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(!!v&&c.dataset.v===v)));});
+  Object.entries(d.multi||{}).forEach(([g,vs])=>{const x=$("#"+g);if(!x)return;
+    x.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String((vs||[]).includes(c.dataset.v))));});
+  Object.entries(d.neg||{}).forEach(([i,v])=>{const r=$$(".neg")[+i];if(!r)return;
+    majNeg(r.querySelector("button"),+v);});
+}catch(e){}}
+
+/* ════════ THÈME, ONGLETS, ACTIONS ════════ */
+function theme(t){document.documentElement.dataset.t=t;
+  $("#theme").textContent=t==="jour"?"☀":"☾";
+  document.querySelector("meta[name=theme-color]").content=t==="jour"?"#E9EEF3":"#0E1621";
+  try{localStorage.setItem(CLE+".theme",t);}catch(e){}}
+$("#theme").onclick=()=>theme(document.documentElement.dataset.t==="jour"?"nuit":"jour");
+
+function vue(n){
+  $("#v-bilan").style.display=n==="bilan"?"block":"none";
+  $("#v-msg").classList.toggle("on",n==="msg");
+  $("#v-glo").classList.toggle("on",n==="glo");
+  $$(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.v===n)));
+  window.scrollTo(0,0);
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");
+  clearTimeout(t._i);t._i=setTimeout(()=>t.classList.remove("on"),1800);}
+
+
+
+$("#copier").onclick=async()=>{
+  const txt=blocs().filter(b=>b.t).map(b=>b.t).join("\n\n");
+  if(!txt){toast("Rien à copier");return;}
+  try{await navigator.clipboard.writeText(txt);toast("Copié");}
+  catch(e){const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";
+    ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");toast("Copié");}catch(_){toast("Copie impossible");}ta.remove();}};
+$("#copamb").onclick=async()=>{
+  const t=phraseAmbiance();
+  if(!t){toast("Rien à copier");return;}
+  try{await navigator.clipboard.writeText(t);toast("Phrase copiée");}
+  catch(e){const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";
+    ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");toast("Phrase copiée");}catch(_){toast("Copie impossible");}ta.remove();}};
+$("#imprimer").onclick=()=>window.print();
+$("#nouveau").onclick=()=>{
+  if(!confirm("Effacer les données de la victime ? L'indicatif est conservé."))return;
+  champs().forEach(e=>{if(!e.hasAttribute("data-keep"))e.value="";});
+  $$(".chips .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+  $('#htype .chip[data-v=debut]').setAttribute("aria-pressed","true");
+  $('#chiffres .chip').setAttribute("aria-pressed","true");
+  $$(".neg button").forEach(b=>majNeg(b,0));
+  pbs=[{p:"",a:""}];buildPbs();
+  rendre();vue("bilan");toast("Nouveau bilan");};
+$("#tout").onclick=()=>{
+  if(!confirm("Effacer toutes les données, indicatif compris ?"))return;
+  try{localStorage.removeItem(CLE);}catch(e){}location.reload();};
+
+/* dock */
+const dock=document.createElement("div");dock.className="dock";
+dock.innerHTML='<div class="locks">'+
+ '<div class="lo" id="v-h">Heure</div><div class="lo" id="v-a">Anticoag.</div><div class="lo" id="v-d">Demande</div></div>'+
+ '<div class="tabs" role="tablist">'+
+ '<button class="tab" data-v="bilan" role="tab" aria-selected="true">Bilan</button>'+
+ '<button class="tab" data-v="msg" role="tab" aria-selected="false">Message</button>'+
+ '<button class="tab" data-v="glo" role="tab" aria-selected="false">Glossaire</button></div>';
+document.body.appendChild(dock);
+$$(".tab").forEach(t=>t.onclick=()=>vue(t.dataset.v));
+
+/* ════════ MISE À JOUR AUTOMATIQUE ════════ */
+const VERSION="2026.08.21";
+$("#ver").textContent=VERSION;
+if("serviceWorker" in navigator){
+  const avaitControleur=!!navigator.serviceWorker.controller;
+  let rechargement=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(!avaitControleur||rechargement)return;
+    rechargement=true;location.reload();
+  });
+  navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).then(reg=>{
+    reg.update();
+    // Nouvelle vérification à chaque retour au premier plan
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update();});
+    setInterval(()=>reg.update(),30*60*1000);
+  }).catch(()=>{});
+}
+
+/* init */
+buildMotifs();buildMotif();buildPbs();buildGlo("");
+$('#chiffres .chip').setAttribute("aria-pressed","true");
+charger();brancher();equiperMicros();
+document.addEventListener("input",rendre);
+document.addEventListener("change",rendre);
+rendre();vue("bilan");
+</script>
+</body>
+</html>
