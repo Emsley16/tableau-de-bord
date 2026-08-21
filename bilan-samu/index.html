@@ -69,6 +69,8 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
 .chip[aria-pressed=true]{background:var(--acc-s);border-color:var(--acc);color:var(--acc);font-weight:600}
 .lk{border-left:3px solid var(--red);padding-left:11px;margin-left:-14px}
 .lk.ok{border-left-color:var(--grn)}
+.lk.libre{border-left-color:var(--border)}
+.lk.libre .tg{display:none}
 .tg{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--red);background:var(--red-s);
   padding:2px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
 .lk.ok .tg{color:var(--grn);background:var(--grn-s)}
@@ -168,6 +170,9 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
 .micmini{flex:none;width:48px;align-self:stretch;min-height:42px;background:var(--s2);
   border:1px solid var(--border);border-radius:8px;font-size:17px;cursor:pointer;padding:0}
 .micmini.rec{border-color:var(--red);background:var(--red-s)}
+#dicteebar{position:fixed;left:0;right:0;top:0;z-index:200;border:none;
+  background:var(--red);color:#fff;font-size:15px;font-weight:700;padding:14px 12px;
+  padding-top:calc(14px + env(safe-area-inset-top));cursor:pointer;width:100%}
 .mic{display:flex;align-items:center;justify-content:center;gap:8px}
 .mic.rec{border-color:var(--red);color:var(--red);background:var(--red-s)}
 .btn2{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:8px;
@@ -594,7 +599,22 @@ trauma:{nom:"Traumatique",sous:"AVP, chute, plaie",
   {id:"h_les",l:"Lésions constatées",t:"txt",ph:"par région : tête, thorax, ventre, bassin, membres"},
   {id:"h_lesv",l:"Lésions à risque observées",t:"multi",v:[["Plaie profonde à la tête, au cou, au thorax, au ventre ou au bassin","traumatisme pénétrant tête, cou, thorax, abdomen ou bassin"],["Portion de thorax qui bouge à contretemps","volet thoracique"],["Brûlure étendue","brûlure étendue"],["Bassin douloureux ou instable","suspicion de fracture du bassin"],["Douleur du dos avec fourmillements ou faiblesse","suspicion d'atteinte médullaire"],["Membre arraché","amputation"],["Membre froid, pâle, sans pouls","ischémie aiguë de membre"]]},
   {id:"h_pci",l:"Conscience au moment des faits",t:"one",v:[["N'a pas perdu connaissance","pas de perte de connaissance"],["A perdu connaissance","perte de connaissance initiale"],["Ne se souvient pas des faits","amnésie des faits"]]},
-  {id:"h_imm",l:"Immobilisation réalisée",t:"multi",v:["collier cervical","matelas immobilisateur","attelle","garrot","pansement compressif",["Aucune","aucune immobilisation"]]}],
+  {id:"h_imm",l:"Immobilisation et conditionnement",t:"multi",v:[
+    ["Collier cervical","collier cervical"],
+    ["Maintien tête à deux mains","maintien de tête manuel"],
+    ["Immobilisateur de tête","immobilisateur de tête"],
+    ["Plan dur","plan dur"],
+    ["Civière cuillère","civière à aubes"],
+    ["Matelas à dépression","matelas immobilisateur à dépression"],
+    ["Attelle à dépression","attelle à dépression"],
+    ["Attelle à traction","attelle à traction"],
+    ["Attelle gouttière","attelle gouttière"],
+    ["Écharpe simple","écharpe simple"],
+    ["Écharpe contre-écharpe","écharpe et contre-écharpe"],
+    ["Garrot tourniquet","garrot tourniquet"],
+    ["Pansement compressif","pansement compressif"],
+    ["Couverture de survie","protection thermique"],
+    ["Aucune","aucune immobilisation"]]}],
  neg:["perte de connaissance","vomissements","douleur du dos ou de la nuque","fourmillements ou faiblesse d'un membre","douleur du ventre","saignement visible"]},
 
 cardio:{nom:"Cardio-thoracique",sous:"douleur, palpitations",
@@ -627,7 +647,9 @@ const MODIFS=[
  {id:"bpco",l:"BPCO / O₂ au long cours"},
  {id:"beta",l:"Bêtabloquant"},
  {id:"hta",l:"Hypertendu chronique"},
- {id:"grossesse",l:"Grossesse"}
+ {id:"grossesse",l:"Grossesse"},
+ {id:"pace",l:"Pacemaker ou défibrillateur"},
+ {id:"sportif",l:"Sportif entraîné"}
 ];
 
 /* ════════ NORMES ET QUALIFICATION ════════ */
@@ -669,6 +691,8 @@ function qual(par,v){
     return{m:"profondément désaturé à "+v+" % "+sup,a:true};}
   case"fc":{
     const b=mod("beta")?", sous bêtabloquant":"";
+    if(mod("pace"))return{m:"fréquence cardiaque à "+v+", porteur d'un stimulateur",a:true};
+    if(mod("sportif")&&v>=45&&v<60)return{m:"bradycardie physiologique à "+v+", sportif entraîné",a:false};
     if(v>=60&&v<=100)return{m:"normocarde"+b,a:!!b};
     if(v>100&&v<=120)return{m:"tachycarde à "+v+b,a:true};
     if(v>120)return{m:"tachycarde à "+v+b,a:true};
@@ -879,7 +903,9 @@ const MODDEF={
  bpco:"la saturation cible d'un BPCO est de 88 à 92 %. À 90 %, il n'est pas désaturé.",
  beta:"le bêtabloquant empêche le cœur d'accélérer. Une fréquence normale ne prouve pas que la victime tolère bien son état.",
  hta:"un hypertendu chronique vit à une tension haute. 110 sur 70 constitue chez lui une hypotension relative.",
- grossesse:"à partir du 2e trimestre, éviter le décubitus dorsal strict et signaler le terme au régulateur."
+ grossesse:"à partir du 2e trimestre, éviter le décubitus dorsal strict et signaler le terme au régulateur.",
+ pace:"le stimulateur impose la fréquence. Elle ne renseigne plus sur la tolérance hémodynamique.",
+ sportif:"un sportif entraîné vit à 45-55 au repos. Une bradycardie apparente peut être sa normale."
 };
 function defsHTML(items,dict){
   const v=items.map(k=>dict[k]?"<span><b>"+cap(k)+"</b> — "+dict[k]+"</span>":"").filter(Boolean);
@@ -900,7 +926,7 @@ const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
 /* ════════ RENDU DES FORMULAIRES ════════ */
 function chipsHTML(id,vals,type){
-  return '<div class="chips" id="'+id+'" data-'+(type==="one"?"one":"multi")+'">'+
+  return '<div class="chips" id="'+id+'" data-'+(type==="one"?"one":"multi")+'="">'+
     vals.map(v=>{const lab=Array.isArray(v)?v[0]:v,out=Array.isArray(v)?v[1]:v;
       return '<button class="chip" data-v="'+out.replace(/"/g,"&quot;")+'" aria-pressed="false">'+
         cap(lab)+'</button>';}).join("")+'</div>';
@@ -915,7 +941,7 @@ function buildMotif(){
   $$("#motifs .mbtn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===motif)));
   $("#dl-titres").innerHTML=M.titres.map(t=>'<option value="'+t+'">').join("");
   $("#atcd-c").outerHTML=chipsHTML("atcd-c",M.atcd,"multi");
-  $("#modif").outerHTML='<div class="chips" id="modif" data-multi">'+
+  $("#modif").outerHTML='<div class="chips" id="modif" data-multi="">'+
     MODIFS.map(m=>'<button class="chip" data-v="'+m.id+'" aria-pressed="false">'+m.l+'</button>').join("")+'</div>';
   $("#modif").setAttribute("data-multi","");
   $("#histoire").innerHTML=M.hist.map(f=>{
@@ -1269,10 +1295,13 @@ function rendre(){
   $("#sub").textContent=MOTIFS[motif].nom+(raw("titre")?" — "+raw("titre"):"");
   majHint();verrous();sauver();
 }
+function acgRequis(){return motif==="trauma"||motif==="neuro"||motif==="circu";}
 function verrous(){
-  const h=!!raw("heure"),a=!!one("acg"),dv=one("dem"),
+  const h=!!raw("heure"),a=acgRequis()?!!one("acg"):true,dv=one("dem"),
         d=!!dv&&(dv!=="__"||!!raw("demlib"));
-  $("#lk-h").classList.toggle("ok",h);$("#lk-a").classList.toggle("ok",a);$("#lk-d").classList.toggle("ok",d);
+  $("#lk-h").classList.toggle("ok",h);
+  $("#lk-a").classList.toggle("ok",!!one("acg"));
+  $("#lk-a").classList.toggle("libre",!acgRequis());$("#lk-d").classList.toggle("ok",d);
   $("#v-h").classList.toggle("ok",h);$("#v-a").classList.toggle("ok",a);$("#v-d").classList.toggle("ok",d);
 }
 
@@ -1290,22 +1319,74 @@ $("#gsearch").oninput=e=>buildGlo(e.target.value);
 
 /* ════════ DICTÉE VOCALE ════════ */
 function dicter(btn){dicterEl($("#"+btn.dataset.cible),btn);}
+
+// Safari sur iOS fige régulièrement la reconnaissance vocale sans rendre la main.
+// Sur ces appareils, on bascule volontairement sur la dictée native du clavier.
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
 function dicterEl(cible,btn){
+  if(!cible)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!cible){return;}
-  if(!window.isSecureContext){toast("Dictée impossible hors https — utiliser le micro du clavier");return;}
-  if(!SR){toast("Dictée indisponible — utiliser le micro du clavier");return;}
-  if(btn._r){btn._r.stop();return;}
-  const r=new SR();r.lang="fr-FR";r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+  if(!window.isSecureContext){toast("Dictée impossible hors https");cible.focus();return;}
+  if(!SR){toast("Dictée indisponible — micro du clavier");cible.focus();return;}
+  if(btn._r){arreterDictee();return;}
+
   const mini=btn.classList.contains("micmini");
-  btn._r=r;btn.classList.add("rec");if(!mini)btn.textContent="Arrêter la dictée";
-  const fin=()=>{btn._r=null;btn.classList.remove("rec");if(!mini)btn.textContent=btn.dataset.lab;rendre();};
-  r.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
-    cible.value=t.trim();rendre();};
-  r.onerror=e=>{toast("Dictée : "+(e.error==="not-allowed"?"micro refusé":e.error));fin();};
+  const r=new SR();r.lang="fr-FR";r.interimResults=false;r.continuous=true;r.maxAlternatives=1;
+
+  let clos=false;
+  const fin=()=>{
+    if(clos)return;clos=true;
+    clearTimeout(r._t);
+    btn._r=null;btn.classList.remove("rec");
+    if(!mini)btn.textContent=btn.dataset.lab;
+    const bar=$("#dicteebar");if(bar)bar.remove();
+    dicteeActive=null;
+    rendre();
+  };
+  r._fin=fin;
+  btn._r=r;dicteeActive=r;
+  btn.classList.add("rec");
+  if(!mini)btn.textContent="Arrêter la dictée";
+
+  // Bandeau d'arrêt toujours accessible, quoi qu'il arrive
+  const bar=document.createElement("button");
+  bar.id="dicteebar";bar.type="button";
+  bar.textContent="Dictée en cours — parlez, puis touchez ici pour arrêter";
+  bar.onclick=arreterDictee;
+  document.body.appendChild(bar);
+
+  // Filet de sécurité : arrêt forcé au bout de 20 secondes
+  r._t=setTimeout(()=>{try{r.abort();}catch(e){}fin();},120000);
+
+  r.onresult=e=>{
+    let t="";
+    for(let i=e.resultIndex;i<e.results.length;i++)
+      if(e.results[i].isFinal)t+=e.results[i][0].transcript;
+    if(t.trim())cible.value=(cible.value?cible.value+" ":"")+t.trim();
+  };
+  r.onerror=e=>{
+    if(e.error==="no-speech"){return;}
+    if(e.error!=="aborted"){
+      toast("Dictée : "+(e.error==="not-allowed"?"micro refusé":e.error));
+      if(IOS)cible.focus();
+    }
+    fin();};
   r.onend=fin;
   try{r.start();}catch(e){fin();}
 }
+
+let dicteeActive=null;
+function arreterDictee(){
+  const r=dicteeActive;if(!r)return;
+  try{r.abort();}catch(e){}
+  try{r.stop();}catch(e){}
+  if(r._fin)r._fin();
+}
+// Échappatoire clavier
+document.addEventListener("keydown",e=>{if(e.key==="Escape")arreterDictee();});
+
 $$(".mic").forEach(b=>b.onclick=()=>dicter(b));
 
 // Champs exclus : trop courts, numériques, ou déjà dotés d'un bouton dédié
@@ -1553,7 +1634,7 @@ document.body.appendChild(dock);
 $$(".tab").forEach(t=>t.onclick=()=>vue(t.dataset.v));
 
 /* ════════ MISE À JOUR AUTOMATIQUE ════════ */
-const VERSION="2026.08.21";
+const VERSION="2026.08.21c";
 $("#ver").textContent=VERSION;
 if("serviceWorker" in navigator){
   const avaitControleur=!!navigator.serviceWorker.controller;
