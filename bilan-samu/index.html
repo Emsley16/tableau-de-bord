@@ -231,18 +231,16 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 <!-- ═══ BILAN ═══ -->
 <div id="v-bilan"><main>
 
-<button class="btn2" id="vider" style="margin-bottom:12px">Vider tous les champs</button>
-
 <details class="sec" id="s1">
   <summary><span class="num">1</span><span class="st"><b>Annonce</b><em>Tout ce qui part dans les 30 premières secondes</em></span><span class="chev">▼</span></summary>
   <div class="bd">
     <div class="f"><span class="gl">Motif de recours</span>
       <div class="mgrid" id="motifs"></div></div>
 
-    <div class="f"><label for="titre">Nature de l'événement</label>
-      <input type="text" id="titre" list="dl-titres" placeholder="chute">
-      <datalist id="dl-titres"></datalist>
-      <span class="mini">Deux à quatre mots. Sans l'âge, sans le sexe, sans le lieu : ils ont leurs propres champs et seraient dits deux fois.</span></div>
+    <div class="f"><span class="gl">Nature de l'événement</span>
+      <div class="chips" id="titrec" data-one></div>
+      <input type="text" id="titre" placeholder="Préciser la nature" style="margin-top:8px;display:none">
+      <span class="mini">L'âge, le sexe et le lieu ont leurs propres champs : ne les remettez pas ici, ils seraient dits deux fois.</span></div>
 
     <div class="f"><span class="gl">Engin et unité</span>
       <div class="row">
@@ -302,16 +300,28 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
       <input type="text" id="poids" inputmode="decimal" placeholder="Poids en kg (enfant, ou thérapeutique envisagée)" style="margin-top:8px">
       <div id="pedbox"></div></div>
 
-    <div class="f lk" id="lk-h"><span class="gl">Heure de début<span class="tg">verrou</span></span>
-      <div class="row"><input type="time" id="heure">
-        <div class="chips" id="htype" data-one>
-          <button class="chip" data-v="debut" aria-pressed="true">Début connu</button>
-          <button class="chip" data-v="vu" aria-pressed="false">Dernier vu normal</button>
-        </div></div></div>
+    <div class="f lk" id="lk-h"><span class="gl">Depuis quand<span class="tg">verrou</span></span>
+      <div class="chips" id="delaic" data-one>
+        <button class="chip" data-v="5" aria-pressed="false">5 min</button>
+        <button class="chip" data-v="15" aria-pressed="false">15 min</button>
+        <button class="chip" data-v="30" aria-pressed="false">30 min</button>
+        <button class="chip" data-v="60" aria-pressed="false">1 h</button>
+        <button class="chip" data-v="120" aria-pressed="false">2 h</button>
+        <button class="chip" data-v="360" aria-pressed="false">6 h</button>
+        <button class="chip" data-v="1440" aria-pressed="false">Hier</button>
+        <button class="chip" data-v="precise" aria-pressed="false">Heure précise</button>
+      </div>
+      <div id="heurebox" style="display:none">
+        <div class="row" style="margin-top:8px"><input type="time" id="heure">
+          <div class="chips" id="htype" data-one>
+            <button class="chip" data-v="debut" aria-pressed="true">Début connu</button>
+            <button class="chip" data-v="vu" aria-pressed="false">Dernier vu normal</button>
+          </div></div></div>
+      <span class="mini">Sur un déficit neurologique, préférez l'heure précise : elle conditionne la thrombolyse.</span></div>
 
     <div class="f"><label for="conclu">Ma conclusion, en une phrase</label>
       <textarea id="conclu" placeholder="Douleur thoracique de présentation coronarienne chez un patient à haut risque, non calmée par le repos."></textarea>
-      <span class="mini">Une impression assumée, jamais un diagnostic affirmé.</span></div>
+      <span class="mini">Facultatif. N'y répétez ni les lésions ni les constantes : elles sont déjà dites. Une impression assumée, jamais un diagnostic affirmé.</span></div>
 
     <div class="f lk" id="lk-d"><span class="gl">Ma demande<span class="tg">verrou</span></span>
       <div class="chips" id="dem" data-one>
@@ -489,13 +499,14 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
   </div>
 </details>
 
-<details class="sec" id="s7">
-  <summary><span class="num">7</span><span class="st"><b>Historique</b><em>Les bilans archivés à l'ouverture précédente</em></span><span class="chev">▼</span></summary>
-  <div class="bd">
-    <div id="hist"></div>
-    <button class="btn2" id="histvider" style="margin-top:11px">Vider l'historique</button>
-  </div>
-</details>
+<div class="g2" style="margin-top:2px">
+  <button class="btn2" id="vider">Vider les champs</button>
+  <button class="btn2" id="histbtn">Historique</button>
+</div>
+<div id="histbox" style="display:none;margin-top:10px">
+  <div id="hist"></div>
+  <button class="btn2" id="histvider" style="margin-top:11px">Vider l'historique</button>
+</div>
 
 <div class="ver">Bilan · Régulation — version <b id="ver">—</b><br>Mise à jour automatique à chaque ouverture connectée</div>
 </main></div>
@@ -943,7 +954,7 @@ function buildMotifs(){
 function buildMotif(){
   const M=MOTIFS[motif];
   $$("#motifs .mbtn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===motif)));
-  $("#dl-titres").innerHTML=M.titres.map(t=>'<option value="'+t+'">').join("");
+  $("#titrec").outerHTML=chipsHTML("titrec",M.titres.concat([["Autre","__autre"]]),"one");
   $("#atcd-c").outerHTML=chipsHTML("atcd-c",M.atcd,"multi");
   $("#modif").outerHTML='<div class="chips" id="modif" data-multi="">'+
     MODIFS.map(m=>'<button class="chip" data-v="'+m.id+'" aria-pressed="false">'+m.l+'</button>').join("")+'</div>';
@@ -1007,14 +1018,9 @@ function accorder(t){
 
 // Le motif ne doit pas répéter l'âge, le sexe ni le lieu : ils ont leur propre champ
 function titrePropre(){
-  let t=raw("titre");if(!t)return"";
-  t=t.replace(/\b\d{1,3}\s*ans?\b/gi,"")
-     .replace(/\b(femme|homme|monsieur|madame|patient|patiente|victime|enfant)\b/gi,"")
-     .replace(/\b(sur la |à |au )?(voie|voix) publique\b/gi,"")
-     .replace(/\b(à |au )?domicile\b/gi,"")
-     .replace(/[,;]\s*[,;]/g,",").replace(/\s{2,}/g," ")
-     .replace(/^[\s,;-]+|[\s,;.-]+$/g,"");
-  return t.toLowerCase();
+  const c=one("titrec");
+  if(c==="__autre")return raw("titre").trim().toLowerCase();
+  return c||"";
 }
 
 // Un régulateur retient mieux un délai écoulé qu'un horaire
@@ -1032,9 +1038,11 @@ function dureeTxt(m){
   return H+" heure"+(H>1?"s":"")+(M?" "+M:"");
 }
 function quandTxt(){
+  const c=one("delaic");
+  if(c&&c!=="precise")return c==="1440"?"depuis hier":"depuis "+dureeTxt(+c);
   const m=dureeDepuis();if(m===null)return"";
   const vu=one("htype")==="vu";
-  if(vu)return"dernière fois vue sans signe il y a "+dureeTxt(m);
+  if(vu)return"dernière fois vue sans signe à "+hDire()+", il y a "+dureeTxt(m);
   return m<=180?"depuis "+dureeTxt(m):"début à "+hDire();
 }
 
@@ -1229,6 +1237,7 @@ function bAnnonce(){
   } else if(E.norm.length&&!E.ped){
     sail.push("Constantes conservées, examen sans particularité");
   }
+  if(motif==="trauma"&&raw("h_les"))sail.push(raw("h_les"));
   const vf=vittelFort();
   if(vf.length)sail.push("critère de Vittel : "+liste(vf.slice(0,2)));
   if(sail.length)p.push(pt(sail.join(", ")));
@@ -1378,14 +1387,17 @@ function rendre(){
     : '<div class="ri vide">Rien en réserve pour l\'instant.</div>';
 
   $("#demlibbox").style.display=one("dem")==="__"?"block":"none";
+  $("#heurebox").style.display=one("delaic")==="precise"?"block":"none";
+  $("#titre").style.display=one("titrec")==="__autre"?"block":"none";
   const ad=$("#atcdef");if(ad)ad.innerHTML=defsHTML(multi("atcd-c"),ATCDEF);
   const md=$("#modifdef");if(md)md.innerHTML=defsHTML(multi("modif"),MODDEF);
-  $("#sub").textContent=MOTIFS[motif].nom+(raw("titre")?" — "+raw("titre"):"");
+  $("#sub").textContent=MOTIFS[motif].nom+(titrePropre()?" — "+titrePropre():"");
   majHint();verrous();sauver();
 }
 function acgRequis(){return motif==="trauma"||motif==="neuro"||motif==="circu";}
 function verrous(){
-  const h=!!raw("heure"),a=acgRequis()?!!one("acg"):true,dv=one("dem"),
+  const dc=one("delaic");
+  const h=!!dc&&(dc!=="precise"||!!raw("heure")),a=acgRequis()?!!one("acg"):true,dv=one("dem"),
         d=!!dv&&(dv!=="__"||!!raw("demlib"));
   $("#lk-h").classList.toggle("ok",h);
   $("#lk-a").classList.toggle("ok",!!one("acg"));
@@ -1641,6 +1653,12 @@ function afficherHist(){
   $$("#hist button[data-hc]").forEach(b=>
     b.onclick=()=>copier((lireHist()[+b.dataset.hc]||{}).a,"Annonce copiée"));
 }
+$("#histbtn").onclick=()=>{
+  const b=$("#histbox"),ouvert=b.style.display!=="none";
+  b.style.display=ouvert?"none":"block";
+  $("#histbtn").textContent=ouvert?"Historique":"Masquer l'historique";
+  if(!ouvert){afficherHist();b.scrollIntoView({block:"nearest"});}
+};
 $("#histvider").onclick=()=>{
   if(!confirm("Effacer tout l'historique ?"))return;
   try{localStorage.removeItem(CLEH);}catch(e){}
@@ -1693,7 +1711,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 /* ════════ MISE À JOUR AUTOMATIQUE ════════ */
-const VERSION="2026.08.21f";
+const VERSION="2026.08.21h";
 $("#ver").textContent=VERSION;
 if("serviceWorker" in navigator){
   const avaitControleur=!!navigator.serviceWorker.controller;
