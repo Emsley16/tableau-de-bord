@@ -76,6 +76,9 @@ input.qte[data-st="modifie"]{border-color:var(--encre);font-weight:600}
 .ecart{display:inline-block;margin-left:8px;padding:5px 9px;border-radius:3px;font-size:13px;font-weight:600;
   background:var(--defaut);color:#fff}
 .ecart.plus{background:var(--confirme)}
+.pos{flex:0 0 38px;font-family:var(--mono);font-size:11px;color:var(--propose);border:1px solid var(--trait);
+  border-radius:3px;padding:6px 2px;text-align:center}
+.pos:hover{border-color:var(--encre);color:var(--encre)}
 .qbtn{flex:0 0 78px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;border:1px solid var(--trait-fort);
   border-radius:3px;padding:6px 4px;text-align:center;color:var(--propose)}
 .qbtn.on{color:#fff;background:var(--encre);border-color:var(--encre)}
@@ -284,7 +287,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.5.0";
+const VERSION = "1.6.0";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -547,7 +550,9 @@ function vueGabarit(log) {
               <button class="mini" data-act="ren-piece">Renommer la pièce</button>
               <button class="mini" data-act="del-piece">Supprimer la pièce</button>
             </div>
-            ${p.elements.map(e => `<div class="gab" data-e="${e.id}">
+            <div class="note" style="margin:0 0 8px">Le numéro à gauche déplace la ligne : cliquez-le et indiquez sa nouvelle position. L'ordre du gabarit est celui du relevé — calez-le sur votre parcours réel du logement.</div>
+            ${p.elements.map((e, i) => `<div class="gab" data-e="${e.id}">
+              <button class="pos" data-act="pos" title="Déplacer cette ligne">${i + 1}</button>
               <input value="${esc(e.nom)}" data-ren="el">
               <button class="qbtn ${e.qte == null ? "" : "on"}" data-act="qte">${e.qte == null ? "unique" : "× " + e.qte}</button>
               <button class="x" data-act="del-el" title="Supprimer l'élément">✕</button>
@@ -603,6 +608,20 @@ function vueGabarit(log) {
       const el = p.elements.find(x => x.id === bouton.closest("[data-e]").dataset.e);
       if (!confirm("Supprimer « " + el.nom + " » ?")) return;
       p.elements = p.elements.filter(x => x.id !== el.id);
+    }
+    if (a === "pos") {
+      // Déplacement par saisie de la position cible : avec 70 lignes en
+      // cuisine, des flèches auraient demandé des dizaines de clics.
+      const el = p.elements.find(x => x.id === bouton.closest("[data-e]").dataset.e);
+      const i = p.elements.indexOf(el);
+      const rep2 = prompt("« " + el.nom + " » est en position " + (i + 1) + " sur " + p.elements.length
+        + ".\n\nNouvelle position ?", i + 1);
+      if (rep2 === null) return;
+      let n = parseInt(String(rep2).replace(/[^0-9]/g, ""), 10);
+      if (isNaN(n)) return;
+      n = Math.max(1, Math.min(p.elements.length, n));
+      p.elements.splice(i, 1);
+      p.elements.splice(n - 1, 0, el);
     }
     if (a === "qte") {
       // Un bouton plutôt qu'un champ : impossible de rester coincé avec une
