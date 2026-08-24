@@ -295,7 +295,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.8.1";
+const VERSION = "1.8.2";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -807,10 +807,10 @@ function elementHtml(p, el) {
       <input class="qte" type="number" inputmode="numeric" min="0" step="1" data-qte data-st="${el.qteSt}"
              value="${el.qte == null ? "" : el.qte}" ${verr ? "disabled" : ""}>${ecartHtml(el)}</div>`}
     <div class="obs-l"><textarea class="obs" data-obs placeholder="Description précise : localisation, dimension, nature du défaut." ${verr ? "disabled" : ""}>${esc(el.obs)}</textarea></div>
-    ${verr ? "" : `<div class="ph">
+    ${(sortie && !cst.length && verr) ? "" : `<div class="ph">
       ${sortie ? "" : cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}
-      <label class="ajout">+<input type="file" accept="image/*" multiple hidden data-add></label>
-      <button class="mini" data-act="reserve" style="align-self:center">Passer en réserve permanente</button>
+      ${verr ? "" : `<label class="ajout">+<input type="file" accept="image/*" multiple hidden data-add></label>
+      <button class="mini" data-act="reserve" style="align-self:center">Passer en réserve permanente</button>`}
     </div>`}
   </div>`;
 }
@@ -1065,8 +1065,12 @@ async function construirePrint() {
     html += `</table>`;
   }
 
-  html += `<h2 class="pb">Annexe photographique</h2>
-    <p>Les photographies ci-après font partie intégrante du présent état des lieux. Les parties reconnaissent en avoir pris connaissance et en avoir reçu un exemplaire.</p>`;
+  html += `<h2 class="pb">Annexe photographique</h2>`;
+  if (!S.photos.length) {
+    html += `<p><b>Aucune photographie n'est annexée au présent état des lieux.</b></p>`;
+  } else {
+    html += `<p>${S.photos.length} photographie${S.photos.length > 1 ? "s" : ""} annexée${S.photos.length > 1 ? "s" : ""} au présent état des lieux, dont elles font partie intégrante. Les parties reconnaissent en avoir pris connaissance et en avoir reçu un exemplaire.</p>`;
+  }
   const idx = {};
   e.pieces.forEach(pc => pc.elements.forEach(el => idx[pc.id + "/" + el.id] = pc.nom + " — " + el.nom));
   let n = 0;

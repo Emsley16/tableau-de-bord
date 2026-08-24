@@ -7,7 +7,7 @@
    Aucune donnée d'état des lieux ne transite ici : relevés, photos et
    signatures restent dans IndexedDB, sur l'appareil. */
 
-const VERSION = "1.8.1";
+const VERSION = "1.8.2";
 const CACHE = "releve-" + VERSION;
 const FICHIERS = [
   "./", "./index.html", "./manifest.webmanifest",
