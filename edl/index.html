@@ -295,7 +295,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.8.0";
+const VERSION = "1.8.1";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -1086,6 +1086,35 @@ async function construirePrint() {
     ${e.type === "entree" ? "Le locataire peut demander la modification du présent état des lieux dans les dix jours de son établissement, et jusqu'à la fin du premier mois de chauffe s'agissant des éléments de chauffage." : ""}</p>`;
 
   $("#print").innerHTML = html;
+  await attendreImages();
+}
+
+// Les photos sont injectées en base64 : sans cette attente, l'impression peut
+// partir avant leur décodage et produire un document vide ou amputé.
+function attendreImages() {
+  const imgs = [].slice.call(document.querySelectorAll("#print img"));
+  if (!imgs.length) return Promise.resolve();
+  return Promise.race([
+    Promise.all(imgs.map(im => im.complete && im.naturalWidth
+      ? Promise.resolve()
+      : new Promise(r => { im.onload = r; im.onerror = r; }))),
+    new Promise(r => setTimeout(r, 8000))
+  ]);
+}
+
+// Une boîte de dialogue modale occupe la couche supérieure du navigateur :
+// imprimer sans la fermer d'abord ne produit qu'une page blanche.
+async function imprimerDocument() {
+  const ouverts = [].slice.call(document.querySelectorAll("dialog[open]"));
+  ouverts.forEach(d => d.close());
+  await construirePrint();
+  await new Promise(r => setTimeout(r, 250));
+  if (!$("#print").textContent.trim()) {
+    alert("Le document n'a pas pu être préparé. Réessayez depuis le bouton Exporter.");
+    return false;
+  }
+  window.print();
+  return true;
 }
 
 /* ===================================================================
@@ -1095,7 +1124,7 @@ async function exporter() {
   const e = S.edl;
   const choix = prompt("1 = PDF à remettre aux parties\n2 = Archive du relevé (originaux + empreintes SHA-256)\n3 = Les deux", "3");
   if (!choix) return;
-  if (choix.indexOf("1") >= 0 || choix.indexOf("3") >= 0) { await construirePrint(); window.print(); }
+  if (choix.indexOf("1") >= 0 || choix.indexOf("3") >= 0) await imprimerDocument();
   if (choix.indexOf("2") >= 0 || choix.indexOf("3") >= 0) {
     const fichiers = [], manifeste = ["# Manifeste d'integrite - SHA-256",
       "# " + e.logementNom + " - " + (e.type === "entree" ? "entree" : "sortie") + " - " + dateFr(e.signe || e.cree), ""];
@@ -1167,7 +1196,10 @@ function ouvrirEnvoi() {
   $("#d-envoi").showModal();
 }
 $("#e-non").onclick = () => $("#d-envoi").close();
-$("#e-pdf").onclick = async () => { await construirePrint(); window.print(); };
+$("#e-pdf").onclick = async () => {
+  const ok = await imprimerDocument();
+  if (ok) setTimeout(() => { if (!$("#d-envoi").open) $("#d-envoi").showModal(); }, 1200);
+};
 $("#e-mail").onclick = () => {
   const e = S.edl;
   const tous = ($("#e-dest").value + "," + $("#e-plus").value)
