@@ -68,6 +68,15 @@ button{cursor:pointer;background:none;border:none}
 .chip[data-on="modifie"]{color:#fff;background:var(--encre);border-color:var(--encre)}
 .chip[data-on="confirme"][data-grave="1"],.chip[data-on="modifie"][data-grave="1"]{background:var(--defaut);border-color:var(--defaut)}
 
+input.qte{width:96px;border:1px solid var(--trait-fort);border-radius:3px;padding:7px 8px;font-size:14px;background:var(--carte)}
+input.qte[data-st="propose"]{color:var(--propose);font-style:italic;border-style:dashed;
+  background:repeating-linear-gradient(135deg,#fff,#fff 4px,#EDF1F4 4px,#EDF1F4 8px)}
+input.qte[data-st="confirme"]{border-color:var(--confirme)}
+input.qte[data-st="modifie"]{border-color:var(--encre);font-weight:600}
+.ecart{display:inline-block;margin-left:8px;padding:5px 9px;border-radius:3px;font-size:13px;font-weight:600;
+  background:var(--defaut);color:#fff}
+.ecart.plus{background:var(--confirme)}
+.gab input.gq{flex:0 0 62px;border:1px solid var(--trait);border-radius:3px;padding:4px 6px;font-size:13px;text-align:center}
 textarea.obs,input.t,select.t{width:100%;border:1px solid var(--trait);border-radius:3px;padding:8px;background:var(--carte);font-size:14px;resize:vertical}
 textarea.obs{min-height:52px} .obs-l{margin-top:6px}
 
@@ -232,7 +241,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.2.0";
+const VERSION = "1.3.1";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -415,7 +424,9 @@ function vueGabarit(log) {
         <input class="piece-n" value="${esc(p.nom)}" data-ren="piece" style="border:none;background:none;flex:1;min-width:0">
         <button class="mini" data-act="del-piece">Supprimer</button>
       </div>
-      ${p.elements.map(e => `<div class="gab" data-e="${e.id}"><input value="${esc(e.nom)}" data-ren="el"><button class="x" data-act="del-el">✕</button></div>`).join("")}
+      ${p.elements.map(e => `<div class="gab" data-e="${e.id}"><input value="${esc(e.nom)}" data-ren="el">
+        <input class="gq" type="number" min="2" step="1" placeholder="lot" title="Nombre attendu, pour les lots comptables. Vide pour un objet unique."
+               value="${e.qte == null ? "" : e.qte}" data-ren="qte"><button class="x" data-act="del-el">✕</button></div>`).join("")}
       <button class="mini" data-act="add-el" style="margin-top:8px">+ Élément</button>
     </div>`).join("")}
     <button class="mini" id="add-piece" style="margin-top:20px">+ Pièce</button>`;
@@ -425,6 +436,10 @@ function vueGabarit(log) {
     const p = log.pieces.find(x => x.id === pid); if (!p) return;
     if (t.dataset.ren === "piece") p.nom = t.value;
     if (t.dataset.ren === "el") p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).nom = t.value;
+    if (t.dataset.ren === "qte") {
+      const n = parseInt(t.value, 10);
+      p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).qte = (isNaN(n) || n < 2) ? null : n;
+    }
     DB.put("logements", log);
   };
   c.onclick = async e => {
@@ -474,6 +489,7 @@ function edlNeuf(log, type, ref) {
       id: p.id, nom: p.nom,
       elements: p.elements.map(el => ({
         id: el.id, nom: el.nom, etat: null, etatSt: "vide", prop: null, propSt: "vide", obs: "",
+        qteRef: el.qte == null ? null : el.qte, qte: null, qteSt: el.qte == null ? "sansobjet" : "vide",
         reserves: reservesActives(log, p.id + "/" + el.id).map(r => ({ id: r.id, texte: r.texte, depuis: r.depuis }))
       }))
     }))
@@ -486,12 +502,20 @@ function edlNeuf(log, type, ref) {
     ref.pieces.forEach(p => p.elements.forEach(el => src[p.id + "/" + el.id] = el));
     e.pieces.forEach(p => p.elements.forEach(el => {
       const o = src[p.id + "/" + el.id];
-      if (o) { el.etat = o.etat; el.etatSt = "propose"; el.obsEntree = o.obs || ""; }
+      if (o) {
+        el.etat = o.etat; el.etatSt = "propose"; el.obsEntree = o.obs || "";
+        // À la sortie, la référence est ce qui a été compté à l'entrée du
+        // locataire, pas le nombre théorique du gabarit.
+        el.qteRef = (o.qte != null) ? o.qte : o.qteRef;
+      }
       el.prop = null; el.propSt = "vide";
+      el.qte = null;
+      el.qteSt = el.qteRef == null ? "sansobjet" : "vide";
     }));
   } else {
     e.pieces.forEach(p => p.elements.forEach(el => {
       el.etat = "Bon état"; el.etatSt = "propose"; el.prop = "Propre"; el.propSt = "propose";
+      if (el.qteRef != null) { el.qte = el.qteRef; el.qteSt = "propose"; }
     }));
   }
   return e;
@@ -501,7 +525,9 @@ function edlNeuf(log, type, ref) {
    7. VUE RELEVÉ
    =================================================================== */
 const tousElements = edl => edl.pieces.flatMap(p => p.elements.map(el => ({ p, el })));
-const nonConfirme = el => el.etatSt === "propose" || el.etatSt === "vide" || el.propSt === "propose" || el.propSt === "vide";
+const nonConfirme = el => el.etatSt === "propose" || el.etatSt === "vide"
+  || el.propSt === "propose" || el.propSt === "vide"
+  || el.qteSt === "propose" || el.qteSt === "vide";
 const restants = edl => tousElements(edl).filter(({ el }) => nonConfirme(el)).length;
 
 async function vueEdl(edl) {
@@ -543,6 +569,7 @@ function dessinerEdl() {
 
   barre([
     { t: "En-tête", f: ouvrirEntete, sec: true },
+    { t: "Supprimer", f: supprimerEdl, sec: true },
     { t: edl.verrouille ? "Exporter" : "Signer", f: edl.verrouille ? exporter : ouvrirSignature, off: !edl.verrouille && bl.length > 0 }
   ]);
   chargerVignettes();
@@ -575,6 +602,10 @@ function elementHtml(p, el) {
     ${comparaison}
     <div class="axe"><span class="axe-l">État de conservation</span>${chips("etat", ETATS, el.etat, el.etatSt)}</div>
     <div class="axe"><span class="axe-l">Propreté</span>${chips("prop", PROPRETES, el.prop, el.propSt)}</div>
+    ${el.qteSt === "sansobjet" ? "" : `<div class="axe">
+      <span class="axe-l">Quantité${el.qteRef != null && sortie ? " — " + el.qteRef + " compté(s) à l'entrée" : ""}</span>
+      <input class="qte" type="number" inputmode="numeric" min="0" step="1" data-qte data-st="${el.qteSt}"
+             value="${el.qte == null ? "" : el.qte}" ${verr ? "disabled" : ""}>${ecartHtml(el)}</div>`}
     <div class="obs-l"><textarea class="obs" data-obs placeholder="Description précise : localisation, dimension, nature du défaut." ${verr ? "disabled" : ""}>${esc(el.obs)}</textarea></div>
     ${verr ? "" : `<div class="ph">
       ${sortie ? "" : cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}
@@ -582,6 +613,24 @@ function elementHtml(p, el) {
       <button class="mini" data-act="reserve" style="align-self:center">Passer en réserve permanente</button>
     </div>`}
   </div>`;
+}
+
+async function supprimerEdl() {
+  const e = S.edl;
+  const quoi = (e.type === "entree" ? "l'état des lieux d'entrée" : "l'état des lieux de sortie")
+    + " du " + dateFr(e.cree) + " (" + (e.locataire.nom || "locataire non renseigné") + ")";
+  if (!confirm("Supprimer " + quoi + " et ses photos ?\n\nCette suppression est définitive. Si le document a été signé, assurez-vous d'avoir exporté son archive avant.")) return;
+  if (e.verrouille && !confirm("Ce relevé est SIGNÉ. Un état des lieux signé est une preuve : sa suppression ne se rattrape pas.\n\nConfirmer malgré tout ?")) return;
+  for (const ph of await DB.parEdl(e.id)) await DB.del("photos", ph.id);
+  await DB.del("edls", e.id);
+  S.edl = null;
+  aller("accueil");
+}
+
+function ecartHtml(el) {
+  if (el.qte == null || el.qteRef == null || el.qte === el.qteRef) return "";
+  const d = el.qte - el.qteRef;
+  return `<span class="ecart ${d > 0 ? "plus" : ""}">${d > 0 ? "+" + d : d} par rapport à ${el.qteRef}</span>`;
 }
 
 function chargerVignettes() {
@@ -605,9 +654,12 @@ function brancherEdl() {
       const p = edl.pieces.find(x => x.id === pBoite.dataset.p);
       const manquant = p.elements.filter(el => el.propSt === "vide");
       if (manquant.length) { alert("Propreté non renseignée sur " + manquant.length + " élément(s). À la sortie, elle doit être constatée, pas supposée."); return; }
+      const acompter = p.elements.filter(el => el.qteSt === "vide");
+      if (acompter.length) { alert("Quantité non comptée sur " + acompter.length + " lot(s) : " + acompter.map(x => x.nom).join(", ") + ". Un lot ne se confirme pas sans être compté."); return; }
       p.elements.forEach(el => {
         if (el.etatSt === "propose") { el.etatSt = "confirme"; journal(el, "etat", el.etat); }
         if (el.propSt === "propose") { el.propSt = "confirme"; journal(el, "prop", el.prop); }
+        if (el.qteSt === "propose") { el.qteSt = "confirme"; journal(el, "qte", el.qte); }
       });
       await sauver(); dessinerEdl(); return;
     }
@@ -641,7 +693,28 @@ function brancherEdl() {
     e.target.value = "";
     await ajouterPhotos(k, fs);
   });
+  c.addEventListener("change", e => {
+    if (!("qte" in e.target.dataset)) return;
+    dessinerEdl();
+  });
   c.addEventListener("input", e => {
+    if ("qte" in e.target.dataset) {
+      const edl = S.edl; if (edl.verrouille) return;
+      const el = edl.pieces.find(x => x.id === e.target.closest("[data-p]").dataset.p)
+        .elements.find(x => x.id === e.target.closest("[data-e]").dataset.e);
+      const v = e.target.value.trim();
+      const initial = el.qteSt === "propose" || el.qteSt === "vide";
+      if (v === "") { el.qte = null; el.qteSt = "vide"; }
+      else {
+        const n = parseInt(v, 10);
+        if (isNaN(n) || n < 0) return;
+        el.qte = n;
+        el.qteSt = (initial && n === el.qteRef) ? "confirme" : "modifie";
+        journal(el, "qte", n);
+      }
+      clearTimeout(c._t); c._t = setTimeout(sauver, 400);
+      return;
+    }
     if (!e.target.classList.contains("obs")) return;
     const el = S.edl.pieces.find(x => x.id === e.target.closest("[data-p]").dataset.p)
       .elements.find(x => x.id === e.target.closest("[data-e]").dataset.e);
@@ -681,6 +754,9 @@ function blocages() {
   const r = restants(e); if (r) out.push(r + " élément(s) encore en pré-remplissage non confirmé.");
   const flous = tousElements(e).filter(({ el }) => (el.etat === GRAVE_ETAT || el.prop === GRAVE_PROP) && !el.obs.trim());
   if (flous.length) out.push(flous.length + " défaut(s) signalé(s) sans description écrite : « mauvais état » ou « sale » sans précision est contestable.");
+  const ecarts = tousElements(e).filter(({ el }) =>
+    el.qte != null && el.qteRef != null && el.qte !== el.qteRef && !el.obs.trim());
+  if (ecarts.length) out.push(ecarts.length + " écart(s) de quantité sans observation : " + ecarts.map(x => x.el.nom).join(", ") + ".");
   return out;
 }
 
@@ -771,10 +847,13 @@ async function construirePrint() {
   }
 
   for (const pc of e.pieces) {
-    html += `<h2>${esc(pc.nom)}</h2><table><tr><th style="width:26%">Élément</th><th style="width:16%">Conservation</th><th style="width:16%">Propreté</th><th>Observations</th></tr>`;
+    html += `<h2>${esc(pc.nom)}</h2><table><tr><th style="width:24%">Élément</th><th style="width:10%">Quantité</th><th style="width:15%">Conservation</th><th style="width:15%">Propreté</th><th>Observations</th></tr>`;
     for (const el of pc.elements) {
       const res = (el.reserves || []).map(r => `<i>Réserve du ${dateFr(r.depuis)} : ${esc(r.texte)}</i>`).join("<br>");
-      html += `<tr${res ? ' class="res"' : ""}><td>${esc(el.nom)}</td><td>${esc(el.etat || "")}</td><td>${esc(el.prop || "")}</td>
+      let q = "";
+      if (el.qte != null) q = (e.type === "sortie" && el.qteRef != null && el.qteRef !== el.qte)
+        ? el.qteRef + " → <b>" + el.qte + "</b>" : String(el.qte);
+      html += `<tr${res ? ' class="res"' : ""}><td>${esc(el.nom)}</td><td>${q}</td><td>${esc(el.etat || "")}</td><td>${esc(el.prop || "")}</td>
         <td>${esc(el.obs)}${res ? (el.obs ? "<br>" : "") + res : ""}</td></tr>`;
     }
     html += `</table>`;
