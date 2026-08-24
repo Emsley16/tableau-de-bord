@@ -76,6 +76,14 @@ input.qte[data-st="modifie"]{border-color:var(--encre);font-weight:600}
 .ecart{display:inline-block;margin-left:8px;padding:5px 9px;border-radius:3px;font-size:13px;font-weight:600;
   background:var(--defaut);color:#fff}
 .ecart.plus{background:var(--confirme)}
+.qbtn{flex:0 0 78px;font-family:var(--mono);font-size:11px;letter-spacing:.04em;border:1px solid var(--trait-fort);
+  border-radius:3px;padding:6px 4px;text-align:center;color:var(--propose)}
+.qbtn.on{color:#fff;background:var(--encre);border-color:var(--encre)}
+.aide{border-left:3px solid var(--encre);background:#fff;padding:10px 12px;font-size:13px;margin:14px 0;color:#33414F}
+.pliable{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;
+  padding:12px;background:var(--carte);border:1px solid var(--trait);margin-bottom:-1px}
+.pliable[aria-expanded="true"]{background:var(--encre);color:#fff;border-color:var(--encre)}
+.pliable .cnt{font-family:var(--mono);font-size:11px;letter-spacing:.06em;opacity:.75;flex-shrink:0}
 .gab input.gq{flex:0 0 74px;border:1px solid var(--trait);border-radius:3px;padding:4px 6px;font-size:13px;text-align:center}
 textarea.obs,input.t,select.t{width:100%;border:1px solid var(--trait);border-radius:3px;padding:8px;background:var(--carte);font-size:14px;resize:vertical}
 textarea.obs{min-height:52px} .obs-l{margin-top:6px}
@@ -150,7 +158,11 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
     <div class="bandeau">
       <div class="bandeau-h">
         <div><div class="eyebrow">Relevé contradictoire</div><h1 class="titre">États des lieux</h1></div>
-        <button class="mini" id="b-gabarits">Logements</button>
+        <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="mini" id="b-bailleur">Bailleur</button>
+          <button class="mini" id="b-locataires">Locataires</button>
+          <button class="mini" id="b-gabarits">Logements</button>
+        </span>
       </div>
     </div>
     <div id="l-edls"></div>
@@ -160,6 +172,26 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
       <label class="mini" style="display:inline-block">Restaurer une sauvegarde<input type="file" accept=".zip" hidden id="f-restaure"></label>
     </div>
     <div class="pied" id="pied">—</div>
+  </section>
+
+  <section id="v-bailleur" class="vue">
+    <div class="bandeau"><div class="bandeau-h">
+      <div><div class="eyebrow">Identité</div><h1 class="titre">Bailleur</h1></div>
+      <button class="mini" id="b-retour-b">Retour</button>
+    </div></div>
+    <div class="aide">Ces informations figurent sur tous vos états des lieux. Saisies une fois, elles sont reprises automatiquement à chaque nouveau relevé.</div>
+    <div class="champ"><label>Nom ou dénomination</label><input class="t" id="b-nom"></div>
+    <div class="champ"><label>Domicile ou siège social</label><input class="t" id="b-dom"></div>
+    <div class="champ"><label>Courriel</label><input class="t" id="b-mail" type="email" autocomplete="email"></div>
+    <div class="champ"><label>Mandataire, le cas échéant</label><input class="t" id="b-mand"></div>
+  </section>
+
+  <section id="v-locataires" class="vue">
+    <div class="bandeau"><div class="bandeau-h">
+      <div><div class="eyebrow">Répertoire</div><h1 class="titre">Locataires</h1></div>
+      <button class="mini" id="b-retour-t">Retour</button>
+    </div></div>
+    <div id="t-corps"></div>
   </section>
 
   <section id="v-logements" class="vue">
@@ -203,16 +235,10 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 <div class="barre" id="barre"></div>
 
 <dialog id="d-entete"><form method="dialog" class="dlg">
-  <h3>Mentions obligatoires</h3>
-  <p>Décret n° 2016-382 du 30 mars 2016. Sans ces mentions, le document est contestable.</p>
-  <div class="champ"><label>Bailleur — nom ou dénomination</label><input class="t" id="f-bnom"></div>
-  <div class="champ"><label>Bailleur — domicile ou siège social</label><input class="t" id="f-bdom"></div>
-  <div class="champ"><label>Locataire — nom</label><input class="t" id="f-lnom"></div>
-  <div class="champ" id="c-ladr"><label>Locataire — nouvelle adresse (sortie)</label><input class="t" id="f-ladr"></div>
+  <h3>Ce relevé</h3>
+  <p id="f-rappel" class="note" style="margin-bottom:12px"></p>
   <div class="champ"><label>Localisation du logement</label><input class="t" id="f-loc"></div>
-  <div class="champ"><label>Mandataire le cas échéant</label><input class="t" id="f-mand"></div>
-  <div class="champ"><label>Courriel du bailleur — pour l'exemplaire qui vous revient</label><input class="t" id="f-cb" type="email" autocomplete="email"></div>
-  <div class="champ"><label>Courriel du locataire — remise immédiate de son exemplaire</label><input class="t" id="f-cl" type="email"></div>
+  <div class="champ" id="c-ladr"><label>Nouvelle adresse du locataire (sortie)</label><input class="t" id="f-ladr"></div>
   <div class="champ"><label>Relevés de compteurs — un par ligne</label><textarea class="obs" id="f-cpt" placeholder="Électricité : 14 522 kWh&#10;Eau froide : 218 m3"></textarea></div>
   <div class="champ"><label>Clés et moyens d'accès — détail et destination, un par ligne</label><textarea class="obs" id="f-cles" placeholder="2 clés porte palière&#10;1 clé boîte aux lettres"></textarea></div>
   <button class="btn" value="ok" style="max-width:none">Enregistrer</button>
@@ -248,6 +274,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
   <h3>Nouvel état des lieux</h3>
   <div class="champ"><label>Logement</label><select class="t" id="n-log"></select></div>
   <div class="champ"><label>Type</label><select class="t" id="n-type"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select></div>
+  <div class="champ"><label>Locataire</label><select class="t" id="n-loc"></select></div>
   <div class="champ" id="c-nref"><label>État des lieux d'entrée de référence</label><select class="t" id="n-ref"></select></div>
   <p class="note">À la sortie, chaque élément est pré-rempli avec l'état constaté à l'entrée : ne rien toucher signifie « inchangé ». La propreté, elle, n'est jamais pré-remplie à la sortie.</p>
   <button class="btn" value="ok" style="max-width:none">Créer</button>
@@ -257,7 +284,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -290,11 +317,13 @@ const DB = (() => {
   function ouvrir() {
     return new Promise((res, rej) => {
       if (db) return res(db);
-      const r = indexedDB.open("releve-edl", 1);
+      const r = indexedDB.open("releve-edl", 2);
       r.onupgradeneeded = e => {
         const d = e.target.result;
         if (!d.objectStoreNames.contains("logements")) d.createObjectStore("logements", { keyPath: "id" });
         if (!d.objectStoreNames.contains("edls")) d.createObjectStore("edls", { keyPath: "id" });
+        if (!d.objectStoreNames.contains("reglages")) d.createObjectStore("reglages", { keyPath: "id" });
+        if (!d.objectStoreNames.contains("locataires")) d.createObjectStore("locataires", { keyPath: "id" });
         if (!d.objectStoreNames.contains("photos")) {
           const p = d.createObjectStore("photos", { keyPath: "id" });
           p.createIndex("parEdl", "edlId", { unique: false });
@@ -403,7 +432,68 @@ function telecharger(blob, nom) {
 /* ===================================================================
    4. ÉTAT
    =================================================================== */
-const S = { vue: "accueil", logements: [], edls: [], edl: null, logement: null, gabarit: null, photos: [], refPhotos: [] };
+const S = { vue: "accueil", logements: [], edls: [], locataires: [], bailleur: null,
+            edl: null, logement: null, gabarit: null, gabOuvert: null, photos: [], refPhotos: [] };
+
+const BAILLEUR_VIDE = { id: "bailleur", nom: "", domicile: "", courriel: "", mandataire: "" };
+
+async function chargerRepertoires() {
+  S.bailleur = (await DB.get("reglages", "bailleur")) || Object.assign({}, BAILLEUR_VIDE);
+  S.locataires = (await DB.tous("locataires")).sort((a, b) => a.nom.localeCompare(b.nom));
+}
+
+/* ---- écran Bailleur ---- */
+async function vueBailleur() {
+  await chargerRepertoires();
+  const b = S.bailleur;
+  $("#b-nom").value = b.nom; $("#b-dom").value = b.domicile;
+  $("#b-mail").value = b.courriel; $("#b-mand").value = b.mandataire || "";
+  barre([{ t: "Retour", sec: true, f: () => aller("accueil") },
+          { t: "Enregistrer", f: async () => {
+              S.bailleur = { id: "bailleur", nom: $("#b-nom").value.trim(), domicile: $("#b-dom").value.trim(),
+                             courriel: $("#b-mail").value.trim(), mandataire: $("#b-mand").value.trim() };
+              await DB.put("reglages", S.bailleur);
+              aller("accueil");
+            } }]);
+}
+
+/* ---- écran Locataires ---- */
+async function vueLocataires() {
+  await chargerRepertoires();
+  const compte = id => S.edls.filter(e => e.locataireId === id).length;
+  $("#t-corps").innerHTML = `<div class="aide">Un locataire saisi ici est réutilisable d'une année sur l'autre : son nom et son courriel se reportent seuls sur chaque nouveau relevé.</div>`
+    + (S.locataires.length ? `<ul class="liste">${S.locataires.map(t => `
+        <li data-t="${t.id}"><span><b>${esc(t.nom)}</b><small>${esc(t.courriel || "sans courriel")} · ${compte(t.id)} RELEVÉ(S)</small></span>
+        <span style="display:flex;gap:6px;flex-shrink:0">
+          <button class="mini" data-act="mod">Modifier</button>
+          <button class="mini" data-act="sup">Supprimer</button></span></li>`).join("")}</ul>`
+      : `<div class="vide">Aucun locataire enregistré.</div>`);
+
+  $("#t-corps").onclick = async ev => {
+    const li = ev.target.closest("li[data-t]"); if (!li) return;
+    const t = S.locataires.find(x => x.id === li.dataset.t);
+    if (ev.target.dataset.act === "sup") {
+      if (compte(t.id)) { alert("Ce locataire est rattaché à " + compte(t.id) + " relevé(s). Supprimez d'abord les relevés concernés."); return; }
+      if (!confirm("Supprimer « " + t.nom + " » du répertoire ?")) return;
+      await DB.del("locataires", t.id); vueLocataires(); return;
+    }
+    const nom = prompt("Nom du locataire", t.nom); if (nom === null) return;
+    const mail = prompt("Courriel du locataire", t.courriel || ""); if (mail === null) return;
+    t.nom = nom.trim() || t.nom; t.courriel = mail.trim();
+    await DB.put("locataires", t); vueLocataires();
+  };
+  barre([{ t: "Retour", sec: true, f: () => aller("accueil") },
+          { t: "Nouveau locataire", f: nouveauLocataire }]);
+}
+
+async function nouveauLocataire() {
+  const nom = prompt("Nom du locataire"); if (!nom || !nom.trim()) return null;
+  const mail = prompt("Courriel du locataire (facultatif)") || "";
+  const t = { id: uid(), nom: nom.trim(), courriel: mail.trim(), cree: Date.now() };
+  await DB.put("locataires", t);
+  S.locataires.push(t);
+  return t;
+}
 
 /* ===================================================================
    5. LOGEMENTS, GABARITS ET RÉSERVES
@@ -424,74 +514,119 @@ function vueGabarit(log) {
     return k;
   };
   const res = (log.reserves || []).filter(r => !r.levee);
+  const total = log.pieces.reduce((n, p) => n + p.elements.length, 0);
+
+  // Une seule pièce ouverte à la fois : avec 166 éléments, tout afficher
+  // rendait l'écran illisible et la moindre correction pénible.
   const c = $("#g-corps");
   c.innerHTML = `
-    <div class="piece"><div class="piece-h"><div class="piece-n">Réserves permanentes</div></div>
-      ${res.length ? res.map(r => `<div class="el fait" style="border-left-color:var(--attente)">
+    <div class="aide"><b>${total} éléments répartis en ${log.pieces.length} pièces.</b><br>
+      Le gabarit est la liste de ce qui existe dans le logement. Il ressert à chaque locataire.
+      Touchez une pièce pour l'ouvrir. Le bouton à droite de chaque ligne indique s'il s'agit d'un objet
+      unique ou d'un lot de plusieurs exemplaires identiques.</div>
+
+    ${res.length ? `<div class="piece"><div class="piece-h"><div class="piece-n">Réserves permanentes</div></div>
+      ${res.map(r => `<div class="el fait" style="border-left-color:var(--attente)">
           <p class="el-n">${esc(nomEl(r.key))}</p>
           <div class="reserve"><u>Depuis le ${dateFr(r.depuis)}</u>${esc(r.texte)}</div>
           <button class="mini" data-lever="${r.id}">Lever la réserve (désordre réparé)</button>
-        </div>`).join("")
-      : `<div class="vide">Aucune réserve. Une réserve est un désordre que vous ne réparez pas et qui doit suivre le logement d'un locataire à l'autre.</div>`}
+        </div>`).join("")}</div>` : ""}
+
+    <div style="margin-top:18px">
+    ${log.pieces.map(p => {
+      const ouvert = S.gabOuvert === p.id;
+      const lots = p.elements.filter(e => e.qte != null).length;
+      return `<div data-p="${p.id}">
+        <button class="pliable" data-act="plier" aria-expanded="${ouvert}">
+          <span class="piece-n">${ouvert ? "▾" : "▸"} ${esc(p.nom)}</span>
+          <span class="cnt">${p.elements.length} élément${p.elements.length > 1 ? "s" : ""}${lots ? " · " + lots + " lot" + (lots > 1 ? "s" : "") : ""}</span>
+        </button>
+        ${!ouvert ? "" : `
+          <div style="border:1px solid var(--trait);border-top:none;padding:10px;background:var(--papier);margin-bottom:-1px">
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <button class="mini" data-act="ren-piece">Renommer la pièce</button>
+              <button class="mini" data-act="del-piece">Supprimer la pièce</button>
+            </div>
+            ${p.elements.map(e => `<div class="gab" data-e="${e.id}">
+              <input value="${esc(e.nom)}" data-ren="el">
+              <button class="qbtn ${e.qte == null ? "" : "on"}" data-act="qte">${e.qte == null ? "unique" : "× " + e.qte}</button>
+              <button class="x" data-act="del-el" title="Supprimer l'élément">✕</button>
+            </div>`).join("")}
+            <button class="mini" data-act="add-el" style="margin-top:10px">+ Élément dans ${esc(p.nom)}</button>
+          </div>`}
+      </div>`;
+    }).join("")}
     </div>
-    ${log.pieces.map(p => `
-    <div class="piece" data-p="${p.id}">
-      <div class="piece-h">
-        <input class="piece-n" value="${esc(p.nom)}" data-ren="piece" style="border:none;background:none;flex:1;min-width:0">
-        <button class="mini" data-act="del-piece">Supprimer</button>
-      </div>
-      ${p.elements.map(e => `<div class="gab" data-e="${e.id}"><input value="${esc(e.nom)}" data-ren="el">
-        <input class="gq" type="text" inputmode="numeric" placeholder="unique" title="Nombre d'exemplaires identiques. Laisser vide pour un objet unique."
-               value="${e.qte == null ? "" : "× " + e.qte}" data-ren="qte">
-        <button class="x" data-act="raz-qte" title="Repasser en objet unique" ${e.qte == null ? "style=\"visibility:hidden\"" : ""}>↺</button>
-        <button class="x" data-act="del-el">✕</button></div>`).join("")}
-      <button class="mini" data-act="add-el" style="margin-top:8px">+ Élément</button>
-    </div>`).join("")}
-    <button class="mini" id="add-piece" style="margin-top:20px">+ Pièce</button>`;
+    <button class="mini" id="add-piece" style="margin-top:20px">+ Nouvelle pièce</button>`;
 
   c.oninput = e => {
-    const t = e.target, pid = t.closest("[data-p]") && t.closest("[data-p]").dataset.p;
-    const p = log.pieces.find(x => x.id === pid); if (!p) return;
-    if (t.dataset.ren === "piece") p.nom = t.value;
-    if (t.dataset.ren === "el") p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).nom = t.value;
-    if (t.dataset.ren === "qte") {
-      const chiffres = t.value.replace(/[^0-9]/g, "");
-      const n = parseInt(chiffres, 10);
-      p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).qte = (isNaN(n) || n < 2) ? null : n;
-    }
-    DB.put("logements", log);
+    const t = e.target;
+    if (t.dataset.ren !== "el") return;
+    const p = log.pieces.find(x => x.id === t.closest("[data-p]").dataset.p);
+    p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).nom = t.value;
+    clearTimeout(c._t); c._t = setTimeout(() => DB.put("logements", log), 400);
   };
-  c.onclick = async e => {
-    const lever = e.target.dataset.lever;
+
+  c.onclick = async ev => {
+    const lever = ev.target.dataset.lever;
     if (lever) {
       if (!confirm("Lever cette réserve ? Elle disparaîtra des prochains états des lieux : ne le faites qu'une fois le désordre réparé.")) return;
       log.reserves.find(r => r.id === lever).levee = Date.now();
       await DB.put("logements", log); vueGabarit(log); return;
     }
-    const a = e.target.dataset.act;
-    if (!a && e.target.id !== "add-piece") return;
-    const pid = e.target.closest("[data-p]") && e.target.closest("[data-p]").dataset.p;
-    const p = log.pieces.find(x => x.id === pid);
-    if (e.target.id === "add-piece") log.pieces.push({ id: uid(), nom: "Nouvelle pièce", elements: [] });
-    if (a === "del-piece" && confirm("Supprimer la pièce « " + p.nom + " » du gabarit ?")) log.pieces = log.pieces.filter(x => x.id !== pid);
-    if (a === "raz-qte") {
-      p.elements.find(x => x.id === e.target.closest("[data-e]").dataset.e).qte = null;
+    if (ev.target.id === "add-piece") {
+      const nom = prompt("Nom de la nouvelle pièce"); if (!nom || !nom.trim()) return;
+      const np = { id: uid(), nom: nom.trim(), elements: [] };
+      log.pieces.push(np); S.gabOuvert = np.id;
       await DB.put("logements", log); vueGabarit(log); return;
     }
-    if (a === "add-el") p.elements.push({ id: uid(), nom: "Nouvel élément" });
-    if (a === "del-el") { const eid = e.target.closest("[data-e]").dataset.e; p.elements = p.elements.filter(x => x.id !== eid); }
-    await DB.put("logements", log); vueGabarit(log);
+    const bouton = ev.target.closest("[data-act]"); if (!bouton) return;
+    const a = bouton.dataset.act;
+    const boiteP = bouton.closest("[data-p]"); if (!boiteP) return;
+    const p = log.pieces.find(x => x.id === boiteP.dataset.p);
+
+    if (a === "plier") { S.gabOuvert = (S.gabOuvert === p.id) ? null : p.id; vueGabarit(log); return; }
+
+    if (a === "ren-piece") {
+      const nom = prompt("Nom de la pièce", p.nom); if (!nom || !nom.trim()) return;
+      p.nom = nom.trim();
+    }
+    if (a === "del-piece") {
+      if (!confirm("Supprimer la pièce « " + p.nom + " » et ses " + p.elements.length + " éléments ?")) return;
+      log.pieces = log.pieces.filter(x => x.id !== p.id);
+    }
+    if (a === "add-el") {
+      const nom = prompt("Nom du nouvel élément"); if (!nom || !nom.trim()) return;
+      p.elements.push({ id: uid(), nom: nom.trim(), qte: null });
+    }
+    if (a === "del-el") {
+      const el = p.elements.find(x => x.id === bouton.closest("[data-e]").dataset.e);
+      if (!confirm("Supprimer « " + el.nom + " » ?")) return;
+      p.elements = p.elements.filter(x => x.id !== el.id);
+    }
+    if (a === "qte") {
+      // Un bouton plutôt qu'un champ : impossible de rester coincé avec une
+      // valeur qu'on n'arrive plus à effacer.
+      const el = p.elements.find(x => x.id === bouton.closest("[data-e]").dataset.e);
+      const rep = prompt("Combien d'exemplaires identiques de « " + el.nom + " » ?\n\n"
+        + "Laissez vide pour un objet unique.", el.qte == null ? "" : el.qte);
+      if (rep === null) return;
+      const n = parseInt(String(rep).replace(/[^0-9]/g, ""), 10);
+      el.qte = (isNaN(n) || n < 2) ? null : n;
+    }
+    await DB.put("logements", log);
+    vueGabarit(log);
   };
+
   barre([
     { t: "Retour", sec: true, f: () => aller("logements") },
-    { t: "Renommer", sec: true, f: async () => {
-        const n = prompt("Nom du logement", log.nom);
-        if (!n || !n.trim()) return;
+    { t: "Renommer le logement", sec: true, f: async () => {
+        const n = prompt("Nom du logement", log.nom); if (!n || !n.trim()) return;
         log.nom = n.trim(); await DB.put("logements", log); vueGabarit(log);
       } },
     { t: "Supprimer", sec: true, f: async () => {
         const lies = (await DB.tous("edls")).filter(e => e.logementId === log.id);
-        if (lies.length) { alert("Ce logement porte " + lies.length + " relevé(s). Un état des lieux signé ne se supprime pas par ricochet : videz d'abord les relevés concernés."); return; }
+        if (lies.length) { alert("Ce logement porte " + lies.length + " relevé(s). Un état des lieux signé ne se supprime pas par ricochet : supprimez d'abord les relevés concernés."); return; }
         if (!confirm("Supprimer définitivement le logement « " + log.nom + " » et son gabarit ?")) return;
         await DB.del("logements", log.id); aller("logements");
       } }
@@ -501,12 +636,16 @@ function vueGabarit(log) {
 /* ===================================================================
    6. CRÉATION D'UN RELEVÉ
    =================================================================== */
-function edlNeuf(log, type, ref) {
+function edlNeuf(log, type, ref, locataire) {
   const e = {
     id: uid(), logementId: log.id, logementNom: log.nom, type,
     refId: ref ? ref.id : null, cree: Date.now(), signe: null, verrouille: false, version: VERSION,
-    bailleur: { nom: "", domicile: "" }, locataire: { nom: "", nouvelleAdresse: "" },
-    localisation: log.localisation || "", mandataire: "", compteurs: "", cles: "",
+    bailleur: { nom: S.bailleur.nom, domicile: S.bailleur.domicile },
+    courrielBailleur: S.bailleur.courriel,
+    locataireId: locataire ? locataire.id : null,
+    locataire: { nom: locataire ? locataire.nom : "", nouvelleAdresse: "" },
+    courrielLocataire: locataire ? locataire.courriel : "",
+    localisation: log.localisation || "", mandataire: S.bailleur.mandataire || "", compteurs: "", cles: "",
     signatures: { bailleur: null, locataire: null }, journal: [],
     pieces: log.pieces.map(p => ({
       id: p.id, nom: p.nom,
@@ -518,8 +657,6 @@ function edlNeuf(log, type, ref) {
     }))
   };
   if (ref) {
-    e.bailleur = Object.assign({}, ref.bailleur);
-    e.locataire = { nom: ref.locataire.nom, nouvelleAdresse: "" };
     e.localisation = ref.localisation; e.cles = ref.cles;
     const src = {};
     ref.pieces.forEach(p => p.elements.forEach(el => src[p.id + "/" + el.id] = el));
@@ -789,27 +926,18 @@ function blocages() {
    =================================================================== */
 function ouvrirEntete() {
   const e = S.edl;
-  $("#f-bnom").value = e.bailleur.nom; $("#f-bdom").value = e.bailleur.domicile;
-  $("#f-lnom").value = e.locataire.nom; $("#f-ladr").value = e.locataire.nouvelleAdresse;
-  $("#f-loc").value = e.localisation; $("#f-mand").value = e.mandataire;
+  $("#f-rappel").textContent = "Bailleur : " + (e.bailleur.nom || "non renseigné")
+    + " · Locataire : " + (e.locataire.nom || "non renseigné")
+    + ". Ces identités se modifient dans les écrans Bailleur et Locataires.";
+  $("#f-loc").value = e.localisation; $("#f-ladr").value = e.locataire.nouvelleAdresse;
   $("#f-cpt").value = e.compteurs; $("#f-cles").value = e.cles;
-  // L'adresse du bailleur ne change pas d'un relevé à l'autre : on la reprend
-  // du dernier relevé qui en portait une.
-  let cb = e.courrielBailleur || "";
-  if (!cb) {
-    const passe = S.edls.filter(x => x.courrielBailleur).sort((a, b) => b.cree - a.cree)[0];
-    if (passe) cb = passe.courrielBailleur;
-  }
-  $("#f-cb").value = cb; $("#f-cl").value = e.courrielLocataire || "";
   $("#d-entete").showModal();
 }
 $("#d-entete").addEventListener("close", async () => {
   const e = S.edl; if (!e || e.verrouille) return;
-  e.bailleur = { nom: $("#f-bnom").value.trim(), domicile: $("#f-bdom").value.trim() };
-  e.locataire = { nom: $("#f-lnom").value.trim(), nouvelleAdresse: $("#f-ladr").value.trim() };
-  e.localisation = $("#f-loc").value.trim(); e.mandataire = $("#f-mand").value.trim();
+  e.locataire.nouvelleAdresse = $("#f-ladr").value.trim();
+  e.localisation = $("#f-loc").value.trim();
   e.compteurs = $("#f-cpt").value; e.cles = $("#f-cles").value;
-  e.courrielBailleur = $("#f-cb").value.trim(); e.courrielLocataire = $("#f-cl").value.trim();
   await sauver(); dessinerEdl();
 });
 
@@ -947,6 +1075,7 @@ async function exporter() {
 
 async function sauvegardeComplete() {
   const logements = await DB.tous("logements"), edls = await DB.tous("edls"), photos = await DB.tous("photos");
+  const locataires = await DB.tous("locataires"), bailleur = await DB.get("reglages", "bailleur");
   const fichiers = [], metaPhotos = [];
   for (const p of photos) {
     const base = "photos/" + p.id;
@@ -956,7 +1085,7 @@ async function sauvegardeComplete() {
     metaPhotos.push({ id: p.id, edlId: p.edlId, elementKey: p.elementKey, kind: p.kind, sha256: p.sha256, nom: p.nom, createdAt: p.createdAt, originalPresent: !!p.original });
   }
   const enc = new TextEncoder();
-  fichiers.push({ nom: "sauvegarde.json", u8: enc.encode(JSON.stringify({ format: "releve-sauvegarde", version: VERSION, date: Date.now(), logements, edls, photos: metaPhotos }, null, 2)) });
+  fichiers.push({ nom: "sauvegarde.json", u8: enc.encode(JSON.stringify({ format: "releve-sauvegarde", version: VERSION, date: Date.now(), logements, edls, locataires, bailleur, photos: metaPhotos }, null, 2)) });
   telecharger(zip(fichiers), "Releve_sauvegarde_" + new Date().toISOString().slice(0, 10) + ".zip");
   alert("Sauvegarde créée. Déposez-la dans iCloud ou sur votre disque : c'est aussi le moyen de reprendre le travail sur un autre appareil.");
 }
@@ -967,6 +1096,8 @@ async function restaurer(file) {
     const f = await dezip(file);
     if (!f["sauvegarde.json"]) throw new Error("Ce fichier n'est pas une sauvegarde Relevé.");
     const d = JSON.parse(new TextDecoder().decode(f["sauvegarde.json"]));
+    if (d.bailleur) await DB.put("reglages", d.bailleur);
+    for (const t of (d.locataires || [])) await DB.put("locataires", t);
     for (const l of d.logements) await DB.put("logements", l);
     for (const e of d.edls) await DB.put("edls", e);
     for (const p of d.photos) {
@@ -1042,8 +1173,11 @@ function aller(v) {
   window.scrollTo(0, 0);
   if (v === "accueil") vueAccueil();
   if (v === "logements") vueLogements();
+  if (v === "bailleur") vueBailleur();
+  if (v === "locataires") vueLocataires();
 }
 async function vueAccueil() {
+  await chargerRepertoires();
   S.logements = await DB.tous("logements");
   S.edls = (await DB.tous("edls")).sort((a, b) => b.cree - a.cree);
   // Les relevés sont groupés par logement : avec plusieurs biens, une liste
@@ -1088,19 +1222,29 @@ function ouvrirNeuf(logId) {
     $("#n-ref").innerHTML = cands.map(e => `<option value="${e.id}">${esc(e.locataire.nom || "sans nom")} — ${dateFr(e.cree)}</option>`).join("")
       || `<option value="">Aucune entrée enregistrée</option>`;
   };
+  $("#n-loc").innerHTML = S.locataires.map(t => `<option value="${t.id}">${esc(t.nom)}</option>`).join("")
+    + `<option value="_new">+ Nouveau locataire…</option>`;
   $("#n-type").onchange = maj; $("#n-log").onchange = maj; maj();
   $("#d-neuf").showModal();
 }
 $("#d-neuf").addEventListener("close", async () => {
   if ($("#d-neuf").returnValue !== "ok") return;
   const log = S.logements.find(l => l.id === $("#n-log").value), type = $("#n-type").value;
+  let locataire = null;
+  if ($("#n-loc").value === "_new") locataire = await nouveauLocataire();
+  else locataire = S.locataires.find(t => t.id === $("#n-loc").value) || null;
+  if (!locataire) { alert("Un état des lieux se fait avec un locataire identifié. Créez-le d'abord."); return; }
+  if (!S.bailleur.nom || !S.bailleur.domicile) {
+    alert("Renseignez d'abord l'écran Bailleur : le nom et le domicile du bailleur sont des mentions obligatoires.");
+    aller("bailleur"); return;
+  }
   let ref = null;
   if (type === "sortie") {
     const rid = $("#n-ref").value;
     if (!rid) { alert("Une sortie doit s'appuyer sur un état des lieux d'entrée : c'est lui qui fournit la référence de comparaison."); return; }
     ref = await DB.get("edls", rid);
   }
-  const e = edlNeuf(log, type, ref);
+  const e = edlNeuf(log, type, ref, locataire);
   await DB.put("edls", e); await vueEdl(e); aller("edl");
 });
 
@@ -1142,6 +1286,10 @@ async function vueLogements() {
 }
 
 $("#b-gabarits").onclick = () => aller("logements");
+$("#b-bailleur").onclick = () => aller("bailleur");
+$("#b-locataires").onclick = () => aller("locataires");
+$("#b-retour-b").onclick = () => aller("accueil");
+$("#b-retour-t").onclick = () => aller("accueil");
 $("#b-retour-l").onclick = () => aller("accueil");
 $("#b-retour-g").onclick = () => aller("accueil");
 $("#b-retour-e").onclick = () => aller("accueil");
