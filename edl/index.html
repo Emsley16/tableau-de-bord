@@ -287,7 +287,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.6.0";
+const VERSION = "1.7.0";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -541,12 +541,13 @@ function vueGabarit(log) {
       const lots = p.elements.filter(e => e.qte != null).length;
       return `<div data-p="${p.id}">
         <button class="pliable" data-act="plier" aria-expanded="${ouvert}">
-          <span class="piece-n">${ouvert ? "▾" : "▸"} ${esc(p.nom)}</span>
+          <span class="piece-n">${ouvert ? "▾" : "▸"} ${log.pieces.indexOf(p) + 1}. ${esc(p.nom)}</span>
           <span class="cnt">${p.elements.length} élément${p.elements.length > 1 ? "s" : ""}${lots ? " · " + lots + " lot" + (lots > 1 ? "s" : "") : ""}</span>
         </button>
         ${!ouvert ? "" : `
           <div style="border:1px solid var(--trait);border-top:none;padding:10px;background:var(--papier);margin-bottom:-1px">
             <div style="display:flex;gap:6px;margin-bottom:10px">
+              <button class="mini" data-act="pos-piece">Déplacer la pièce</button>
               <button class="mini" data-act="ren-piece">Renommer la pièce</button>
               <button class="mini" data-act="del-piece">Supprimer la pièce</button>
             </div>
@@ -592,6 +593,17 @@ function vueGabarit(log) {
 
     if (a === "plier") { S.gabOuvert = (S.gabOuvert === p.id) ? null : p.id; vueGabarit(log); return; }
 
+    if (a === "pos-piece") {
+      const i = log.pieces.indexOf(p);
+      const liste = log.pieces.map((x, j) => (j + 1) + ". " + x.nom).join("\n");
+      const rep2 = prompt("Ordre actuel :\n" + liste + "\n\nÀ quelle position placer « " + p.nom + " » ?", i + 1);
+      if (rep2 === null) return;
+      let n = parseInt(String(rep2).replace(/[^0-9]/g, ""), 10);
+      if (isNaN(n)) return;
+      n = Math.max(1, Math.min(log.pieces.length, n));
+      log.pieces.splice(i, 1);
+      log.pieces.splice(n - 1, 0, p);
+    }
     if (a === "ren-piece") {
       const nom = prompt("Nom de la pièce", p.nom); if (!nom || !nom.trim()) return;
       p.nom = nom.trim();
