@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relevé — États des lieux</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Relevé">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#16202B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --encre:#16202B; --papier:#F2F4F6; --carte:#FFFFFF; --trait:#C9D2DA; --trait-fort:#94A3B0;
+  --propose:#8A97A3; --confirme:#0F6E52; --attente:#B4600B; --defaut:#A32A1E;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--papier);color:var(--encre);font-family:var(--sans);font-size:16px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--encre);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.app{max-width:900px;margin:0 auto;padding:0 12px 130px}
+.bandeau{position:sticky;top:0;z-index:40;background:var(--papier);padding:10px 12px 8px;margin:0 -12px;border-bottom:1px solid var(--trait)}
+.bandeau-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--propose)}
+.titre{font-size:17px;font-weight:650;letter-spacing:-.01em;margin:0}
+
+.maj{position:sticky;top:0;z-index:60;background:var(--encre);color:#fff;padding:9px 12px;margin:0 -12px;
+  display:none;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+.maj.on{display:flex}
+.maj button{border:1px solid #fff;border-radius:3px;padding:5px 10px;color:#fff;font-size:12px;font-family:var(--mono);letter-spacing:.06em}
+
+.jauge{display:flex;gap:2px;margin-top:8px;height:6px}
+.jauge i{flex:1 1 0;background:var(--trait);border-radius:1px}
+.jauge i.ok{background:var(--confirme)} .jauge i.mod{background:var(--encre)}
+.jauge-l{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--propose)}
+.jauge-l b{color:var(--attente);font-weight:600} .jauge-l b.fini{color:var(--confirme)}
+
+.piece{margin-top:22px}
+.piece-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:6px;border-bottom:2px solid var(--encre)}
+.piece-n{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+.mini{font-family:var(--mono);font-size:11px;letter-spacing:.06em;border:1px solid var(--trait-fort);border-radius:3px;padding:4px 8px;white-space:nowrap}
+.mini:disabled{opacity:.35}
+
+.el{background:var(--carte);border:1px solid var(--trait);border-top:none;padding:12px}
+.piece .el:first-of-type{border-top:1px solid var(--trait)}
+.el.enattente{border-left:3px solid var(--attente)} .el.fait{border-left:3px solid var(--confirme)}
+.el-n{font-weight:600;font-size:15px;margin:0 0 8px}
+.el-n span{font-family:var(--mono);font-size:11px;color:var(--propose);font-weight:400;letter-spacing:.06em}
+
+.reserve{border-left:3px solid var(--attente);background:#FFF8EE;padding:8px 10px;margin:0 0 10px;font-size:13px}
+.reserve u{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--attente);text-decoration:none;display:block;margin-bottom:2px}
+
+.axe{margin-bottom:8px}
+.axe-l{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--propose);display:block;margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--trait-fort);border-radius:3px;padding:7px 10px;font-size:13px;line-height:1;background:var(--carte);color:var(--propose)}
+.chip[data-on="propose"]{color:var(--propose);font-style:italic;border-style:dashed;
+  background:repeating-linear-gradient(135deg,#fff,#fff 4px,#EDF1F4 4px,#EDF1F4 8px)}
+.chip[data-on="confirme"]{color:#fff;background:var(--confirme);border-color:var(--confirme)}
+.chip[data-on="modifie"]{color:#fff;background:var(--encre);border-color:var(--encre)}
+.chip[data-on="confirme"][data-grave="1"],.chip[data-on="modifie"][data-grave="1"]{background:var(--defaut);border-color:var(--defaut)}
+
+input.qte{width:96px;border:1px solid var(--trait-fort);border-radius:3px;padding:7px 8px;font-size:14px;background:var(--carte)}
+input.qte[data-st="propose"]{color:var(--propose);font-style:italic;border-style:dashed;
+  background:repeating-linear-gradient(135deg,#fff,#fff 4px,#EDF1F4 4px,#EDF1F4 8px)}
+input.qte[data-st="confirme"]{border-color:var(--confirme)}
+input.qte[data-st="modifie"]{border-color:var(--encre);font-weight:600}
+.ecart{display:inline-block;margin-left:8px;padding:5px 9px;border-radius:3px;font-size:13px;font-weight:600;
+  background:var(--defaut);color:#fff}
+.ecart.plus{background:var(--confirme)}
+.gab input.gq{flex:0 0 74px;border:1px solid var(--trait);border-radius:3px;padding:4px 6px;font-size:13px;text-align:center}
+textarea.obs,input.t,select.t{width:100%;border:1px solid var(--trait);border-radius:3px;padding:8px;background:var(--carte);font-size:14px;resize:vertical}
+textarea.obs{min-height:52px} .obs-l{margin-top:6px}
+
+.ph{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px}
+.ph figure{margin:0;flex:0 0 auto;width:82px}
+.ph img{width:82px;height:82px;object-fit:cover;border-radius:3px;display:block;background:var(--trait)}
+.ph figcaption{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;color:var(--propose);text-align:center}
+.ph .ref img{border:2px solid var(--propose)} .ph .cst img{border:2px solid var(--confirme)}
+.ajout{flex:0 0 auto;width:82px;height:82px;border:1px dashed var(--trait-fort);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--trait-fort)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;margin-bottom:10px}
+.cmp>div{border:1px solid var(--trait);padding:6px;border-radius:3px}
+.cmp h4{margin:0 0 5px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--propose)}
+.cmp .val{font-size:13px;font-weight:600}
+
+.barre{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--carte);border-top:1px solid var(--trait-fort);
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center}
+.btn{border:1px solid var(--encre);background:var(--encre);color:#fff;border-radius:3px;padding:11px 16px;font-size:14px;font-weight:600;flex:1;max-width:280px}
+.btn.sec{background:var(--carte);color:var(--encre)} .btn:disabled{opacity:.35}
+
+.vue{display:none}.vue.on{display:block}
+dialog{border:1px solid var(--trait-fort);border-radius:4px;padding:0;max-width:560px;width:calc(100% - 24px);background:var(--carte);color:var(--encre)}
+dialog::backdrop{background:rgba(22,32,43,.55)}
+.dlg{padding:16px;max-height:80vh;overflow:auto}
+.dlg h3{margin:0 0 4px;font-size:16px} .dlg p{margin:0 0 12px;font-size:14px;color:#4A5866}
+.champ{margin-bottom:10px}
+.champ label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--propose);margin-bottom:3px}
+.sig{border:1px solid var(--trait-fort);border-radius:3px;width:100%;height:150px;touch-action:none;background:#fff}
+.liste{list-style:none;margin:0;padding:0}
+.liste li{border:1px solid var(--trait);background:var(--carte);padding:12px;margin-bottom:-1px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.liste b{display:block;font-size:15px}
+.liste small{font-family:var(--mono);font-size:11px;color:var(--propose);letter-spacing:.05em}
+.vide{border:1px dashed var(--trait-fort);padding:22px;text-align:center;color:#4A5866;font-size:14px}
+.alerte{border-left:3px solid var(--attente);background:#FFF8EE;padding:10px 12px;font-size:13px;margin:12px 0}
+.alerte ul{margin:6px 0 0;padding-left:18px}
+.note{font-size:12px;color:#4A5866;margin-top:14px}
+.pied{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--propose);text-align:center;margin-top:18px}
+.gab{display:flex;gap:6px;align-items:center;margin-bottom:-1px;border:1px solid var(--trait);padding:8px;background:var(--carte)}
+.gab input{flex:1;border:none;background:none;font-size:14px;min-width:0}
+.gab .x{color:var(--defaut);font-family:var(--mono);font-size:13px;padding:0 6px}
+
+#print{display:none}
+@media print{
+  body{background:#fff} .app,.barre,dialog,.maj{display:none!important}
+  #print{display:block;font-size:10.5pt;color:#000}
+  #print h1{font-size:15pt;margin:0 0 2mm}
+  #print h2{font-size:11pt;margin:6mm 0 1mm;border-bottom:1.2pt solid #000;padding-bottom:1mm}
+  #print table{width:100%;border-collapse:collapse;margin-bottom:2mm}
+  #print td,#print th{border:.4pt solid #666;padding:1.4mm 2mm;font-size:9.5pt;vertical-align:top;text-align:left}
+  #print th{background:#eee}
+  #print .res{background:#f6f0e6}
+  #print .pimg{width:44mm;height:auto;border:.4pt solid #666}
+  #print figure{margin:0}
+  #print figcaption{font-size:7.5pt;font-family:monospace}
+  #print .sigbloc{display:flex;gap:8mm;margin-top:4mm}
+  #print .sigbloc div{flex:1;border:.4pt solid #666;padding:2mm;min-height:32mm}
+  #print .sigbloc img{max-width:100%;max-height:24mm}
+  #print .pb{page-break-before:always} #print .nb{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="maj" id="maj">
+  <span>Une nouvelle version est disponible.</span>
+  <button id="b-maj">Actualiser</button>
+</div>
+
+<div class="app">
+
+  <section id="v-accueil" class="vue on">
+    <div class="bandeau">
+      <div class="bandeau-h">
+        <div><div class="eyebrow">Relevé contradictoire</div><h1 class="titre">États des lieux</h1></div>
+        <button class="mini" id="b-gabarits">Logements</button>
+      </div>
+    </div>
+    <div id="l-edls"></div>
+    <p class="note">Les relevés vivent sur cet appareil. Pour passer de l'iPhone au Mac, utilisez la sauvegarde complète : elle transporte tout, photos comprises.</p>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="mini" id="b-sauve">Sauvegarde complète</button>
+      <label class="mini" style="display:inline-block">Restaurer une sauvegarde<input type="file" accept=".zip" hidden id="f-restaure"></label>
+    </div>
+    <div class="pied" id="pied">—</div>
+  </section>
+
+  <section id="v-logements" class="vue">
+    <div class="bandeau">
+      <div class="bandeau-h">
+        <div><div class="eyebrow">Parc locatif</div><h1 class="titre">Logements</h1></div>
+        <button class="mini" id="b-retour-l">Retour</button>
+      </div>
+    </div>
+    <div id="lg-corps"></div>
+  </section>
+
+  <section id="v-gabarit" class="vue">
+    <div class="bandeau">
+      <div class="bandeau-h">
+        <div><div class="eyebrow">Gabarit et réserves</div><h1 class="titre" id="g-nom">Logement</h1></div>
+        <button class="mini" id="b-retour-g">Retour</button>
+      </div>
+    </div>
+    <div id="g-corps"></div>
+  </section>
+
+  <section id="v-edl" class="vue">
+    <div class="bandeau">
+      <div class="bandeau-h">
+        <div><div class="eyebrow" id="e-type">—</div><h1 class="titre" id="e-nom">—</h1></div>
+        <button class="mini" id="b-retour-e">Retour</button>
+      </div>
+      <div class="jauge" id="e-jauge"></div>
+      <div class="jauge-l">
+        <span id="e-compte">—</span>
+        <button class="mini" id="b-entete" style="border:none;padding:0;text-decoration:underline">En-tête et compteurs</button>
+      </div>
+    </div>
+    <div id="e-corps"></div>
+    <div id="e-blocage"></div>
+  </section>
+
+</div>
+
+<div class="barre" id="barre"></div>
+
+<dialog id="d-entete"><form method="dialog" class="dlg">
+  <h3>Mentions obligatoires</h3>
+  <p>Décret n° 2016-382 du 30 mars 2016. Sans ces mentions, le document est contestable.</p>
+  <div class="champ"><label>Bailleur — nom ou dénomination</label><input class="t" id="f-bnom"></div>
+  <div class="champ"><label>Bailleur — domicile ou siège social</label><input class="t" id="f-bdom"></div>
+  <div class="champ"><label>Locataire — nom</label><input class="t" id="f-lnom"></div>
+  <div class="champ" id="c-ladr"><label>Locataire — nouvelle adresse (sortie)</label><input class="t" id="f-ladr"></div>
+  <div class="champ"><label>Localisation du logement</label><input class="t" id="f-loc"></div>
+  <div class="champ"><label>Mandataire le cas échéant</label><input class="t" id="f-mand"></div>
+  <div class="champ"><label>Courriel du bailleur — pour l'exemplaire qui vous revient</label><input class="t" id="f-cb" type="email" autocomplete="email"></div>
+  <div class="champ"><label>Courriel du locataire — remise immédiate de son exemplaire</label><input class="t" id="f-cl" type="email"></div>
+  <div class="champ"><label>Relevés de compteurs — un par ligne</label><textarea class="obs" id="f-cpt" placeholder="Électricité : 14 522 kWh&#10;Eau froide : 218 m3"></textarea></div>
+  <div class="champ"><label>Clés et moyens d'accès — détail et destination, un par ligne</label><textarea class="obs" id="f-cles" placeholder="2 clés porte palière&#10;1 clé boîte aux lettres"></textarea></div>
+  <button class="btn" value="ok" style="max-width:none">Enregistrer</button>
+</form></dialog>
+
+<dialog id="d-sign"><div class="dlg">
+  <h3>Signature des parties</h3>
+  <p>Chaque partie signe après relecture. Un exemplaire est remis immédiatement à chacune.</p>
+  <div class="champ"><label>Le bailleur ou son mandataire</label><canvas class="sig" id="sig-b"></canvas></div>
+  <div class="champ"><label>Le locataire</label><canvas class="sig" id="sig-l"></canvas></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn sec" id="sig-eff">Effacer</button>
+    <button class="btn sec" id="sig-non">Annuler</button>
+    <button class="btn" id="sig-ok">Signer et verrouiller</button>
+  </div>
+</div></dialog>
+
+<dialog id="d-envoi"><div class="dlg">
+  <h3>Remise aux parties</h3>
+  <p>Un navigateur ne peut pas joindre un fichier à un courriel sans votre accord explicite : la remise se fait donc en deux gestes.</p>
+  <div class="champ"><label>Destinataires</label><input class="t" id="e-dest"></div>
+  <div class="champ"><label>Ajouter une adresse (garant, co-titulaire, agence)</label><input class="t" id="e-plus" type="email" placeholder="facultatif"></div>
+  <div class="alerte" id="e-emp"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn sec" id="e-pdf">1. Enregistrer le PDF</button>
+    <button class="btn" id="e-mail">2. Ouvrir le courriel</button>
+  </div>
+  <p class="note">Dans la fenêtre d'impression, choisissez « Enregistrer au format PDF » puis retenez l'emplacement : c'est le fichier à joindre au message.</p>
+  <button class="btn sec" id="e-non" style="margin-top:10px;max-width:none">Fermer</button>
+</div></dialog>
+
+<dialog id="d-neuf"><form method="dialog" class="dlg">
+  <h3>Nouvel état des lieux</h3>
+  <div class="champ"><label>Logement</label><select class="t" id="n-log"></select></div>
+  <div class="champ"><label>Type</label><select class="t" id="n-type"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select></div>
+  <div class="champ" id="c-nref"><label>État des lieux d'entrée de référence</label><select class="t" id="n-ref"></select></div>
+  <p class="note">À la sortie, chaque élément est pré-rempli avec l'état constaté à l'entrée : ne rien toucher signifie « inchangé ». La propreté, elle, n'est jamais pré-remplie à la sortie.</p>
+  <button class="btn" value="ok" style="max-width:none">Créer</button>
+</form></dialog>
+
+<div id="print"></div>
+
+<script>
+"use strict";
+const VERSION = "1.4.0";
+
+/* ===================================================================
+   1. CONSTANTES MÉTIER
+   =================================================================== */
+const ETATS = ["Neuf", "Bon état", "État d'usage", "Mauvais état"];
+const PROPRETES = ["Propre", "Traces à nettoyer", "Sale — nettoyage nécessaire"];
+const GRAVE_ETAT = "Mauvais état";
+const GRAVE_PROP = "Sale — nettoyage nécessaire";
+
+// Studio meublé. Mobilier repris de la liste réglementaire du décret n° 2015-981.
+const GABARIT_DEFAUT = [
+  ["Pièce principale", ["Sol", "Murs", "Plafond", "Porte palière et serrure", "Fenêtre et vitrage",
+    "Occultation (volet, store, rideau)", "Prises et interrupteurs", "Luminaires",
+    "Émetteur de chauffage", "Plinthes", "Literie avec couette ou couverture", "Table", "Sièges", "Étagères de rangement"]],
+  ["Coin cuisine", ["Sol", "Murs", "Plafond", "Plan de travail", "Meubles bas et hauts", "Évier et robinetterie",
+    "Plaques de cuisson", "Four ou micro-ondes", "Réfrigérateur", "Hotte ou extraction",
+    "Vaisselle", "Ustensiles de cuisine", "Prises et interrupteurs"]],
+  ["Salle d'eau / WC", ["Sol", "Murs", "Plafond", "Douche ou baignoire", "Robinetterie", "Joints silicone",
+    "Lavabo", "Miroir", "WC et abattant", "Ventilation (VMC)", "Sèche-serviettes", "Porte"]],
+  ["Entrée et rangements", ["Sol", "Murs", "Placard", "Compteurs et tableau électrique",
+    "Détecteur de fumée", "Matériel d'entretien ménager"]],
+  ["Annexes", ["Cave", "Local vélo", "Stationnement", "Boîte aux lettres"]]
+];
+
+/* ===================================================================
+   2. BASE LOCALE
+   =================================================================== */
+const DB = (() => {
+  let db = null;
+  function ouvrir() {
+    return new Promise((res, rej) => {
+      if (db) return res(db);
+      const r = indexedDB.open("releve-edl", 1);
+      r.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains("logements")) d.createObjectStore("logements", { keyPath: "id" });
+        if (!d.objectStoreNames.contains("edls")) d.createObjectStore("edls", { keyPath: "id" });
+        if (!d.objectStoreNames.contains("photos")) {
+          const p = d.createObjectStore("photos", { keyPath: "id" });
+          p.createIndex("parEdl", "edlId", { unique: false });
+        }
+      };
+      r.onsuccess = () => { db = r.result; res(db); };
+      r.onerror = () => rej(r.error);
+    });
+  }
+  const tx = async (store, mode, fn) => {
+    const d = await ouvrir();
+    return new Promise((res, rej) => {
+      const t = d.transaction(store, mode), s = t.objectStore(store);
+      let out; try { out = fn(s); } catch (e) { rej(e); return; }
+      t.oncomplete = () => res(out && out.result !== undefined ? out.result : out);
+      t.onerror = () => rej(t.error);
+    });
+  };
+  return {
+    put: (s, v) => tx(s, "readwrite", o => o.put(v)),
+    get: (s, id) => tx(s, "readonly", o => o.get(id)),
+    del: (s, id) => tx(s, "readwrite", o => o.delete(id)),
+    tous: s => tx(s, "readonly", o => o.getAll()),
+    parEdl: id => tx("photos", "readonly", o => o.index("parEdl").getAll(id))
+  };
+})();
+
+/* ===================================================================
+   3. OUTILS
+   =================================================================== */
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const dateFr = t => new Date(t).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+const heureFr = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+async function sha256(blob) {
+  if (!crypto.subtle) return "indisponible-hors-https";
+  const h = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+  return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function redim(file, max, q) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error("Encodage impossible")), "image/jpeg", q);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Image illisible")); };
+    img.src = url;
+  });
+}
+const blobUrl = b => URL.createObjectURL(b);
+const blobDataUrl = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+
+/* ---- archives ZIP, écriture et lecture, sans dépendance ---- */
+const CRCT = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRCT[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zip(fichiers) {
+  const parts = [], central = [], enc = new TextEncoder();
+  const num = (v, n) => { const a = new Uint8Array(n); for (let i = 0; i < n; i++) a[i] = (v >>> (8 * i)) & 0xFF; return a; };
+  let off = 0;
+  for (const f of fichiers) {
+    const nom = enc.encode(f.nom), c = crc32(f.u8), len = f.u8.length;
+    const lfh = [enc.encode("PK\x03\x04"), num(20, 2), num(0, 2), num(0, 2), num(0, 2), num(33, 2),
+      num(c, 4), num(len, 4), num(len, 4), num(nom.length, 2), num(0, 2), nom];
+    lfh.forEach(p => parts.push(p)); parts.push(f.u8);
+    central.push([enc.encode("PK\x01\x02"), num(20, 2), num(20, 2), num(0, 2), num(0, 2), num(0, 2), num(33, 2),
+      num(c, 4), num(len, 4), num(len, 4), num(nom.length, 2), num(0, 2), num(0, 2), num(0, 2), num(0, 2), num(0, 4), num(off, 4), nom]);
+    off += lfh.reduce((a, p) => a + p.length, 0) + len;
+  }
+  const cdStart = off; let cdLen = 0;
+  central.forEach(c => c.forEach(p => { parts.push(p); cdLen += p.length; }));
+  parts.push(enc.encode("PK\x05\x06"), num(0, 2), num(0, 2), num(fichiers.length, 2), num(fichiers.length, 2), num(cdLen, 4), num(cdStart, 4), num(0, 2));
+  return new Blob(parts, { type: "application/zip" });
+}
+async function dezip(blob) {
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const dec = new TextDecoder(), out = {};
+  let i = 0;
+  while (i < buf.length - 30) {
+    if (dv.getUint32(i, true) !== 0x04034b50) { i++; continue; }
+    const method = dv.getUint16(i + 8, true);
+    const csize = dv.getUint32(i + 18, true);
+    const nlen = dv.getUint16(i + 26, true), elen = dv.getUint16(i + 28, true);
+    const nom = dec.decode(buf.subarray(i + 30, i + 30 + nlen));
+    const debut = i + 30 + nlen + elen;
+    if (method !== 0) throw new Error("Archive compressée non reconnue : " + nom);
+    out[nom] = buf.slice(debut, debut + csize);
+    i = debut + csize;
+  }
+  return out;
+}
+function telecharger(blob, nom) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nom;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 6000);
+}
+
+/* ===================================================================
+   4. ÉTAT
+   =================================================================== */
+const S = { vue: "accueil", logements: [], edls: [], edl: null, logement: null, gabarit: null, photos: [], refPhotos: [] };
+
+/* ===================================================================
+   5. LOGEMENTS, GABARITS ET RÉSERVES
+   =================================================================== */
+function logementNeuf(nom) {
+  return {
+    id: uid(), nom, localisation: "", reserves: [],
+    pieces: GABARIT_DEFAUT.map(([n, els]) => ({ id: uid(), nom: n, elements: els.map(e => ({ id: uid(), nom: e })) }))
+  };
+}
+const reservesActives = (log, k) => (log.reserves || []).filter(r => r.key === k && !r.levee);
+
+function vueGabarit(log) {
+  S.gabarit = log;
+  $("#g-nom").textContent = log.nom;
+  const nomEl = k => {
+    for (const p of log.pieces) for (const e of p.elements) if (p.id + "/" + e.id === k) return p.nom + " — " + e.nom;
+    return k;
+  };
+  const res = (log.reserves || []).filter(r => !r.levee);
+  const c = $("#g-corps");
+  c.innerHTML = `
+    <div class="piece"><div class="piece-h"><div class="piece-n">Réserves permanentes</div></div>
+      ${res.length ? res.map(r => `<div class="el fait" style="border-left-color:var(--attente)">
+          <p class="el-n">${esc(nomEl(r.key))}</p>
+          <div class="reserve"><u>Depuis le ${dateFr(r.depuis)}</u>${esc(r.texte)}</div>
+          <button class="mini" data-lever="${r.id}">Lever la réserve (désordre réparé)</button>
+        </div>`).join("")
+      : `<div class="vide">Aucune réserve. Une réserve est un désordre que vous ne réparez pas et qui doit suivre le logement d'un locataire à l'autre.</div>`}
+    </div>
+    ${log.pieces.map(p => `
+    <div class="piece" data-p="${p.id}">
+      <div class="piece-h">
+        <input class="piece-n" value="${esc(p.nom)}" data-ren="piece" style="border:none;background:none;flex:1;min-width:0">
+        <button class="mini" data-act="del-piece">Supprimer</button>
+      </div>
+      ${p.elements.map(e => `<div class="gab" data-e="${e.id}"><input value="${esc(e.nom)}" data-ren="el">
+        <input class="gq" type="text" inputmode="numeric" placeholder="unique" title="Nombre d'exemplaires identiques. Laisser vide pour un objet unique."
+               value="${e.qte == null ? "" : "× " + e.qte}" data-ren="qte">
+        <button class="x" data-act="raz-qte" title="Repasser en objet unique" ${e.qte == null ? "style=\"visibility:hidden\"" : ""}>↺</button>
+        <button class="x" data-act="del-el">✕</button></div>`).join("")}
+      <button class="mini" data-act="add-el" style="margin-top:8px">+ Élément</button>
+    </div>`).join("")}
+    <button class="mini" id="add-piece" style="margin-top:20px">+ Pièce</button>`;
+
+  c.oninput = e => {
+    const t = e.target, pid = t.closest("[data-p]") && t.closest("[data-p]").dataset.p;
+    const p = log.pieces.find(x => x.id === pid); if (!p) return;
+    if (t.dataset.ren === "piece") p.nom = t.value;
+    if (t.dataset.ren === "el") p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).nom = t.value;
+    if (t.dataset.ren === "qte") {
+      const chiffres = t.value.replace(/[^0-9]/g, "");
+      const n = parseInt(chiffres, 10);
+      p.elements.find(x => x.id === t.closest("[data-e]").dataset.e).qte = (isNaN(n) || n < 2) ? null : n;
+    }
+    DB.put("logements", log);
+  };
+  c.onclick = async e => {
+    const lever = e.target.dataset.lever;
+    if (lever) {
+      if (!confirm("Lever cette réserve ? Elle disparaîtra des prochains états des lieux : ne le faites qu'une fois le désordre réparé.")) return;
+      log.reserves.find(r => r.id === lever).levee = Date.now();
+      await DB.put("logements", log); vueGabarit(log); return;
+    }
+    const a = e.target.dataset.act;
+    if (!a && e.target.id !== "add-piece") return;
+    const pid = e.target.closest("[data-p]") && e.target.closest("[data-p]").dataset.p;
+    const p = log.pieces.find(x => x.id === pid);
+    if (e.target.id === "add-piece") log.pieces.push({ id: uid(), nom: "Nouvelle pièce", elements: [] });
+    if (a === "del-piece" && confirm("Supprimer la pièce « " + p.nom + " » du gabarit ?")) log.pieces = log.pieces.filter(x => x.id !== pid);
+    if (a === "raz-qte") {
+      p.elements.find(x => x.id === e.target.closest("[data-e]").dataset.e).qte = null;
+      await DB.put("logements", log); vueGabarit(log); return;
+    }
+    if (a === "add-el") p.elements.push({ id: uid(), nom: "Nouvel élément" });
+    if (a === "del-el") { const eid = e.target.closest("[data-e]").dataset.e; p.elements = p.elements.filter(x => x.id !== eid); }
+    await DB.put("logements", log); vueGabarit(log);
+  };
+  barre([
+    { t: "Retour", sec: true, f: () => aller("logements") },
+    { t: "Renommer", sec: true, f: async () => {
+        const n = prompt("Nom du logement", log.nom);
+        if (!n || !n.trim()) return;
+        log.nom = n.trim(); await DB.put("logements", log); vueGabarit(log);
+      } },
+    { t: "Supprimer", sec: true, f: async () => {
+        const lies = (await DB.tous("edls")).filter(e => e.logementId === log.id);
+        if (lies.length) { alert("Ce logement porte " + lies.length + " relevé(s). Un état des lieux signé ne se supprime pas par ricochet : videz d'abord les relevés concernés."); return; }
+        if (!confirm("Supprimer définitivement le logement « " + log.nom + " » et son gabarit ?")) return;
+        await DB.del("logements", log.id); aller("logements");
+      } }
+  ]);
+}
+
+/* ===================================================================
+   6. CRÉATION D'UN RELEVÉ
+   =================================================================== */
+function edlNeuf(log, type, ref) {
+  const e = {
+    id: uid(), logementId: log.id, logementNom: log.nom, type,
+    refId: ref ? ref.id : null, cree: Date.now(), signe: null, verrouille: false, version: VERSION,
+    bailleur: { nom: "", domicile: "" }, locataire: { nom: "", nouvelleAdresse: "" },
+    localisation: log.localisation || "", mandataire: "", compteurs: "", cles: "",
+    signatures: { bailleur: null, locataire: null }, journal: [],
+    pieces: log.pieces.map(p => ({
+      id: p.id, nom: p.nom,
+      elements: p.elements.map(el => ({
+        id: el.id, nom: el.nom, etat: null, etatSt: "vide", prop: null, propSt: "vide", obs: "",
+        qteRef: el.qte == null ? null : el.qte, qte: null, qteSt: el.qte == null ? "sansobjet" : "vide",
+        reserves: reservesActives(log, p.id + "/" + el.id).map(r => ({ id: r.id, texte: r.texte, depuis: r.depuis }))
+      }))
+    }))
+  };
+  if (ref) {
+    e.bailleur = Object.assign({}, ref.bailleur);
+    e.locataire = { nom: ref.locataire.nom, nouvelleAdresse: "" };
+    e.localisation = ref.localisation; e.cles = ref.cles;
+    const src = {};
+    ref.pieces.forEach(p => p.elements.forEach(el => src[p.id + "/" + el.id] = el));
+    e.pieces.forEach(p => p.elements.forEach(el => {
+      const o = src[p.id + "/" + el.id];
+      if (o) {
+        el.etat = o.etat; el.etatSt = "propose"; el.obsEntree = o.obs || "";
+        // À la sortie, la référence est ce qui a été compté à l'entrée du
+        // locataire, pas le nombre théorique du gabarit.
+        el.qteRef = (o.qte != null) ? o.qte : o.qteRef;
+      }
+      el.prop = null; el.propSt = "vide";
+      el.qte = null;
+      el.qteSt = el.qteRef == null ? "sansobjet" : "vide";
+    }));
+  } else {
+    e.pieces.forEach(p => p.elements.forEach(el => {
+      el.etat = "Bon état"; el.etatSt = "propose"; el.prop = "Propre"; el.propSt = "propose";
+      if (el.qteRef != null) { el.qte = el.qteRef; el.qteSt = "propose"; }
+    }));
+  }
+  return e;
+}
+
+/* ===================================================================
+   7. VUE RELEVÉ
+   =================================================================== */
+const tousElements = edl => edl.pieces.flatMap(p => p.elements.map(el => ({ p, el })));
+const nonConfirme = el => el.etatSt === "propose" || el.etatSt === "vide"
+  || el.propSt === "propose" || el.propSt === "vide"
+  || el.qteSt === "propose" || el.qteSt === "vide";
+const restants = edl => tousElements(edl).filter(({ el }) => nonConfirme(el)).length;
+
+async function vueEdl(edl) {
+  S.edl = edl;
+  S.logement = await DB.get("logements", edl.logementId);
+  S.photos = await DB.parEdl(edl.id);
+  S.refPhotos = edl.refId ? await DB.parEdl(edl.refId) : [];
+  $("#e-type").textContent = (edl.type === "entree" ? "État des lieux d'entrée" : "État des lieux de sortie")
+    + " · " + dateFr(edl.cree) + (edl.verrouille ? " · verrouillé" : "");
+  $("#e-nom").textContent = edl.logementNom;
+  $("#c-ladr").style.display = edl.type === "sortie" ? "" : "none";
+  dessinerEdl();
+}
+
+function dessinerEdl() {
+  const edl = S.edl, tous = tousElements(edl);
+  $("#e-jauge").innerHTML = tous.map(({ el }) => {
+    const fini = !nonConfirme(el), mod = el.etatSt === "modifie" || el.propSt === "modifie";
+    return `<i class="${fini ? (mod ? "mod" : "ok") : ""}"></i>`;
+  }).join("");
+  const r = restants(edl);
+  $("#e-compte").innerHTML = r ? `<b>${r}</b> élément${r > 1 ? "s" : ""} à confirmer sur ${tous.length}`
+    : `<b class="fini">${tous.length} éléments confirmés</b>`;
+
+  $("#e-corps").innerHTML = edl.pieces.map(p => {
+    const nb = p.elements.filter(nonConfirme).length;
+    return `<div class="piece" data-p="${p.id}">
+      <div class="piece-h"><div class="piece-n">${esc(p.nom)}</div>
+        <button class="mini" data-act="conf-piece" ${nb && !edl.verrouille ? "" : "disabled"}>Confirmer la pièce (${nb})</button></div>
+      ${p.elements.map(el => elementHtml(p, el)).join("")}
+    </div>`;
+  }).join("");
+
+  const bl = blocages();
+  $("#e-blocage").innerHTML = edl.verrouille
+    ? `<div class="alerte" style="border-color:var(--confirme);background:#F0F8F4"><b>Document signé le ${dateFr(edl.signe)} à ${heureFr(edl.signe)}.</b> Toute correction passe désormais par un avenant daté et signé.</div>`
+    : bl.length ? `<div class="alerte"><b>Signature indisponible</b><ul>${bl.map(b => `<li>${esc(b)}</li>`).join("")}</ul></div>`
+      : `<div class="alerte" style="border-color:var(--confirme);background:#F0F8F4"><b>Document complet.</b> Relisez avec le locataire avant de signer.</div>`;
+
+  barre([
+    { t: "En-tête", f: ouvrirEntete, sec: true },
+    { t: "Supprimer", f: supprimerEdl, sec: true },
+    { t: edl.verrouille ? "Exporter" : "Signer", f: edl.verrouille ? exporter : ouvrirSignature, off: !edl.verrouille && bl.length > 0 },
+    { t: "Envoyer", f: ouvrirEnvoi, sec: true, off: !edl.verrouille }
+  ]);
+  chargerVignettes();
+}
+
+function elementHtml(p, el) {
+  const k = p.id + "/" + el.id, verr = S.edl.verrouille, sortie = S.edl.type === "sortie";
+  const cst = S.photos.filter(x => x.elementKey === k);
+  const ref = S.refPhotos.filter(x => x.elementKey === k);
+
+  const chips = (axe, vals, cur, st) => `<div class="chips">${vals.map(v => `
+      <button class="chip" data-axe="${axe}" data-v="${esc(v)}" data-on="${cur === v ? st : ""}"
+        data-grave="${(v === GRAVE_ETAT || v === GRAVE_PROP) ? 1 : 0}" ${verr ? "disabled" : ""}>${esc(v)}</button>`).join("")}</div>`;
+
+  const bandes = (el.reserves || []).map(r =>
+    `<div class="reserve"><u>Réserve permanente — constatée le ${dateFr(r.depuis)}, non réparée</u>${esc(r.texte)}</div>`).join("");
+
+  const comparaison = sortie ? `<div class="cmp">
+      <div><h4>À l'entrée</h4><div class="val">${esc(el.etat || "—")}</div>
+        ${el.obsEntree ? `<div style="font-size:12px;color:#4A5866;margin-top:4px">${esc(el.obsEntree)}</div>` : ""}
+        ${ref.length ? `<div class="ph">${ref.map(ph => `<figure class="ref"><img data-ph="${ph.id}" data-src="ref"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}</div>`
+          : `<div style="font-size:12px;color:var(--propose);margin-top:4px">Aucune photo de référence</div>`}</div>
+      <div><h4>Ce jour</h4><div class="val">${el.etatSt === "propose" ? "<i style='color:var(--propose)'>inchangé (proposé)</i>" : esc(el.etat || "—")}</div>
+        ${cst.length ? `<div class="ph">${cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}</div>` : ""}</div>
+    </div>` : "";
+
+  return `<div class="el ${nonConfirme(el) ? "enattente" : "fait"}" data-e="${el.id}">
+    <p class="el-n">${esc(el.nom)} ${nonConfirme(el) ? `<span>à confirmer</span>` : ""}</p>
+    ${bandes}
+    ${comparaison}
+    <div class="axe"><span class="axe-l">État de conservation</span>${chips("etat", ETATS, el.etat, el.etatSt)}</div>
+    <div class="axe"><span class="axe-l">Propreté</span>${chips("prop", PROPRETES, el.prop, el.propSt)}</div>
+    ${el.qteSt === "sansobjet" ? "" : `<div class="axe">
+      <span class="axe-l">Quantité${el.qteRef != null && sortie ? " — " + el.qteRef + " compté(s) à l'entrée" : ""}</span>
+      <input class="qte" type="number" inputmode="numeric" min="0" step="1" data-qte data-st="${el.qteSt}"
+             value="${el.qte == null ? "" : el.qte}" ${verr ? "disabled" : ""}>${ecartHtml(el)}</div>`}
+    <div class="obs-l"><textarea class="obs" data-obs placeholder="Description précise : localisation, dimension, nature du défaut." ${verr ? "disabled" : ""}>${esc(el.obs)}</textarea></div>
+    ${verr ? "" : `<div class="ph">
+      ${sortie ? "" : cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}
+      <label class="ajout">+<input type="file" accept="image/*" multiple hidden data-add></label>
+      <button class="mini" data-act="reserve" style="align-self:center">Passer en réserve permanente</button>
+    </div>`}
+  </div>`;
+}
+
+async function supprimerEdl() {
+  const e = S.edl;
+  const quoi = (e.type === "entree" ? "l'état des lieux d'entrée" : "l'état des lieux de sortie")
+    + " du " + dateFr(e.cree) + " (" + (e.locataire.nom || "locataire non renseigné") + ")";
+  if (!confirm("Supprimer " + quoi + " et ses photos ?\n\nCette suppression est définitive. Si le document a été signé, assurez-vous d'avoir exporté son archive avant.")) return;
+  if (e.verrouille && !confirm("Ce relevé est SIGNÉ. Un état des lieux signé est une preuve : sa suppression ne se rattrape pas.\n\nConfirmer malgré tout ?")) return;
+  for (const ph of await DB.parEdl(e.id)) await DB.del("photos", ph.id);
+  await DB.del("edls", e.id);
+  S.edl = null;
+  aller("accueil");
+}
+
+function ecartHtml(el) {
+  if (el.qte == null || el.qteRef == null || el.qte === el.qteRef) return "";
+  const d = el.qte - el.qteRef;
+  return `<span class="ecart ${d > 0 ? "plus" : ""}">${d > 0 ? "+" + d : d} par rapport à ${el.qteRef}</span>`;
+}
+
+function chargerVignettes() {
+  document.querySelectorAll("#e-corps img[data-ph]").forEach(img => {
+    if (img.getAttribute("src")) return;
+    const src = img.dataset.src === "ref" ? S.refPhotos : S.photos;
+    const ph = src.find(x => x.id === img.dataset.ph);
+    if (ph) img.src = blobUrl(ph.thumb);
+  });
+}
+
+/* ---- interactions ---- */
+function brancherEdl() {
+  const c = $("#e-corps");
+  c.addEventListener("click", async e => {
+    const edl = S.edl; if (!edl || edl.verrouille) return;
+    const act = e.target.dataset.act, chip = e.target.closest(".chip");
+    const boite = e.target.closest("[data-e]"), pBoite = e.target.closest("[data-p]");
+
+    if (act === "conf-piece") {
+      const p = edl.pieces.find(x => x.id === pBoite.dataset.p);
+      const manquant = p.elements.filter(el => el.propSt === "vide");
+      if (manquant.length) { alert("Propreté non renseignée sur " + manquant.length + " élément(s). À la sortie, elle doit être constatée, pas supposée."); return; }
+      const acompter = p.elements.filter(el => el.qteSt === "vide");
+      if (acompter.length) { alert("Quantité non comptée sur " + acompter.length + " lot(s) : " + acompter.map(x => x.nom).join(", ") + ". Un lot ne se confirme pas sans être compté."); return; }
+      p.elements.forEach(el => {
+        if (el.etatSt === "propose") { el.etatSt = "confirme"; journal(el, "etat", el.etat); }
+        if (el.propSt === "propose") { el.propSt = "confirme"; journal(el, "prop", el.prop); }
+        if (el.qteSt === "propose") { el.qteSt = "confirme"; journal(el, "qte", el.qte); }
+      });
+      await sauver(); dessinerEdl(); return;
+    }
+
+    if (act === "reserve") {
+      const el = edl.pieces.find(x => x.id === pBoite.dataset.p).elements.find(x => x.id === boite.dataset.e);
+      const texte = prompt("Désordre qui ne sera pas réparé et devra suivre le logement.\nLe locataire suivant n'en sera pas tenu responsable.", el.obs || "");
+      if (!texte || !texte.trim()) return;
+      const k = pBoite.dataset.p + "/" + boite.dataset.e;
+      const r = { id: uid(), key: k, texte: texte.trim(), depuis: Date.now(), levee: null };
+      S.logement.reserves = S.logement.reserves || [];
+      S.logement.reserves.push(r);
+      el.reserves = (el.reserves || []).concat([{ id: r.id, texte: r.texte, depuis: r.depuis }]);
+      await DB.put("logements", S.logement); await sauver(); dessinerEdl(); return;
+    }
+
+    if (chip) {
+      const el = edl.pieces.find(x => x.id === pBoite.dataset.p).elements.find(x => x.id === boite.dataset.e);
+      const champ = chip.dataset.axe === "etat" ? "etat" : "prop", st = champ + "St", v = chip.dataset.v;
+      const initial = el[st] === "propose" || el[st] === "vide";
+      el[st] = (initial && el[champ] === v) ? "confirme" : "modifie";
+      el[champ] = v;
+      journal(el, champ, v);
+      await sauver(); dessinerEdl();
+    }
+  });
+  c.addEventListener("change", async e => {
+    if (!("add" in e.target.dataset)) return;
+    const k = e.target.closest("[data-p]").dataset.p + "/" + e.target.closest("[data-e]").dataset.e;
+    const fs = [].slice.call(e.target.files);
+    e.target.value = "";
+    await ajouterPhotos(k, fs);
+  });
+  c.addEventListener("change", e => {
+    if (!("qte" in e.target.dataset)) return;
+    dessinerEdl();
+  });
+  c.addEventListener("input", e => {
+    if ("qte" in e.target.dataset) {
+      const edl = S.edl; if (edl.verrouille) return;
+      const el = edl.pieces.find(x => x.id === e.target.closest("[data-p]").dataset.p)
+        .elements.find(x => x.id === e.target.closest("[data-e]").dataset.e);
+      const v = e.target.value.trim();
+      const initial = el.qteSt === "propose" || el.qteSt === "vide";
+      if (v === "") { el.qte = null; el.qteSt = "vide"; }
+      else {
+        const n = parseInt(v, 10);
+        if (isNaN(n) || n < 0) return;
+        el.qte = n;
+        el.qteSt = (initial && n === el.qteRef) ? "confirme" : "modifie";
+        journal(el, "qte", n);
+      }
+      clearTimeout(c._t); c._t = setTimeout(sauver, 400);
+      return;
+    }
+    if (!e.target.classList.contains("obs")) return;
+    const el = S.edl.pieces.find(x => x.id === e.target.closest("[data-p]").dataset.p)
+      .elements.find(x => x.id === e.target.closest("[data-e]").dataset.e);
+    el.obs = e.target.value;
+    clearTimeout(c._t); c._t = setTimeout(sauver, 400);
+  });
+}
+const journal = (el, champ, valeur) => S.edl.journal.push({ t: Date.now(), el: el.nom, champ, valeur });
+const sauver = () => DB.put("edls", S.edl);
+
+async function ajouterPhotos(k, files) {
+  for (const f of files) {
+    try {
+      const [vue, thumb, empreinte] = await Promise.all([redim(f, 1200, .78), redim(f, 400, .7), sha256(f)]);
+      const ph = {
+        id: uid(), edlId: S.edl.id, elementKey: k, kind: S.edl.type === "sortie" ? "constat" : "reference",
+        original: f, vue, thumb, sha256: empreinte, nom: f.name || "photo.jpg",
+        createdAt: Date.now(), originalPresent: true
+      };
+      await DB.put("photos", ph); S.photos.push(ph);
+    } catch (err) { alert("Photo non ajoutée : " + err.message); }
+  }
+  dessinerEdl();
+}
+
+/* ===================================================================
+   8. CONTRÔLE DES MENTIONS
+   =================================================================== */
+function blocages() {
+  const e = S.edl, out = []; if (!e) return out;
+  if (!e.bailleur.nom || !e.bailleur.domicile) out.push("Nom et domicile du bailleur manquants.");
+  if (!e.locataire.nom) out.push("Nom du locataire manquant.");
+  if (!e.localisation) out.push("Localisation du logement manquante.");
+  if (!e.compteurs.trim()) out.push("Relevés de compteurs manquants.");
+  if (!e.cles.trim()) out.push("Détail et destination des clés manquants.");
+  if (e.type === "sortie" && !e.locataire.nouvelleAdresse) out.push("Nouvelle adresse du locataire manquante (exigée à la sortie).");
+  const r = restants(e); if (r) out.push(r + " élément(s) encore en pré-remplissage non confirmé.");
+  const flous = tousElements(e).filter(({ el }) => (el.etat === GRAVE_ETAT || el.prop === GRAVE_PROP) && !el.obs.trim());
+  if (flous.length) out.push(flous.length + " défaut(s) signalé(s) sans description écrite : « mauvais état » ou « sale » sans précision est contestable.");
+  const ecarts = tousElements(e).filter(({ el }) =>
+    el.qte != null && el.qteRef != null && el.qte !== el.qteRef && !el.obs.trim());
+  if (ecarts.length) out.push(ecarts.length + " écart(s) de quantité sans observation : " + ecarts.map(x => x.el.nom).join(", ") + ".");
+  return out;
+}
+
+/* ===================================================================
+   9. EN-TÊTE
+   =================================================================== */
+function ouvrirEntete() {
+  const e = S.edl;
+  $("#f-bnom").value = e.bailleur.nom; $("#f-bdom").value = e.bailleur.domicile;
+  $("#f-lnom").value = e.locataire.nom; $("#f-ladr").value = e.locataire.nouvelleAdresse;
+  $("#f-loc").value = e.localisation; $("#f-mand").value = e.mandataire;
+  $("#f-cpt").value = e.compteurs; $("#f-cles").value = e.cles;
+  // L'adresse du bailleur ne change pas d'un relevé à l'autre : on la reprend
+  // du dernier relevé qui en portait une.
+  let cb = e.courrielBailleur || "";
+  if (!cb) {
+    const passe = S.edls.filter(x => x.courrielBailleur).sort((a, b) => b.cree - a.cree)[0];
+    if (passe) cb = passe.courrielBailleur;
+  }
+  $("#f-cb").value = cb; $("#f-cl").value = e.courrielLocataire || "";
+  $("#d-entete").showModal();
+}
+$("#d-entete").addEventListener("close", async () => {
+  const e = S.edl; if (!e || e.verrouille) return;
+  e.bailleur = { nom: $("#f-bnom").value.trim(), domicile: $("#f-bdom").value.trim() };
+  e.locataire = { nom: $("#f-lnom").value.trim(), nouvelleAdresse: $("#f-ladr").value.trim() };
+  e.localisation = $("#f-loc").value.trim(); e.mandataire = $("#f-mand").value.trim();
+  e.compteurs = $("#f-cpt").value; e.cles = $("#f-cles").value;
+  e.courrielBailleur = $("#f-cb").value.trim(); e.courrielLocataire = $("#f-cl").value.trim();
+  await sauver(); dessinerEdl();
+});
+
+/* ===================================================================
+   10. SIGNATURES
+   =================================================================== */
+function crayon(cv) {
+  const ctx = cv.getContext("2d");
+  let trace = false, vide = true;
+  const raz = () => {
+    const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    cv.width = r.width * d; cv.height = r.height * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    ctx.lineWidth = 1.8; ctx.lineCap = "round"; ctx.strokeStyle = "#16202B";
+  };
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener("pointerdown", e => { trace = true; vide = false; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo.apply(ctx, pos(e)); });
+  cv.addEventListener("pointermove", e => { if (trace) { ctx.lineTo.apply(ctx, pos(e)); ctx.stroke(); } });
+  cv.addEventListener("pointerup", () => trace = false);
+  cv.addEventListener("pointercancel", () => trace = false);
+  return { raz, effacer: () => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); vide = true; }, estVide: () => vide, cv };
+}
+let sigB, sigL;
+function ouvrirSignature() {
+  $("#d-sign").showModal();
+  if (!sigB) { sigB = crayon($("#sig-b")); sigL = crayon($("#sig-l")); }
+  sigB.raz(); sigL.raz(); sigB.effacer(); sigL.effacer();
+}
+$("#sig-eff").onclick = () => { sigB.effacer(); sigL.effacer(); };
+$("#sig-non").onclick = () => $("#d-sign").close();
+$("#sig-ok").onclick = async () => {
+  if (sigB.estVide() || sigL.estVide()) { alert("Les deux parties doivent signer. Un état des lieux signé d'un seul côté n'a pas de valeur contradictoire."); return; }
+  if (!confirm("Verrouiller le document ? Après signature, plus aucune modification n'est possible — toute correction devra faire l'objet d'un avenant daté et signé.")) return;
+  S.edl.signatures = { bailleur: sigB.cv.toDataURL("image/png"), locataire: sigL.cv.toDataURL("image/png") };
+  S.edl.signe = Date.now(); S.edl.verrouille = true;
+  await sauver(); $("#d-sign").close(); dessinerEdl();
+  alert("Document verrouillé. Étape suivante : exporter le PDF, le remettre immédiatement à chaque partie, puis enregistrer l'archive.");
+};
+
+/* ===================================================================
+   11. DOCUMENT IMPRIMABLE
+   =================================================================== */
+async function construirePrint() {
+  const e = S.edl;
+  const lignes = t => (t || "").split("\n").filter(x => x.trim()).map(x => `<li>${esc(x)}</li>`).join("");
+  const toutesRes = [];
+  e.pieces.forEach(p => p.elements.forEach(el => (el.reserves || []).forEach(r => toutesRes.push({ ou: p.nom + " — " + el.nom, r }))));
+
+  let html = `
+    <h1>État des lieux ${e.type === "entree" ? "d'entrée" : "de sortie"}</h1>
+    <table>
+      <tr><th style="width:38%">Date d'établissement</th><td>${dateFr(e.signe || e.cree)} à ${heureFr(e.signe || e.cree)}</td></tr>
+      <tr><th>Localisation du logement</th><td>${esc(e.localisation)}</td></tr>
+      <tr><th>Bailleur</th><td>${esc(e.bailleur.nom)} — ${esc(e.bailleur.domicile)}</td></tr>
+      <tr><th>Locataire</th><td>${esc(e.locataire.nom)}${e.type === "sortie" ? " — nouvelle adresse : " + esc(e.locataire.nouvelleAdresse) : ""}</td></tr>
+      ${e.mandataire ? `<tr><th>Mandataire</th><td>${esc(e.mandataire)}</td></tr>` : ""}
+    </table>
+    <h2>Relevés de compteurs</h2><ul>${lignes(e.compteurs)}</ul>
+    <h2>Clés et moyens d'accès</h2><ul>${lignes(e.cles)}</ul>`;
+
+  if (toutesRes.length) {
+    html += `<h2>Réserves — désordres antérieurs non réparés</h2>
+      <p>Les désordres listés ci-dessous ont été constatés avant la présente location et n'ont pas été réparés.
+      Ils sont portés à la connaissance du locataire, qui n'en est pas responsable et ne pourra en être tenu pour comptable à la sortie.</p>
+      <table><tr><th style="width:32%">Emplacement</th><th style="width:18%">Constaté le</th><th>Nature du désordre</th></tr>
+      ${toutesRes.map(x => `<tr class="res"><td>${esc(x.ou)}</td><td>${dateFr(x.r.depuis)}</td><td>${esc(x.r.texte)}</td></tr>`).join("")}
+      </table>`;
+  }
+
+  for (const pc of e.pieces) {
+    html += `<h2>${esc(pc.nom)}</h2><table><tr><th style="width:24%">Élément</th><th style="width:10%">Quantité</th><th style="width:15%">Conservation</th><th style="width:15%">Propreté</th><th>Observations</th></tr>`;
+    for (const el of pc.elements) {
+      const res = (el.reserves || []).map(r => `<i>Réserve du ${dateFr(r.depuis)} : ${esc(r.texte)}</i>`).join("<br>");
+      let q = "";
+      if (el.qte != null) q = (e.type === "sortie" && el.qteRef != null && el.qteRef !== el.qte)
+        ? el.qteRef + " → <b>" + el.qte + "</b>" : String(el.qte);
+      html += `<tr${res ? ' class="res"' : ""}><td>${esc(el.nom)}</td><td>${q}</td><td>${esc(el.etat || "")}</td><td>${esc(el.prop || "")}</td>
+        <td>${esc(el.obs)}${res ? (el.obs ? "<br>" : "") + res : ""}</td></tr>`;
+    }
+    html += `</table>`;
+  }
+
+  html += `<h2 class="pb">Annexe photographique</h2>
+    <p>Les photographies ci-après font partie intégrante du présent état des lieux. Les parties reconnaissent en avoir pris connaissance et en avoir reçu un exemplaire.</p>`;
+  const idx = {};
+  e.pieces.forEach(pc => pc.elements.forEach(el => idx[pc.id + "/" + el.id] = pc.nom + " — " + el.nom));
+  let n = 0;
+  for (const ph of S.photos) {
+    n++;
+    const src = await blobDataUrl(ph.vue);
+    html += `<figure class="nb" style="display:inline-block;width:46mm;margin:0 2mm 3mm 0">
+      <img class="pimg" src="${src}">
+      <figcaption>P${String(n).padStart(3, "0")} — ${esc(idx[ph.elementKey] || "")} — ${dateFr(ph.createdAt)}</figcaption></figure>`;
+  }
+
+  html += `<div class="sigbloc">
+      <div><b>Le bailleur ou son mandataire</b><br>${esc(e.bailleur.nom)}<br>${e.signatures.bailleur ? `<img src="${e.signatures.bailleur}">` : ""}</div>
+      <div><b>Le locataire</b><br>${esc(e.locataire.nom)}<br>${e.signatures.locataire ? `<img src="${e.signatures.locataire}">` : ""}</div>
+    </div>
+    <p style="font-size:8pt;margin-top:3mm">Document établi contradictoirement et remis à chaque partie au moment de sa signature.
+    ${e.type === "entree" ? "Le locataire peut demander la modification du présent état des lieux dans les dix jours de son établissement, et jusqu'à la fin du premier mois de chauffe s'agissant des éléments de chauffage." : ""}</p>`;
+
+  $("#print").innerHTML = html;
+}
+
+/* ===================================================================
+   12. EXPORTS
+   =================================================================== */
+async function exporter() {
+  const e = S.edl;
+  const choix = prompt("1 = PDF à remettre aux parties\n2 = Archive du relevé (originaux + empreintes SHA-256)\n3 = Les deux", "3");
+  if (!choix) return;
+  if (choix.indexOf("1") >= 0 || choix.indexOf("3") >= 0) { await construirePrint(); window.print(); }
+  if (choix.indexOf("2") >= 0 || choix.indexOf("3") >= 0) {
+    const fichiers = [], manifeste = ["# Manifeste d'integrite - SHA-256",
+      "# " + e.logementNom + " - " + (e.type === "entree" ? "entree" : "sortie") + " - " + dateFr(e.signe || e.cree), ""];
+    let n = 0;
+    for (const ph of S.photos) {
+      n++;
+      const nom = "photos/P" + String(n).padStart(3, "0") + "_" + ph.elementKey.replace(/[^a-z0-9]/gi, "-") + ".jpg";
+      const src = ph.originalPresent && ph.original ? ph.original : ph.vue;
+      fichiers.push({ nom, u8: new Uint8Array(await src.arrayBuffer()) });
+      manifeste.push(ph.sha256 + "  " + nom + (ph.originalPresent ? "  [original]" : "  [1200px]"));
+    }
+    const meta = Object.assign({}, e, { photos: S.photos.map(p => ({ id: p.id, elementKey: p.elementKey, sha256: p.sha256, createdAt: p.createdAt, nom: p.nom })) });
+    const enc = new TextEncoder();
+    fichiers.push({ nom: "etat-des-lieux.json", u8: enc.encode(JSON.stringify(meta, null, 2)) });
+    fichiers.push({ nom: "manifeste-sha256.txt", u8: enc.encode(manifeste.join("\n")) });
+    const zb = zip(fichiers), emp = await sha256(zb);
+    e.hashArchive = emp; e.hashDate = Date.now(); await sauver();
+    telecharger(zb, "EDL_" + e.logementNom.replace(/\W+/g, "-") + "_" + e.type + "_" + new Date(e.signe || e.cree).toISOString().slice(0, 10) + ".zip");
+    setTimeout(() => alert("Empreinte SHA-256 de l'archive :\n\n" + emp + "\n\nEnvoyez-la-vous par courriel le jour même : c'est elle qui prouvera plus tard que le dossier n'a pas bougé."), 900);
+  }
+}
+
+async function sauvegardeComplete() {
+  const logements = await DB.tous("logements"), edls = await DB.tous("edls"), photos = await DB.tous("photos");
+  const fichiers = [], metaPhotos = [];
+  for (const p of photos) {
+    const base = "photos/" + p.id;
+    if (p.original) fichiers.push({ nom: base + "-o.jpg", u8: new Uint8Array(await p.original.arrayBuffer()) });
+    fichiers.push({ nom: base + "-v.jpg", u8: new Uint8Array(await p.vue.arrayBuffer()) });
+    fichiers.push({ nom: base + "-t.jpg", u8: new Uint8Array(await p.thumb.arrayBuffer()) });
+    metaPhotos.push({ id: p.id, edlId: p.edlId, elementKey: p.elementKey, kind: p.kind, sha256: p.sha256, nom: p.nom, createdAt: p.createdAt, originalPresent: !!p.original });
+  }
+  const enc = new TextEncoder();
+  fichiers.push({ nom: "sauvegarde.json", u8: enc.encode(JSON.stringify({ format: "releve-sauvegarde", version: VERSION, date: Date.now(), logements, edls, photos: metaPhotos }, null, 2)) });
+  telecharger(zip(fichiers), "Releve_sauvegarde_" + new Date().toISOString().slice(0, 10) + ".zip");
+  alert("Sauvegarde créée. Déposez-la dans iCloud ou sur votre disque : c'est aussi le moyen de reprendre le travail sur un autre appareil.");
+}
+
+async function restaurer(file) {
+  if (!confirm("Restaurer cette sauvegarde ? Les relevés portant le même identifiant seront remplacés par la version de l'archive. Les autres sont conservés.")) return;
+  try {
+    const f = await dezip(file);
+    if (!f["sauvegarde.json"]) throw new Error("Ce fichier n'est pas une sauvegarde Relevé.");
+    const d = JSON.parse(new TextDecoder().decode(f["sauvegarde.json"]));
+    for (const l of d.logements) await DB.put("logements", l);
+    for (const e of d.edls) await DB.put("edls", e);
+    for (const p of d.photos) {
+      const bl = n => f["photos/" + p.id + n] ? new Blob([f["photos/" + p.id + n]], { type: "image/jpeg" }) : null;
+      const o = bl("-o.jpg"), v = bl("-v.jpg"), t = bl("-t.jpg");
+      if (!v || !t) continue;
+      await DB.put("photos", Object.assign({}, p, { original: o, vue: v, thumb: t, originalPresent: !!o }));
+    }
+    alert("Restauration terminée : " + d.logements.length + " logement(s), " + d.edls.length + " relevé(s), " + d.photos.length + " photo(s).");
+    vueAccueil();
+  } catch (err) { alert("Restauration impossible : " + err.message); }
+}
+
+function ouvrirEnvoi() {
+  const e = S.edl;
+  const dest = [e.courrielBailleur, e.courrielLocataire].filter(Boolean);
+  $("#e-dest").value = dest.join(", ");
+  $("#e-plus").value = "";
+  $("#e-emp").innerHTML = e.hashArchive
+    ? `<b>Empreinte d'intégrité disponible.</b> Elle sera recopiée dans le message : c'est elle qui datera le document et prouvera qu'il n'a pas bougé.`
+    : `<b>Aucune empreinte calculée.</b> Passez d'abord par « Exporter » puis l'archive, pour que le message porte la preuve d'intégrité.`;
+  $("#d-envoi").showModal();
+}
+$("#e-non").onclick = () => $("#d-envoi").close();
+$("#e-pdf").onclick = async () => { await construirePrint(); window.print(); };
+$("#e-mail").onclick = () => {
+  const e = S.edl;
+  const tous = ($("#e-dest").value + "," + $("#e-plus").value)
+    .split(/[,;\s]+/).map(x => x.trim()).filter(x => x.indexOf("@") > 0);
+  if (!tous.length) { alert("Aucune adresse valable. Renseignez au moins celle du locataire."); return; }
+  const quoi = e.type === "entree" ? "d'entrée" : "de sortie";
+  const objet = "État des lieux " + quoi + " — " + (e.localisation || e.logementNom) + " — " + dateFr(e.signe || e.cree);
+  const corps = [
+    "Madame, Monsieur,",
+    "",
+    "Vous trouverez ci-joint l'état des lieux " + quoi + " du logement situé " + (e.localisation || e.logementNom) + ",",
+    "établi contradictoirement et signé par les deux parties le " + dateFr(e.signe || e.cree) + " à " + heureFr(e.signe || e.cree) + ".",
+    "",
+    e.hashArchive ? "Empreinte SHA-256 du dossier complet (photographies incluses) :" : "",
+    e.hashArchive ? e.hashArchive : "",
+    e.hashArchive ? "Cette empreinte permet de vérifier à tout moment que le dossier n'a pas été modifié après cette date." : "",
+    "",
+    e.type === "entree"
+      ? "Conformément à la loi, vous disposez d'un délai de dix jours pour demander la modification du présent état des lieux, et jusqu'à la fin du premier mois de chauffe s'agissant des éléments de chauffage."
+      : "",
+    "",
+    "Je vous remercie d'accuser réception de ce message depuis votre adresse.",
+    "",
+    "Cordialement,",
+    e.bailleur.nom || ""
+  ].filter(x => x !== null).join("\n");
+  const lien = "mailto:" + encodeURIComponent(tous.join(",")) +
+    "?subject=" + encodeURIComponent(objet) + "&body=" + encodeURIComponent(corps);
+  if (lien.length > 1900) { alert("Message trop long pour être pré-rempli automatiquement. Copiez l'empreinte à la main."); }
+  location.href = lien;
+};
+
+/* ===================================================================
+   13. NAVIGATION
+   =================================================================== */
+function barre(actions) {
+  const b = $("#barre"); b.innerHTML = "";
+  actions.forEach(a => {
+    const el = document.createElement("button");
+    el.className = "btn" + (a.sec ? " sec" : "");
+    el.textContent = a.t; el.disabled = !!a.off; el.onclick = a.f;
+    b.appendChild(el);
+  });
+}
+function aller(v) {
+  S.vue = v;
+  document.querySelectorAll(".vue").forEach(s => s.classList.toggle("on", s.id === "v-" + v));
+  window.scrollTo(0, 0);
+  if (v === "accueil") vueAccueil();
+  if (v === "logements") vueLogements();
+}
+async function vueAccueil() {
+  S.logements = await DB.tous("logements");
+  S.edls = (await DB.tous("edls")).sort((a, b) => b.cree - a.cree);
+  // Les relevés sont groupés par logement : avec plusieurs biens, une liste
+  // à plat devient illisible dès la deuxième année.
+  const groupes = [];
+  S.logements.forEach(l => groupes.push({ id: l.id, nom: l.nom, items: [] }));
+  S.edls.forEach(e => {
+    let g = groupes.find(x => x.id === e.logementId);
+    if (!g) { g = { id: e.logementId, nom: e.logementNom + " (logement supprimé)", items: [] }; groupes.push(g); }
+    g.items.push(e);
+  });
+  const utiles = groupes.filter(g => g.items.length);
+  $("#l-edls").innerHTML = utiles.length ? utiles.map(g => `
+    <div class="piece">
+      <div class="piece-h"><div class="piece-n">${esc(g.nom)}</div>
+        <button class="mini" data-neuf="${g.id}">+ Relevé</button></div>
+      <ul class="liste">${g.items.map(e => `
+        <li data-id="${e.id}"><span><b>${e.type === "entree" ? "Entrée" : "Sortie"} — ${esc(e.locataire.nom || "locataire non renseigné")}</b>
+          <small>${dateFr(e.cree)} · ${e.verrouille ? "SIGNÉ" : restants(e) + " À CONFIRMER"}</small></span>
+          <span class="mini">Ouvrir</span></li>`).join("")}</ul>
+    </div>`).join("")
+    : `<div class="vide" style="margin-top:20px">Aucun état des lieux.<br>Créez d'abord un logement, puis un relevé d'entrée.</div>`;
+  $("#l-edls").onclick = async ev => {
+    const neuf = ev.target.dataset.neuf;
+    if (neuf) { ouvrirNeuf(neuf); return; }
+    const li = ev.target.closest("li[data-id]"); if (!li) return;
+    await vueEdl(await DB.get("edls", li.dataset.id)); aller("edl");
+  };
+  barre([
+    { t: "Logements", sec: true, f: () => aller("logements") },
+    { t: "Nouvel état des lieux", off: S.logements.length === 0, f: () => ouvrirNeuf() }
+  ]);
+}
+function ouvrirNeuf(logId) {
+  if (!S.logements.length) { alert("Créez d'abord un logement."); return; }
+  $("#n-log").innerHTML = S.logements.map(l => `<option value="${l.id}">${esc(l.nom)}</option>`).join("");
+  if (logId && S.logements.some(l => l.id === logId)) $("#n-log").value = logId;
+  const maj = () => {
+    const sortie = $("#n-type").value === "sortie";
+    $("#c-nref").style.display = sortie ? "" : "none";
+    const cands = S.edls.filter(e => e.logementId === $("#n-log").value && e.type === "entree");
+    $("#n-ref").innerHTML = cands.map(e => `<option value="${e.id}">${esc(e.locataire.nom || "sans nom")} — ${dateFr(e.cree)}</option>`).join("")
+      || `<option value="">Aucune entrée enregistrée</option>`;
+  };
+  $("#n-type").onchange = maj; $("#n-log").onchange = maj; maj();
+  $("#d-neuf").showModal();
+}
+$("#d-neuf").addEventListener("close", async () => {
+  if ($("#d-neuf").returnValue !== "ok") return;
+  const log = S.logements.find(l => l.id === $("#n-log").value), type = $("#n-type").value;
+  let ref = null;
+  if (type === "sortie") {
+    const rid = $("#n-ref").value;
+    if (!rid) { alert("Une sortie doit s'appuyer sur un état des lieux d'entrée : c'est lui qui fournit la référence de comparaison."); return; }
+    ref = await DB.get("edls", rid);
+  }
+  const e = edlNeuf(log, type, ref);
+  await DB.put("edls", e); await vueEdl(e); aller("edl");
+});
+
+async function nouveauLogement() {
+  const nom = prompt("Nom du logement (ex. Studio Cognac — 20 m²)");
+  if (!nom || !nom.trim()) return;
+  const l = logementNeuf(nom.trim());
+  await DB.put("logements", l);
+  S.logements.push(l);
+  vueGabarit(l); aller("gabarit");
+}
+
+async function vueLogements() {
+  S.logements = await DB.tous("logements");
+  S.edls = await DB.tous("edls");
+  const compte = id => S.edls.filter(e => e.logementId === id).length;
+  $("#lg-corps").innerHTML = S.logements.length ? `<ul class="liste">${S.logements.map(l => {
+    const res = (l.reserves || []).filter(r => !r.levee).length;
+    const n = compte(l.id);
+    return `<li data-l="${l.id}">
+      <span><b>${esc(l.nom)}</b><small>${l.pieces.length} PIÈCES · ${n} RELEVÉ${n > 1 ? "S" : ""}${res ? " · " + res + " RÉSERVE" + (res > 1 ? "S" : "") : ""}</small></span>
+      <span style="display:flex;gap:6px;flex-shrink:0">
+        <button class="mini" data-act="gab">Gabarit</button>
+        <button class="mini" data-act="neuf">+ Relevé</button>
+      </span></li>`;
+  }).join("")}</ul>`
+    : `<div class="vide" style="margin-top:20px">Aucun logement.<br>Chaque logement porte son propre gabarit de pièces et ses réserves.</div>`;
+
+  $("#lg-corps").onclick = async ev => {
+    const li = ev.target.closest("li[data-l]"); if (!li) return;
+    const l = S.logements.find(x => x.id === li.dataset.l);
+    if (ev.target.dataset.act === "neuf") { ouvrirNeuf(l.id); return; }
+    vueGabarit(l); aller("gabarit");
+  };
+  barre([
+    { t: "Retour", sec: true, f: () => aller("accueil") },
+    { t: "Nouveau logement", f: nouveauLogement }
+  ]);
+}
+
+$("#b-gabarits").onclick = () => aller("logements");
+$("#b-retour-l").onclick = () => aller("accueil");
+$("#b-retour-g").onclick = () => aller("accueil");
+$("#b-retour-e").onclick = () => aller("accueil");
+$("#b-entete").onclick = ouvrirEntete;
+$("#b-sauve").onclick = sauvegardeComplete;
+$("#f-restaure").onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (f) restaurer(f); };
+
+/* ===================================================================
+   14. MISES À JOUR
+   =================================================================== */
+let enAttente = null, rechargement = false;
+function proposerMaj() { $("#maj").classList.add("on"); }
+$("#b-maj").onclick = () => {
+  if (S.edl && !S.edl.verrouille && S.vue === "edl" &&
+      !confirm("Un relevé est en cours. Il est enregistré et sera retrouvé après l'actualisation. Continuer ?")) return;
+  if (enAttente) enAttente.postMessage({ type: "APPLIQUER_MAJ" });
+  else location.reload();
+};
+if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    const verifier = () => reg.update().catch(() => {});
+    verifier();                                            // à chaque lancement
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) verifier(); });
+    setInterval(verifier, 30 * 60 * 1000);
+    if (reg.waiting) { enAttente = reg.waiting; proposerMaj(); }
+    reg.addEventListener("updatefound", () => {
+      const nv = reg.installing; if (!nv) return;
+      nv.addEventListener("statechange", () => {
+        if (nv.state === "installed" && navigator.serviceWorker.controller) { enAttente = nv; proposerMaj(); }
+      });
+    });
+  }).catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (rechargement) return; rechargement = true; location.reload();
+  });
+}
+
+/* ===================================================================
+   15. DÉMARRAGE
+   =================================================================== */
+$("#pied").textContent = "Relevé " + VERSION + (location.protocol === "file:" ? " · mode local : hors-ligne et empreintes indisponibles" : "");
+brancherEdl();
+aller("accueil");
+window.addEventListener("beforeunload", ev => {
+  if (S.edl && !S.edl.verrouille && S.vue === "edl") { ev.preventDefault(); ev.returnValue = ""; }
+});
+</script>
+</body>
+</html>
