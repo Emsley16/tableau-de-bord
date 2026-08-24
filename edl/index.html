@@ -240,11 +240,15 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 <dialog id="d-entete"><form method="dialog" class="dlg">
   <h3>Ce relevé</h3>
   <p id="f-rappel" class="note" style="margin-bottom:12px"></p>
+  <div class="champ"><label>Date du relevé</label><input class="t" id="f-date" type="date"></div>
   <div class="champ"><label>Localisation du logement</label><input class="t" id="f-loc"></div>
   <div class="champ" id="c-ladr"><label>Nouvelle adresse du locataire (sortie)</label><input class="t" id="f-ladr"></div>
   <div class="champ"><label>Relevés de compteurs — un par ligne</label><textarea class="obs" id="f-cpt" placeholder="Électricité : 14 522 kWh&#10;Eau froide : 218 m3"></textarea></div>
   <div class="champ"><label>Clés et moyens d'accès — détail et destination, un par ligne</label><textarea class="obs" id="f-cles" placeholder="2 clés porte palière&#10;1 clé boîte aux lettres"></textarea></div>
-  <button class="btn" value="ok" style="max-width:none">Enregistrer</button>
+  <div style="display:flex;gap:8px">
+    <button class="btn sec" value="annuler" formnovalidate>Annuler</button>
+    <button class="btn" value="ok">Enregistrer</button>
+  </div>
 </form></dialog>
 
 <dialog id="d-sign"><div class="dlg">
@@ -278,16 +282,20 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
   <div class="champ"><label>Logement</label><select class="t" id="n-log"></select></div>
   <div class="champ"><label>Type</label><select class="t" id="n-type"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select></div>
   <div class="champ"><label>Locataire</label><select class="t" id="n-loc"></select></div>
+  <div class="champ"><label>Date du relevé</label><input class="t" id="n-date" type="date"></div>
   <div class="champ" id="c-nref"><label>État des lieux d'entrée de référence</label><select class="t" id="n-ref"></select></div>
   <p class="note">À la sortie, chaque élément est pré-rempli avec l'état constaté à l'entrée : ne rien toucher signifie « inchangé ». La propreté, elle, n'est jamais pré-remplie à la sortie.</p>
-  <button class="btn" value="ok" style="max-width:none">Créer</button>
+  <div style="display:flex;gap:8px">
+    <button class="btn sec" value="annuler" formnovalidate>Annuler</button>
+    <button class="btn" value="ok">Créer</button>
+  </div>
 </form></dialog>
 
 <div id="print"></div>
 
 <script>
 "use strict";
-const VERSION = "1.7.0";
+const VERSION = "1.8.0";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -960,12 +968,18 @@ function ouvrirEntete() {
   $("#f-rappel").textContent = "Bailleur : " + (e.bailleur.nom || "non renseigné")
     + " · Locataire : " + (e.locataire.nom || "non renseigné")
     + ". Ces identités se modifient dans les écrans Bailleur et Locataires.";
+  const d0 = new Date(e.cree);
+  $("#f-date").value = new Date(d0.getTime() - d0.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  $("#f-date").disabled = !!e.verrouille;
   $("#f-loc").value = e.localisation; $("#f-ladr").value = e.locataire.nouvelleAdresse;
   $("#f-cpt").value = e.compteurs; $("#f-cles").value = e.cles;
   $("#d-entete").showModal();
 }
 $("#d-entete").addEventListener("close", async () => {
   const e = S.edl; if (!e || e.verrouille) return;
+  if ($("#d-entete").returnValue !== "ok") return;
+  const sd = $("#f-date").value;
+  if (sd) { const [a2, m2, j2] = sd.split("-").map(Number); e.cree = new Date(a2, m2 - 1, j2, 12, 0, 0).getTime(); }
   e.locataire.nouvelleAdresse = $("#f-ladr").value.trim();
   e.localisation = $("#f-loc").value.trim();
   e.compteurs = $("#f-cpt").value; e.cles = $("#f-cles").value;
@@ -1255,10 +1269,13 @@ function ouvrirNeuf(logId) {
   };
   $("#n-loc").innerHTML = S.locataires.map(t => `<option value="${t.id}">${esc(t.nom)}</option>`).join("")
     + `<option value="_new">+ Nouveau locataire…</option>`;
+  const j = new Date();
+  $("#n-date").value = new Date(j.getTime() - j.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   $("#n-type").onchange = maj; $("#n-log").onchange = maj; maj();
   $("#d-neuf").showModal();
 }
 $("#d-neuf").addEventListener("close", async () => {
+  // Annuler, Échap ou clic hors de la fenêtre : aucune création.
   if ($("#d-neuf").returnValue !== "ok") return;
   const log = S.logements.find(l => l.id === $("#n-log").value), type = $("#n-type").value;
   let locataire = null;
@@ -1276,6 +1293,13 @@ $("#d-neuf").addEventListener("close", async () => {
     ref = await DB.get("edls", rid);
   }
   const e = edlNeuf(log, type, ref, locataire);
+  const saisie = $("#n-date").value;
+  if (saisie) {
+    // Midi plutôt que minuit : évite qu'un décalage horaire ne fasse basculer
+    // le relevé sur la veille.
+    const [an, mo, jo] = saisie.split("-").map(Number);
+    e.cree = new Date(an, mo - 1, jo, 12, 0, 0).getTime();
+  }
   await DB.put("edls", e); await vueEdl(e); aller("edl");
 });
 
