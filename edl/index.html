@@ -95,6 +95,8 @@ textarea.obs{min-height:52px} .obs-l{margin-top:6px}
 .ph figure{margin:0;flex:0 0 auto;width:82px}
 .ph img{width:82px;height:82px;object-fit:cover;border-radius:3px;display:block;background:var(--trait)}
 .ph figcaption{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;color:var(--propose);text-align:center}
+.phdel{width:82px;margin-top:3px;padding:3px 0;font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  border:1px solid var(--defaut);border-radius:3px;color:var(--defaut);display:block}
 .ph .ref img{border:2px solid var(--propose)} .ph .cst img{border:2px solid var(--confirme)}
 .ajout{flex:0 0 auto;width:82px;height:82px;border:1px dashed var(--trait-fort);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--trait-fort)}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;margin-bottom:10px}
@@ -295,7 +297,7 @@ dialog::backdrop{background:rgba(22,32,43,.55)}
 
 <script>
 "use strict";
-const VERSION = "1.8.2";
+const VERSION = "1.8.3";
 
 /* ===================================================================
    1. CONSTANTES MÉTIER
@@ -793,7 +795,8 @@ function elementHtml(p, el) {
         ${ref.length ? `<div class="ph">${ref.map(ph => `<figure class="ref"><img data-ph="${ph.id}" data-src="ref"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}</div>`
           : `<div style="font-size:12px;color:var(--propose);margin-top:4px">Aucune photo de référence</div>`}</div>
       <div><h4>Ce jour</h4><div class="val">${el.etatSt === "propose" ? "<i style='color:var(--propose)'>inchangé (proposé)</i>" : esc(el.etat || "—")}</div>
-        ${cst.length ? `<div class="ph">${cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}</div>` : ""}</div>
+        ${cst.length ? `<div class="ph">${cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption>
+          ${verr ? "" : `<button class="phdel" data-act="del-ph" data-ph="${ph.id}">Retirer</button>`}</figure>`).join("")}</div>` : ""}</div>
     </div>` : "";
 
   return `<div class="el ${nonConfirme(el) ? "enattente" : "fait"}" data-e="${el.id}">
@@ -808,7 +811,8 @@ function elementHtml(p, el) {
              value="${el.qte == null ? "" : el.qte}" ${verr ? "disabled" : ""}>${ecartHtml(el)}</div>`}
     <div class="obs-l"><textarea class="obs" data-obs placeholder="Description précise : localisation, dimension, nature du défaut." ${verr ? "disabled" : ""}>${esc(el.obs)}</textarea></div>
     ${(sortie && !cst.length && verr) ? "" : `<div class="ph">
-      ${sortie ? "" : cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption></figure>`).join("")}
+      ${sortie ? "" : cst.map(ph => `<figure class="cst"><img data-ph="${ph.id}"><figcaption>${dateFr(ph.createdAt)}</figcaption>
+        ${verr ? "" : `<button class="phdel" data-act="del-ph" data-ph="${ph.id}">Retirer</button>`}</figure>`).join("")}
       ${verr ? "" : `<label class="ajout">+<input type="file" accept="image/*" multiple hidden data-add></label>
       <button class="mini" data-act="reserve" style="align-self:center">Passer en réserve permanente</button>`}
     </div>`}
@@ -850,6 +854,16 @@ function brancherEdl() {
     const act = e.target.dataset.act, chip = e.target.closest(".chip");
     const boite = e.target.closest("[data-e]"), pBoite = e.target.closest("[data-p]");
 
+    if (act === "del-ph") {
+      const id = e.target.dataset.ph;
+      const ph = S.photos.find(x => x.id === id);
+      if (!ph) return;
+      if (!confirm("Retirer cette photographie du " + dateFr(ph.createdAt) + " ?\n\nElle sera définitivement supprimée. Vous pourrez en reprendre une autre aussitôt.")) return;
+      await DB.del("photos", id);
+      S.photos = S.photos.filter(x => x.id !== id);
+      dessinerEdl();
+      return;
+    }
     if (act === "conf-piece") {
       const p = edl.pieces.find(x => x.id === pBoite.dataset.p);
       const manquant = p.elements.filter(el => el.propSt === "vide");
