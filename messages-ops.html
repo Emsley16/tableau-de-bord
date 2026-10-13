@@ -691,7 +691,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.12b";
+const VERSION="2026.10.13a";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -749,7 +749,9 @@ const ACTIONS=[
 const COLLISIONS=[
   {v:"frontale",antag:true},{v:"latérale",antag:true},{v:"fronto-latérale",antag:true},
   {v:"contre un obstacle fixe",antag:false},{v:"en sortie de route",antag:false},
-  {v:"contre un piéton",antag:false},{v:"contre un deux-roues",antag:false}
+  {v:"contre un piéton",antag:false},{v:"contre un deux-roues",antag:false},
+  {v:"chute seul",l:"Chute seul, sans tiers (deux-roues)",t:"ayant chuté seul, sans tiers impliqué",antag:false},
+  {v:"perte de contrôle seul",l:"Perte de contrôle seul, sans tiers",t:"seul après une perte de contrôle, sans tiers impliqué",antag:false}
 ];
 const CINETIQUES=["faible","moyenne","forte"];
 const ACTIONS_R=[
@@ -1757,7 +1759,7 @@ function buildCodisForms(){
   $("#charg").outerHTML=chipsHTML("charg",[["Chargement intact","intact"],["Chargement endommagé","endommage"]],"one");
   $("#chargRisk").outerHTML=chipsHTML("chargRisk",[["Risques particuliers liés au chargement","1"]],"multi");
   $("#chargRisk").style.marginTop="6px";
-  $("#collision").innerHTML=COLLISIONS.map(c=>'<option value="'+c.v+'">'+cap(c.v)+'</option>').join("");
+  $("#collision").innerHTML=COLLISIONS.map(c=>'<option value="'+c.v+'">'+(c.l||cap(c.v))+'</option>').join("");
   $("#cinetique").innerHTML=CINETIQUES.map(c=>'<option value="'+c+'">cinétique '+c+'</option>').join("");
   $("#collision").value="frontale";$("#cinetique").value="forte";
   $("#vgrid").innerHTML=VEHICULES.map(v=>'<button type="button" class="vtile" data-veh="'+v.id+'">'+v.svg+'<span>'+v.lab+'</span></button>').join("");
@@ -1907,7 +1909,8 @@ function buildCodisR(){
   if(one("energ"))veh+=" "+one("energ");
   const col=COLLISIONS.find(c=>c.v===raw("collision"))||COLLISIONS[0];
   const ant=lc(raw("antag")),cin=raw("cinetique")||"forte";
-  const colTxt=col.antag?"dans une collision "+col.v+" à "+cin+" cinétique"+(ant?" contre "+ant:""):col.v+" à "+cin+" cinétique";
+  const colTxt=col.antag?"dans une collision "+col.v+" à "+cin+" cinétique"+(ant?" contre "+ant:""):
+    col.t?col.t+", à "+cin+" cinétique":col.v+" à "+cin+" cinétique";
   let ch="";
   if(one("charg")==="intact")ch="Chargement intact";
   else if(one("charg")==="endommage")ch="Chargement endommagé";
