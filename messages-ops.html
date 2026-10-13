@@ -248,6 +248,37 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 .hi.vide{color:var(--muted);font-style:italic;font-size:13px;background:none;border-style:dashed}
 .ver{text-align:center;font-size:11px;color:var(--muted);opacity:.62;padding:14px 0 4px;line-height:1.5}
 
+
+/* écrans de saisie */
+.phseg{margin-bottom:12px}
+.phseg button{font-size:14.5px}
+.sh{padding:12px 14px 0;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)}
+.sh.c{color:var(--blu)}
+.sec>.bd:first-child{border-top:0}
+.sec>.sh+.bd{border-top:0}
+details.sub{margin-top:10px;border-top:1px dashed var(--border);padding-top:8px}
+details.sub>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted);list-style:none;padding:4px 0}
+details.sub>summary::-webkit-details-marker{display:none}
+details.sub>summary::before{content:"＋ ";color:var(--acc)}
+details.sub[open]>summary::before{content:"－ "}
+.ngrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ngrid button{background:var(--s2);border:1px solid var(--border);border-radius:9px;color:var(--text);
+  padding:10px 4px;min-height:52px;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer}
+.ngrid button[aria-pressed=true]{background:var(--acc-s);border-color:var(--acc);color:var(--acc)}
+.qk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qc{display:flex;flex-direction:column;gap:3px;min-width:0}
+.qc>span{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qc input{text-align:center;font-family:var(--mono);font-size:21px;padding:9px 4px}
+.qc .q{text-align:center;font-style:normal;font-size:10.5px;min-height:2.5em}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 14px}
+.nav button{border-radius:var(--r);padding:15px 6px;font-size:15px;font-weight:800;cursor:pointer;
+  background:var(--s2);border:1px solid var(--border);color:var(--text);min-height:54px}
+.nav .pri{background:var(--acc);border-color:var(--acc);color:var(--bg)}
+.nav .prib{background:var(--blu);border-color:var(--blu);color:var(--bg)}
+.chip.def{border-style:dashed}
+.chip.def::after{content:" · par défaut";font-size:11px;font-weight:400;opacity:.8}
+#sxSeg button{font-size:16px}
+
 /* lecture plein écran */
 #lect{position:fixed;inset:0;z-index:90;background:#000;color:#fff;display:none;overflow:auto;
   padding:calc(16px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom))}
@@ -300,103 +331,80 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
   <div class="g2"><button class="y" id="bnNew">Nouvelle intervention</button><button class="n" id="bnKeep">Reprendre</button></div>
 </div>
 
-<details class="sec" id="s1" open>
-  <summary><span class="num">1</span><span class="st"><b>Départ et lieu</b><em>Commun aux deux messages</em></span><span class="chev">▼</span></summary>
-  <div class="bd">
-    <div class="f"><span class="gl">Type d'intervention</span>
-      <div class="seg" id="typeSeg">
-        <button data-t="SAP" aria-pressed="true">Secours à personne</button>
-        <button data-t="ROUTIER" aria-pressed="false">Secours routier</button>
-      </div></div>
+<div class="seg phseg" id="phSeg">
+  <button data-p="arr" aria-pressed="true">1 · Arrivée</button>
+  <button data-p="bil" aria-pressed="false">2 · Bilan</button>
+  <button data-p="fin" aria-pressed="false">3 · Fin</button>
+</div>
 
-    <div class="f"><span class="gl">Engin et centre</span>
-      <div class="row">
-        <select id="engin" data-keep>
-          <option value="VSAV 1">VSAV 1</option><option value="VSAV 2">VSAV 2</option>
-          <option value="VSAV 3">VSAV 3</option><option value="VSAV 4">VSAV 4</option>
-          <option value="VSR">VSR</option><option value="FPT">FPT</option>
-          <option value="VSM">VSM</option><option value="VLSM">VLSM</option><option value="VTU">VTU</option>
-        </select>
-        <input type="text" id="cis" data-keep value="Cognac" placeholder="Centre">
-      </div>
-      <span class="mini">Conservés d'une intervention à l'autre. Indicatif annoncé : engin + centre (« VSAV 1 Cognac »).</span></div>
+<!-- ─────────── 1 · ARRIVÉE ─────────── -->
+<div class="ph" id="ph-arr">
 
-    <div class="f"><label for="commune">Commune</label>
-      <input type="text" id="commune" data-keep placeholder="Cognac"></div>
-
-    <div class="f"><span class="gl" id="adrLbl">Adresse</span>
-      <div class="chips cod" id="adrind" data-multi><button class="chip" data-v="1" aria-pressed="false">Adresse indiquée au départ</button></div>
-      <input type="text" id="adresse" placeholder="12 rue des Vignes" style="margin-top:8px">
-      <button class="btn2" id="geo">Me localiser</button>
-      <span class="mini" id="geoinfo">Sans préposition : le programme construit la phrase. La géolocalisation donne la position du téléphone, pas forcément celle de la victime — vérifier avant d'énoncer.</span></div>
-
-    <div class="f"><span class="gl">Contexte du lieu</span>
-      <div class="chips" id="ctxlieu" data-one>
-        <button class="chip" data-v="à son domicile" aria-pressed="false">Domicile</button>
-        <button class="chip" data-v="sur la voie publique" aria-pressed="false">Voie publique</button>
-        <button class="chip" data-v="sur son lieu de travail" aria-pressed="false">Lieu de travail</button>
-        <button class="chip" data-v="en EHPAD" aria-pressed="false">EHPAD</button>
-        <button class="chip" data-v="en établissement de soins" aria-pressed="false">Établissement de soins</button>
-        <button class="chip" data-v="dans un établissement recevant du public" aria-pressed="false">ERP</button>
-        <button class="chip" data-v="en milieu sportif" aria-pressed="false">Milieu sportif</button>
-        <button class="chip" data-v="en milieu naturel" aria-pressed="false">Milieu naturel</button>
-      </div>
-      <input type="text" id="ctxdet" placeholder="Précision : 2e étage sans ascenseur, accès par l'arrière…" style="margin-top:8px"></div>
+<div class="sec"><div class="bd">
+  <div class="f row">
+    <div class="seg" id="typeSeg" style="flex:2">
+      <button data-t="SAP" aria-pressed="true">SAP</button>
+      <button data-t="ROUTIER" aria-pressed="false">Routier</button>
+    </div>
+    <select id="engin" data-keep aria-label="Engin" style="flex:1">
+      <option value="VSAV 1">VSAV 1</option><option value="VSAV 2">VSAV 2</option>
+      <option value="VSAV 3">VSAV 3</option><option value="VSAV 4">VSAV 4</option>
+      <option value="VSR">VSR</option><option value="FPT">FPT</option>
+      <option value="VSM">VSM</option><option value="VLSM">VLSM</option><option value="VTU">VTU</option>
+    </select>
   </div>
-</details>
 
-<details class="sec" id="s2" open>
-  <summary><span class="num">2</span><span class="st"><b>Victime et nature</b><em>Alimente la phrase CODIS et l'annonce SAMU</em></span><span class="chev">▼</span></summary>
-  <div class="bd">
-    <div class="f"><span class="gl">Motif de recours</span><div class="mgrid" id="motifs"></div></div>
-
-    <div class="f"><span class="gl">Nature de l'événement</span>
-      <div class="chips" id="titrec" data-one></div>
+  <div class="f"><span class="gl">Nature</span>
+    <div class="ngrid" id="ngrid"></div>
+    <details class="sub" id="natDet"><summary>Autre nature, ou affiner</summary>
+      <div class="mgrid" id="motifs" style="margin-top:10px"></div>
+      <div class="chips" id="titrec" data-one style="margin-top:10px"></div>
       <input type="text" id="titre" placeholder="Préciser la nature : ce que vous constatez" style="margin-top:8px;display:none">
       <span class="auto" id="titreHint"></span>
-      <span class="mini">L'âge, le sexe et le lieu ont leurs propres champs : ne pas les remettre ici.</span></div>
+    </details></div>
 
-    <div class="f"><span class="gl">Victime principale</span>
-      <div class="g3">
-        <input type="number" id="age" inputmode="numeric" placeholder="Âge">
-        <select id="ageu"><option value="ans">ans</option><option value="mois">mois</option></select>
-        <select id="sexe"><option value="">Sexe</option><option value="Homme">Homme</option><option value="Femme">Femme</option></select>
-      </div>
-      <input type="text" id="poids" inputmode="decimal" placeholder="Poids en kg (enfant, ou thérapeutique envisagée)" style="margin-top:8px">
-      <div id="pedbox"></div></div>
+  <div class="f"><span class="gl">Victime</span>
+    <div class="row">
+      <input type="number" id="age" inputmode="numeric" placeholder="Âge" style="flex:1.1">
+      <select id="ageu" aria-label="Unité" style="flex:1"><option value="ans">ans</option><option value="mois">mois</option></select>
+      <div class="seg" id="sxSeg" style="flex:1.6"><button data-s="Homme" aria-pressed="false">H</button><button data-s="Femme" aria-pressed="false">F</button></div>
+      <input type="hidden" id="sexe">
+    </div>
+    <div id="pedbox"></div></div>
 
-    <div class="f lk" id="lk-h"><span class="gl">Depuis quand<span class="tg">verrou</span></span>
-      <div class="chips" id="delaic" data-one>
-        <button class="chip" data-v="5" aria-pressed="false">5 min</button>
-        <button class="chip" data-v="15" aria-pressed="false">15 min</button>
-        <button class="chip" data-v="30" aria-pressed="false">30 min</button>
-        <button class="chip" data-v="60" aria-pressed="false">1 h</button>
-        <button class="chip" data-v="120" aria-pressed="false">2 h</button>
-        <button class="chip" data-v="360" aria-pressed="false">6 h</button>
-        <button class="chip" data-v="1440" aria-pressed="false">Hier</button>
-        <button class="chip" data-v="precise" aria-pressed="false">Heure précise</button>
-      </div>
-      <div id="heurebox" style="display:none">
-        <div class="row" style="margin-top:8px"><input type="time" id="heure">
-          <div class="chips" id="htype" data-one>
-            <button class="chip" data-v="debut" aria-pressed="true">Début connu</button>
-            <button class="chip" data-v="vu" aria-pressed="false">Dernier vu normal</button>
-          </div></div></div>
-      <span class="mini">Sur un déficit neurologique, préférer l'heure précise : elle conditionne la thrombolyse.</span></div>
+  <div class="f"><span class="gl" id="adrLbl">Lieu</span>
+    <div class="row">
+      <input type="text" id="commune" data-keep placeholder="Commune" style="flex:2">
+      <button class="btn2" id="geo" style="margin-top:0;flex:1">Me localiser</button>
+    </div>
+    <div class="chips cod" id="adrind" data-multi style="margin-top:8px"><button class="chip" data-v="1" aria-pressed="false">Adresse indiquée au départ</button></div>
+    <input type="text" id="adresse" placeholder="12 rue des Vignes" style="margin-top:8px">
+    <span class="mini" id="geoinfo">Décocher « adresse indiquée » si la victime n'est pas à l'adresse transmise. La géolocalisation donne la position du téléphone : vérifier avant d'énoncer.</span></div>
 
-    <div class="f"><span class="gl">Constaté sur place</span>
-      <div class="chips" id="aggrav" data-multi>
-        <button class="chip" data-v="victime inconsciente" aria-pressed="false">Inconsciente</button>
-        <button class="chip" data-v="en détresse vitale" aria-pressed="false">Détresse vitale</button>
-        <button class="chip" data-v="avec hémorragie active" aria-pressed="false">Hémorragie active</button>
-        <button class="chip" data-v="victime incarcérée" aria-pressed="false">Incarcérée</button>
-        <button class="chip" data-v="accès difficile" aria-pressed="false">Accès difficile</button>
-        <button class="chip" data-v="relevage difficile" aria-pressed="false">Relevage difficile</button>
-      </div>
-      <input type="text" id="aggravlib" placeholder="Autre élément constaté" style="margin-top:8px">
-      <span class="mini">Ce que vous voyez sur place. Ce qui concerne la personne elle-même (anticoagulant, vit seule, grossesse) se coche dans Terrain et s'ajoute seul au message.</span></div>
-  </div>
-</details>
+  <div class="f"><span class="gl">Contexte</span>
+    <div class="chips" id="ctxlieu" data-one>
+      <button class="chip" data-v="à son domicile" aria-pressed="false">Domicile</button>
+      <button class="chip" data-v="sur la voie publique" aria-pressed="false">Voie publique</button>
+      <button class="chip" data-v="sur son lieu de travail" aria-pressed="false">Travail</button>
+      <button class="chip" data-v="en EHPAD" aria-pressed="false">EHPAD</button>
+      <button class="chip" data-v="en établissement de soins" aria-pressed="false">Établ. de soins</button>
+      <button class="chip" data-v="dans un établissement recevant du public" aria-pressed="false">ERP</button>
+      <button class="chip" data-v="en milieu sportif" aria-pressed="false">Sport</button>
+      <button class="chip" data-v="en milieu naturel" aria-pressed="false">Milieu naturel</button>
+    </div>
+    <input type="text" id="ctxdet" placeholder="Précision : 2e étage sans ascenseur…" style="margin-top:8px"></div>
+
+  <div class="f"><span class="gl">Constaté sur place</span>
+    <div class="chips" id="aggrav" data-multi>
+      <button class="chip" data-v="victime inconsciente" aria-pressed="false">Inconsciente</button>
+      <button class="chip" data-v="en détresse vitale" aria-pressed="false">Détresse vitale</button>
+      <button class="chip" data-v="avec hémorragie active" aria-pressed="false">Hémorragie active</button>
+      <button class="chip" data-v="victime incarcérée" aria-pressed="false">Incarcérée</button>
+      <button class="chip" data-v="accès difficile" aria-pressed="false">Accès difficile</button>
+      <button class="chip" data-v="relevage difficile" aria-pressed="false">Relevage difficile</button>
+    </div>
+    <input type="text" id="aggravlib" placeholder="Autre élément constaté" style="margin-top:8px"></div>
+</div></div>
 
 <details class="sec" id="sR" hidden>
   <summary><span class="num c">R</span><span class="st"><b>Accident</b><em>Véhicule, collision, cinétique, chargement</em></span><span class="chev">▼</span></summary>
@@ -420,80 +428,173 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
   </div>
 </details>
 
-<details class="sec" id="s3" open>
-  <summary><span class="num c">3</span><span class="st"><b>CODIS</b><em>État, demande de moyens, actions, autres victimes</em></span><span class="chev">▼</span></summary>
-  <div class="bd cod">
-    <div class="f"><span class="gl">État de la victime principale</span>
-      <div class="chips" id="etat" data-one></div>
-      <span class="auto" id="etatHint"></span></div>
-
+<div class="sec"><div class="sh c">CODIS</div><div class="bd cod">
+  <div class="f"><span class="gl">État de la victime</span>
+    <div class="chips" id="etat" data-one></div>
+    <span class="auto" id="etatHint"></span></div>
+  <div class="f"><span class="gl">Je demande</span>
+    <div class="chips" id="renf"></div></div>
+  <div class="f"><span class="gl">Je fais</span>
+    <div class="chips" id="actS" data-multi></div>
+    <div class="chips" id="actR" data-multi hidden></div></div>
+  <details class="sub" id="codDet"><summary>Plus : qualification, autres victimes, saisie libre</summary>
     <div class="f" id="qualBox"><span class="gl">Qualification</span>
       <div class="chips" id="qual" data-one></div>
       <span class="auto" id="qualHint"></span></div>
-
-    <div class="f"><span class="gl">Je demande</span>
-      <div class="chips" id="renf"></div>
-      <input type="text" id="renfMan" placeholder="Autre demande : un moyen de levage" style="margin-top:8px">
-      <span class="mini">La décision avant la description. Aucun besoin = « secours suffisants ».</span></div>
-
-    <div class="f"><span class="gl">Je fais</span>
-      <div class="chips" id="actS" data-multi></div>
-      <div class="chips" id="actR" data-multi hidden></div>
-      <input type="text" id="faisMan" placeholder="Autre action : protection thermique de la victime" style="margin-top:8px"></div>
-
     <div class="f"><span class="gl">Autres victimes</span>
       <div id="xv"></div>
       <button class="addp" id="addxv">+ Ajouter une victime</button></div>
+    <div class="f"><label for="renfMan">Autre demande</label>
+      <input type="text" id="renfMan" placeholder="un moyen de levage"></div>
+    <div class="f"><label for="faisMan">Autre action</label>
+      <input type="text" id="faisMan" placeholder="protection thermique de la victime"></div>
+  </details>
+</div></div>
 
-    <div class="f"><span class="gl">Transport de la victime principale</span>
-      <div class="g2"><input type="text" id="vect" placeholder="Vecteur : VSAV, SMUR"><input type="text" id="dest" placeholder="Destination : CH Cognac"></div>
-      <span class="mini">N'apparaît que dans le compte rendu.</span></div>
+<div class="nav">
+  <button class="prib" id="toCodis">Message CODIS</button>
+  <button class="pri" id="toBil">Bilan →</button>
+</div>
+</div>
+
+<!-- ─────────── 2 · BILAN ─────────── -->
+<div class="ph" id="ph-bil" hidden>
+
+<div class="sec"><div class="bd">
+  <div class="f lk" id="lk-h"><span class="gl">Depuis quand<span class="tg">verrou</span></span>
+    <div class="chips" id="delaic" data-one>
+      <button class="chip" data-v="5" aria-pressed="false">5 min</button>
+      <button class="chip" data-v="15" aria-pressed="false">15 min</button>
+      <button class="chip" data-v="30" aria-pressed="false">30 min</button>
+      <button class="chip" data-v="60" aria-pressed="false">1 h</button>
+      <button class="chip" data-v="120" aria-pressed="false">2 h</button>
+      <button class="chip" data-v="360" aria-pressed="false">6 h</button>
+      <button class="chip" data-v="1440" aria-pressed="false">Hier</button>
+      <button class="chip" data-v="precise" aria-pressed="false">Heure précise</button>
+    </div>
+    <div id="heurebox" style="display:none">
+      <div class="row" style="margin-top:8px"><input type="time" id="heure">
+        <div class="chips" id="htype" data-one>
+          <button class="chip" data-v="debut" aria-pressed="true">Début connu</button>
+          <button class="chip" data-v="vu" aria-pressed="false">Dernier vu normal</button>
+        </div></div></div>
+    <span class="mini">Sur un déficit neurologique, préférer l'heure précise : elle conditionne la thrombolyse.</span></div>
+</div></div>
+
+<div class="sec"><div class="sh">Constantes</div><div class="bd">
+  <div class="qk">
+    <label class="qc"><span>SpO₂ %</span><input type="number" id="spo2" inputmode="numeric" enterkeyhint="next"><i class="q x" id="q-spo2">—</i></label>
+    <label class="qc"><span>FC</span><input type="number" id="fc" inputmode="numeric" enterkeyhint="next"><i class="q x" id="q-fc">—</i></label>
+    <label class="qc"><span>FR</span><input type="number" id="fr" inputmode="numeric" enterkeyhint="next"><i class="q x" id="q-fr">—</i></label>
+    <label class="qc"><span>PA syst.</span><input type="number" id="pas" inputmode="numeric" enterkeyhint="next"><i class="q x" id="q-pa">—</i></label>
+    <label class="qc"><span>PA diast.</span><input type="number" id="pad" inputmode="numeric" enterkeyhint="done"><i class="q x"></i></label>
+    <label class="qc"><span>O₂ L/min</span><input type="number" id="o2" inputmode="numeric"><i class="q x"></i></label>
   </div>
-</details>
+  <select id="disp" aria-label="Dispositif d'oxygène" style="margin-top:8px"><option value="">Oxygène : aucun dispositif</option><option value="masque à haute concentration">Masque à haute concentration</option><option value="masque simple">Masque simple</option><option value="lunettes">Lunettes</option><option value="insufflateur">Insufflateur</option></select>
+  <span class="mini">Le curseur passe seul au champ suivant dès que la valeur est complète.</span>
 
-<details class="sec" id="s4">
-  <summary><span class="num">4</span><span class="st"><b>Terrain</b><em>Ce qui concerne la personne : traitements, antécédents, mode de vie</em></span><span class="chev">▼</span></summary>
-  <div class="bd">
-    <div class="f lk" id="lk-a"><span class="gl">Anticoagulant ou antiagrégant<span class="tg">verrou</span></span>
-      <div class="chips" id="acg" data-one>
-        <button class="chip" data-v="oui" aria-pressed="false">Oui</button>
-        <button class="chip" data-v="non" aria-pressed="false">Non</button>
-        <button class="chip" data-v="inconnu" aria-pressed="false">Non déterminé</button>
-      </div>
-      <span class="mini">« Sous anticoagulant » passe dans les deux messages.</span></div>
+  <div class="f"><span class="gl">Glasgow <b id="gcs" style="color:var(--acc);font-size:15px;margin-left:6px">—</b> <i class="q x" id="q-gcs" style="font-style:normal;margin-left:6px">—</i></span>
+    <div class="seg" id="gq">
+      <button data-g="15" aria-pressed="false">15</button>
+      <button data-g="14" aria-pressed="false">14 · confus</button>
+      <button data-g="autre" aria-pressed="false">Autre</button>
+    </div>
+    <details class="sub" id="gdet"><summary>Détail Y · V · M</summary>
+      <select id="gy" style="margin-top:8px">
+        <option value="">Yeux — non évalué</option>
+        <option value="4">Y4 · spontanée, les yeux sont déjà ouverts</option>
+        <option value="3">Y3 · à la demande verbale, quand je lui parle</option>
+        <option value="2">Y2 · à la stimulation douloureuse seulement</option>
+        <option value="1">Y1 · aucune ouverture, même à la douleur</option>
+      </select>
+      <select id="gv" style="margin-top:8px">
+        <option value="">Verbal — non évalué</option>
+        <option value="5">V5 · orientée, sait où il est, quel jour, qui il est</option>
+        <option value="4">V4 · confuse, parle mais se trompe ou divague</option>
+        <option value="3">V3 · mots inappropriés, sans lien avec la question</option>
+        <option value="2">V2 · sons incompréhensibles, gémissements</option>
+        <option value="1">V1 · aucun son</option>
+      </select>
+      <select id="gm" style="margin-top:8px">
+        <option value="">Moteur — non évalué</option>
+        <option value="6">M6 · obéit à un ordre simple</option>
+        <option value="5">M5 · localise la douleur, porte la main vers le point</option>
+        <option value="4">M4 · retrait, retire le membre sans localiser</option>
+        <option value="3">M3 · flexion anormale, membres repliés sur le tronc</option>
+        <option value="2">M2 · extension anormale, membres tendus en rotation</option>
+        <option value="1">M1 · aucun mouvement</option>
+      </select>
+      <button class="btn2" id="g0">Effacer le Glasgow</button>
+      <span class="mini">Y3 se teste à la voix, Y2 uniquement après stimulation douloureuse. Le total va de 3 à 15.</span>
+    </details></div>
 
-    <div class="f"><span class="gl">Antécédents</span>
-      <div class="chips" id="atcd-c"></div>
-      <input type="text" id="atcd" placeholder="Autres antécédents" style="margin-top:8px">
-      <div class="glose2" id="atcdef"></div>
-      <span class="mini">Les deux premiers cochés passent dans l'annonce SAMU.</span></div>
+  <details class="sub" id="mesDet"><summary>Autres mesures : recoloration, température, glycémie, douleur, poids</summary>
+    <div class="cst"><label>Recoloration</label><input type="text" id="trc" inputmode="decimal" placeholder="sec"><div class="q x" id="q-trc">—</div></div>
+    <div class="cst"><label>Température</label><input type="text" id="temp" inputmode="decimal" placeholder="°C"><div class="q x" id="q-temp">—</div></div>
+    <div class="cst"><label>Glycémie</label><input type="text" id="gly" inputmode="decimal" placeholder="g/L"><div class="q x" id="q-gly">—</div></div>
+    <div class="cst"><label>Douleur (EN)</label><input type="number" id="en" inputmode="numeric" placeholder="/10"><div class="q x" id="q-en">—</div></div>
+    <input type="text" id="poids" inputmode="decimal" placeholder="Poids en kg (enfant, ou thérapeutique envisagée)" style="margin-top:10px">
+  </details>
+</div></div>
 
-    <div class="f"><span class="gl">Traitements</span>
-      <input type="text" id="ttt" placeholder="Ramipril, atorvastatine">
-      <span class="gl" style="margin-top:10px">Ce qui décale les seuils des constantes</span>
-      <div class="chips" id="modif"></div>
-      <div class="glose2" id="modifdef"></div>
-      <span class="mini">Se coche seul quand l'antécédent correspondant est coché (BPCO, hypertension, pacemaker).</span></div>
+<div class="sec"><div class="sh">Terrain</div><div class="bd">
+  <div class="f lk" id="lk-a"><span class="gl">Anticoagulant ou antiagrégant<span class="tg">verrou</span></span>
+    <div class="chips" id="acg" data-one>
+      <button class="chip" data-v="oui" aria-pressed="false">Oui</button>
+      <button class="chip" data-v="non" aria-pressed="false">Non</button>
+      <button class="chip" data-v="inconnu" aria-pressed="false">Non déterminé</button>
+    </div></div>
+  <div class="f"><span class="gl">Antécédents</span>
+    <div class="chips" id="atcd-c"></div>
+    <input type="text" id="atcd" placeholder="Autres antécédents" style="margin-top:8px">
+    <div class="glose2" id="atcdef"></div>
+    <span class="mini">Les deux premiers cochés passent dans l'annonce SAMU.</span></div>
+  <div class="f"><span class="gl">Traitements</span>
+    <input type="text" id="ttt" placeholder="Ramipril, atorvastatine">
+    <span class="gl" style="margin-top:10px">Ce qui décale les seuils des constantes</span>
+    <div class="chips" id="modif"></div>
+    <div class="glose2" id="modifdef"></div>
+    <span class="mini">Se coche seul quand l'antécédent correspondant est coché.</span></div>
+  <div class="f"><span class="gl">Allergies</span>
+    <div class="row"><input type="text" id="allerg" placeholder="Allergies" style="flex:2">
+      <button class="chip" data-fill="allerg" data-v="Aucune connue" style="flex:1">Aucune connue</button></div></div>
+  <div class="f"><span class="gl">Mode de vie</span>
+    <div class="chips" id="vie" data-multi>
+      <button class="chip" data-v="vit seul" aria-pressed="false">Vit seul(e)</button>
+      <button class="chip" data-v="autonome" aria-pressed="false">Autonome</button>
+      <button class="chip" data-v="aide à domicile" aria-pressed="false">Aide à domicile</button>
+      <button class="chip" data-v="dépendant" aria-pressed="false">Dépendant(e)</button>
+      <button class="chip" data-v="grossesse" aria-pressed="false">Grossesse</button>
+    </div>
+    <input type="text" id="viecontexte" placeholder="Précision : terme de la grossesse, aidant présent…" style="margin-top:8px"></div>
+</div></div>
 
-    <div class="f"><span class="gl">Allergies</span>
-      <input type="text" id="allerg" placeholder="Aucune connue">
-      <div class="chips" style="margin-top:7px"><button class="chip" data-fill="allerg" data-v="Aucune connue">Aucune connue</button></div></div>
-
-    <div class="f"><span class="gl">Mode de vie</span>
-      <div class="chips" id="vie" data-multi>
-        <button class="chip" data-v="vit seul" aria-pressed="false">Vit seul(e)</button>
-        <button class="chip" data-v="autonome" aria-pressed="false">Autonome</button>
-        <button class="chip" data-v="aide à domicile" aria-pressed="false">Aide à domicile</button>
-        <button class="chip" data-v="dépendant" aria-pressed="false">Dépendant(e)</button>
-        <button class="chip" data-v="grossesse" aria-pressed="false">Grossesse</button>
-      </div>
-      <input type="text" id="viecontexte" placeholder="Précision : terme de la grossesse, aidant présent…" style="margin-top:8px">
-      <span class="mini">« Vit seul(e) » et « Grossesse » passent dans la phrase CODIS ; la grossesse passe aussi dans l'annonce SAMU.</span></div>
-  </div>
-</details>
+<div class="sec"><div class="sh">Examen</div><div class="bd">
+  <div class="f"><span class="gl">Téguments</span>
+    <div class="chips" id="teg" data-multi>
+      <button class="chip" data-v="__norm" aria-pressed="false">Normaux</button>
+      <button class="chip" data-v="pâle" aria-pressed="false">Pâleur</button>
+      <button class="chip" data-v="couvert de sueurs" aria-pressed="false">Sueurs</button>
+      <button class="chip" data-v="marbré" aria-pressed="false">Marbrures</button>
+      <button class="chip" data-v="cyanosé" aria-pressed="false">Cyanose</button>
+      <button class="chip" data-v="ictérique" aria-pressed="false">Ictère</button>
+    </div></div>
+  <div class="f"><span class="gl">Abdomen</span>
+    <div class="chips" id="abdo" data-one>
+      <button class="chip" data-v="__norm" aria-pressed="false">Souple, indolore</button>
+      <button class="chip" data-v="sensible à la palpation" aria-pressed="false">Sensible</button>
+      <button class="chip" data-v="une défense localisée" aria-pressed="false">Défense</button>
+      <button class="chip" data-v="une contracture" aria-pressed="false">Contracture</button>
+      <button class="chip" data-v="météorisé" aria-pressed="false">Météorisé</button>
+    </div></div>
+  <div class="f"><input type="text" id="exlibre" placeholder="Autre anomalie : auscultation, lésion, déficit…"></div>
+  <div class="f"><div class="chips" id="chiffres" data-one>
+    <button class="chip" data-v="oui" aria-pressed="true">Bilan chiffré transmis en parallèle</button></div></div>
+  <div id="vitbox"></div>
+</div></div>
 
 <details class="sec" id="s5">
-  <summary><span class="num">5</span><span class="st"><b>Histoire</b><em>Pour répondre au régulateur, pas pour l'annonce</em></span><span class="chev">▼</span></summary>
+  <summary><span class="num">+</span><span class="st"><b>Histoire</b><em>Facultatif — pour répondre au régulateur</em></span><span class="chev">▼</span></summary>
   <div class="bd"><div id="histoire"></div>
     <div class="f"><span class="gl">Négatifs pertinents</span>
       <span class="mini" style="margin:0 0 6px">Ce que vous avez cherché et écarté.</span>
@@ -503,112 +604,37 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
   </div>
 </details>
 
-<details class="sec" id="s6">
-  <summary><span class="num">6</span><span class="st"><b>Examen</b><em>Seules les anomalies remontent dans l'annonce</em></span><span class="chev">▼</span></summary>
-  <div class="bd">
-    <div class="f"><span class="gl">Constantes</span>
-      <div class="cst"><label>Fréq. respiratoire</label><input type="number" id="fr" inputmode="numeric" placeholder="/min"><div class="q x" id="q-fr">—</div></div>
-      <div class="cst"><label>SpO₂</label><input type="number" id="spo2" inputmode="numeric" placeholder="%"><div class="q x" id="q-spo2">—</div></div>
-      <div class="cst"><label>Oxygène</label><input type="number" id="o2" inputmode="numeric" placeholder="L/min"><select id="disp" style="font-size:12px;padding:6px"><option value="">—</option><option value="masque à haute concentration">MHC</option><option value="masque simple">Masque</option><option value="lunettes">Lunettes</option><option value="insufflateur">Insufflateur</option></select></div>
-      <div class="cst"><label>Fréq. cardiaque</label><input type="number" id="fc" inputmode="numeric" placeholder="/min"><div class="q x" id="q-fc">—</div></div>
-      <div class="cst"><label>PA syst. / diast.</label><div class="row"><input type="number" id="pas" inputmode="numeric" placeholder="Sys"><input type="number" id="pad" inputmode="numeric" placeholder="Dia"></div><div class="q x" id="q-pa">—</div></div>
-      <div class="cst"><label>Recoloration</label><input type="text" id="trc" inputmode="decimal" placeholder="sec"><div class="q x" id="q-trc">—</div></div>
-      <div class="cst"><label>Température</label><input type="text" id="temp" inputmode="decimal" placeholder="°C"><div class="q x" id="q-temp">—</div></div>
-      <div class="cst"><label>Glycémie</label><input type="text" id="gly" inputmode="decimal" placeholder="g/L"><div class="q x" id="q-gly">—</div></div>
-      <div class="cst"><label>Douleur (EN)</label><input type="number" id="en" inputmode="numeric" placeholder="/10"><div class="q x" id="q-en">—</div></div>
-    </div>
-    <div class="f"><span class="gl">Glasgow — ouverture des yeux (Y)</span>
-      <select id="gy">
-        <option value="">— non évalué —</option>
-        <option value="4">Y4 · spontanée, les yeux sont déjà ouverts</option>
-        <option value="3">Y3 · à la demande verbale, quand je lui parle</option>
-        <option value="2">Y2 · à la stimulation douloureuse seulement</option>
-        <option value="1">Y1 · aucune ouverture, même à la douleur</option>
-      </select></div>
-    <div class="f"><span class="gl">Réponse verbale (V)</span>
-      <select id="gv">
-        <option value="">— non évalué —</option>
-        <option value="5">V5 · orientée, sait où il est, quel jour, qui il est</option>
-        <option value="4">V4 · confuse, parle mais se trompe ou divague</option>
-        <option value="3">V3 · mots inappropriés, sans lien avec la question</option>
-        <option value="2">V2 · sons incompréhensibles, gémissements</option>
-        <option value="1">V1 · aucun son</option>
-      </select></div>
-    <div class="f"><span class="gl">Réponse motrice (M)</span>
-      <select id="gm">
-        <option value="">— non évalué —</option>
-        <option value="6">M6 · obéit à un ordre simple</option>
-        <option value="5">M5 · localise la douleur, porte la main vers le point</option>
-        <option value="4">M4 · retrait, retire le membre sans localiser</option>
-        <option value="3">M3 · flexion anormale, membres repliés sur le tronc</option>
-        <option value="2">M2 · extension anormale, membres tendus en rotation</option>
-        <option value="1">M1 · aucun mouvement</option>
-      </select>
-      <div class="g2" style="margin-top:6px"><button class="btn2" id="g15" style="margin-top:0">Glasgow 15 (4-5-6)</button><button class="btn2" id="g0" style="margin-top:0">Effacer le Glasgow</button></div>
-      <div class="cst" style="margin-top:10px"><label>Total</label>
-        <div style="font-family:var(--mono);font-size:19px;text-align:center;color:var(--acc)" id="gcs">—</div>
-        <div class="q x" id="q-gcs">—</div></div>
-      <span class="mini">Y3 se teste à la voix, Y2 uniquement après stimulation douloureuse. Le total va de 3 à 15.</span></div>
-    <div class="f"><span class="gl">Téguments</span>
-      <div class="chips" id="teg" data-multi>
-        <button class="chip" data-v="__norm" aria-pressed="false">Normalement colorés</button>
-        <button class="chip" data-v="pâle" aria-pressed="false">Pâleur</button>
-        <button class="chip" data-v="couvert de sueurs" aria-pressed="false">Sueurs</button>
-        <button class="chip" data-v="marbré" aria-pressed="false">Marbrures</button>
-        <button class="chip" data-v="cyanosé" aria-pressed="false">Cyanose</button>
-        <button class="chip" data-v="ictérique" aria-pressed="false">Ictère</button>
-      </div></div>
-    <div class="f"><span class="gl">Abdomen</span>
-      <div class="chips" id="abdo" data-one>
-        <button class="chip" data-v="__norm" aria-pressed="false">Souple, dépressible, indolore</button>
-        <button class="chip" data-v="sensible à la palpation" aria-pressed="false">Sensible</button>
-        <button class="chip" data-v="une défense localisée" aria-pressed="false">Défense</button>
-        <button class="chip" data-v="une contracture" aria-pressed="false">Contracture</button>
-        <button class="chip" data-v="météorisé" aria-pressed="false">Météorisé</button>
-      </div></div>
-    <div class="f"><label for="exlibre">Autre anomalie constatée</label>
-      <input type="text" id="exlibre" placeholder="Auscultation, lésion, déficit…"></div>
-    <div class="f"><div class="chips" id="chiffres" data-one>
-      <button class="chip" data-v="oui" aria-pressed="true">Bilan chiffré transmis en parallèle</button></div></div>
-    <div id="vitbox"></div>
-  </div>
-</details>
-
 <details class="sec" id="s7">
-  <summary><span class="num">7</span><span class="st"><b>Problèmes traités</b><em>Constaté, fait — pour la réserve</em></span><span class="chev">▼</span></summary>
+  <summary><span class="num">+</span><span class="st"><b>Problèmes traités</b><em>Facultatif — constaté, fait</em></span><span class="chev">▼</span></summary>
   <div class="bd">
     <div id="pbs"></div>
     <button class="addp" id="addpb">+ Ajouter un problème</button>
   </div>
 </details>
 
-<details class="sec" id="s8">
-  <summary><span class="num">8</span><span class="st"><b>Régulation</b><em>Impression et demande au médecin régulateur</em></span><span class="chev">▼</span></summary>
-  <div class="bd">
-    <div class="f"><label for="conclu">Mon impression, en quelques mots</label>
-      <textarea id="conclu" maxlength="160" placeholder="Elle se dégrade depuis notre arrivée."></textarea>
-      <div id="conclualerte"></div>
-      <span class="mini">Facultatif et court : ce que les chiffres ne disent pas. Ne pas redécrire lésions ni constantes.</span></div>
-    <div class="f lk" id="lk-d"><span class="gl">Ma demande<span class="tg">verrou</span></span>
-      <div class="chips" id="dem" data-one>
-        <button class="chip" data-v="un renfort médicalisé" aria-pressed="false">Renfort médicalisé</button>
-        <button class="chip" data-v="votre orientation et l'autorisation de transport" aria-pressed="false">Orientation et autorisation de transport</button>
-        <button class="chip" data-v="l'autorisation de laisser sur place" aria-pressed="false">Laisser sur place</button>
-        <button class="chip" data-v="un avis sur la conduite à tenir" aria-pressed="false">Avis</button>
-        <button class="chip" data-v="__" aria-pressed="false">Autre, je formule</button>
-      </div>
-      <div id="demlibbox" style="display:none">
-        <input type="text" id="demlib" placeholder="Formulation libre" style="margin-top:8px"></div>
-      <input type="text" id="demdet" placeholder="Précision : destination, protocole, motif" style="margin-top:8px">
-      <div class="chips" id="delai" data-one style="margin-top:8px">
-        <button class="chip" data-v="immédiat" aria-pressed="false">Immédiat</button>
-        <button class="chip" data-v="" aria-pressed="false">Sans délai particulier</button>
-      </div></div>
-  </div>
-</details>
+<div class="sec"><div class="sh">Régulation</div><div class="bd">
+  <div class="f lk" id="lk-d"><span class="gl">Ma demande<span class="tg">verrou</span></span>
+    <div class="chips" id="dem" data-one>
+      <button class="chip" data-v="un renfort médicalisé" aria-pressed="false">Renfort médicalisé</button>
+      <button class="chip" data-v="votre orientation et l'autorisation de transport" aria-pressed="false">Orientation et transport</button>
+      <button class="chip" data-v="l'autorisation de laisser sur place" aria-pressed="false">Laisser sur place</button>
+      <button class="chip" data-v="un avis sur la conduite à tenir" aria-pressed="false">Avis</button>
+      <button class="chip" data-v="__" aria-pressed="false">Autre</button>
+    </div>
+    <div id="demlibbox" style="display:none">
+      <input type="text" id="demlib" placeholder="Formulation libre" style="margin-top:8px"></div>
+    <div class="chips" id="delai" data-one style="margin-top:8px">
+      <button class="chip" data-v="immédiat" aria-pressed="false">Immédiat</button>
+      <button class="chip" data-v="" aria-pressed="false">Sans délai particulier</button>
+    </div>
+    <input type="text" id="demdet" placeholder="Précision : destination, protocole, motif" style="margin-top:8px"></div>
+  <div class="f"><label for="conclu">Mon impression (facultatif)</label>
+    <textarea id="conclu" maxlength="160" placeholder="Elle se dégrade depuis notre arrivée."></textarea>
+    <div id="conclualerte"></div></div>
+</div></div>
 
 <details class="sec" id="s9">
-  <summary><span class="num">9</span><span class="st"><b>Photo</b><em>Ordonnance ou lésion — aide à la description</em></span><span class="chev">▼</span></summary>
+  <summary><span class="num">+</span><span class="st"><b>Photo</b><em>Ordonnance ou lésion — aide à la description</em></span><span class="chev">▼</span></summary>
   <div class="bd">
     <div class="f"><span class="gl">Nature de l'image</span>
       <div class="chips" id="phmode" data-one>
@@ -630,9 +656,27 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
   </div>
 </details>
 
+<div class="nav">
+  <button class="pri" id="toSamu">Annonce SAMU</button>
+  <button id="toFin">Fin →</button>
+</div>
+</div>
+
+<!-- ─────────── 3 · FIN ─────────── -->
+<div class="ph" id="ph-fin" hidden>
+<div class="sec"><div class="sh c">Transport</div><div class="bd cod">
+  <div class="f"><div class="g2"><input type="text" id="vect" placeholder="Vecteur : VSAV, SMUR"><input type="text" id="dest" placeholder="Destination : CH Cognac"></div>
+    <span class="mini">Victime principale. Les autres victimes routières ont leur propre transport dans « Plus » de l'écran Arrivée.</span></div>
+</div></div>
+<div class="nav">
+  <button class="prib" id="toCR" style="grid-column:1/-1">Compte rendu CODIS</button>
+</div>
+
 <details class="sec" id="s10">
-  <summary><span class="num">⚙</span><span class="st"><b>Réglages et historique</b><em>Destinataire, interventions archivées</em></span><span class="chev">▼</span></summary>
+  <summary><span class="num">⚙</span><span class="st"><b>Réglages et historique</b><em>Centre, destinataire, interventions archivées</em></span><span class="chev">▼</span></summary>
   <div class="bd">
+    <div class="f"><label for="cis">Centre (dans l'indicatif)</label>
+      <input type="text" id="cis" data-keep value="Cognac"></div>
     <div class="f"><label for="destCodis">Destinataire du message CODIS</label>
       <input type="text" id="destCodis" data-keep value="CODIS 16"></div>
     <div class="f"><span class="gl">Interventions archivées</span>
@@ -641,6 +685,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
       <button class="btn2 dgr" id="tout">Tout effacer, réglages compris</button></div>
   </div>
 </details>
+</div>
 
 <div class="ver">Messages opérationnels — version <b id="ver">—</b><br>Outil d'aide : ne se substitue ni à la doctrine ni à votre jugement.</div>
 </main></div>
@@ -702,7 +747,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.13b";
+const VERSION="2026.10.13c";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1439,8 +1484,9 @@ function examenParts(){
     if(g)ano.push("Glasgow "+g);
   } else {
     const push=q=>{if(!q)return;(q.a?ano:norm).push(q.m);};
-    push(qual("gcs",g));push(qual("fr",val("fr")));push(qual("spo2",val("spo2")));
-    push(qual("fc",val("fc")));push(qualPA());push(qual("trc",val("trc")));
+    // Ordre de gravité : seules les trois premières anomalies passent dans l'annonce
+    push(qual("gcs",g));push(qual("spo2",val("spo2")));push(qualPA());
+    push(qual("fc",val("fc")));push(qual("fr",val("fr")));push(qual("trc",val("trc")));
     push(qual("temp",val("temp")));push(qual("gly",val("gly")));push(qual("en",val("en")));
   }
   const tg=multi("teg");
@@ -1753,7 +1799,7 @@ $("#phgo").onclick=async()=>{
 function etatInitial(){
   return{type:"SAP",msg:"ambiance",
     renf:{SAP:[NO_NEED],ROUTIER:ENGIN_DEFAULTS.VSAV.renfort.slice()},
-    sapX:[],rX:[],manual:false,manualTxt:"",t0:Date.now(),last:Date.now()};
+    sapX:[],rX:[],manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
 }
 let S=etatInitial();
 
@@ -1798,7 +1844,13 @@ function buildEtat(){
 }
 function renderRenf(){
   const set=S.renf[S.type];
-  $("#renf").innerHTML=RENFORTS.map(r=>'<button class="chip" data-r="'+esc(r)+'" aria-pressed="'+set.includes(r)+'">'+esc(r)+'</button>').join("");
+  const chip=r=>'<button class="chip" data-r="'+esc(r)+'" aria-pressed="'+set.includes(r)+'">'+esc(r)+'</button>';
+  // Les moyens les plus demandés d'abord, le reste replié
+  const FREQ=[NO_NEED,"SMUR","Forces de l'ordre","VSR","VSAV supplémentaire","Chef de Groupe"];
+  const rest=RENFORTS.filter(r=>!FREQ.includes(r));
+  const ouvert=rest.some(r=>set.includes(r))||($("#renfPlus")&&$("#renfPlus").open);
+  $("#renf").innerHTML=FREQ.map(chip).join("")+
+    '<details class="sub" id="renfPlus" style="width:100%"'+(ouvert?" open":"")+'><summary>Autres moyens</summary><div class="chips" style="margin-top:8px">'+rest.map(chip).join("")+'</div></details>';
 }
 function enginDefauts(){
   const d=ENGIN_DEFAULTS[raw("engin")==="VSR"?"VSR":"VSAV"];
@@ -2008,6 +2060,57 @@ function analyseCodis(){
   $("#wC").innerHTML=W.map(([c,t])=>'<div class="w '+c+'"><span>'+t+'</span></div>').join("");
 }
 
+/* ════════ NATURE EN UN APPUI ════════ */
+const NATS=[
+ ["Malaise","malaise","malaise"],
+ ["Douleur thoracique","cardio","douleur thoracique"],
+ ["Détresse respiratoire","respi","détresse respiratoire"],
+ ["Signes d'AVC","neuro","signes évocateurs d'un AVC"],
+ ["Convulsions","neuro","crise convulsive"],
+ ["Chute","trauma","chute"],
+ ["Accident de la route","trauma","accident de la voie publique"],
+ ["Hémorragie","circu","hémorragie"],
+ ["Douleur du ventre","autre","douleur du ventre"]
+];
+function buildNats(){
+  $("#ngrid").innerHTML=NATS.map((n,i)=>'<button data-i="'+i+'" aria-pressed="false">'+n[0]+'</button>').join("");
+}
+function choisirNature(i){
+  const n=NATS[i];if(!n)return;
+  if(motif!==n[1]){motif=n[1];buildMotif();}
+  $$("#titrec .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.v===n[2])));
+}
+function syncNats(){
+  const t=one("titrec");
+  $$("#ngrid button").forEach(b=>{const n=NATS[+b.dataset.i];b.setAttribute("aria-pressed",String(motif===n[1]&&t===n[2]));});
+}
+
+/* ════════ ÉCRANS, SEXE, GLASGOW, VALEURS PAR DÉFAUT ════════ */
+function phase(p){
+  S.phase=p;
+  ["arr","bil","fin"].forEach(k=>$("#ph-"+k).hidden=k!==p);
+  $$("#phSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.p===p)));
+  window.scrollTo(0,0);
+}
+function syncSexe(){const v=raw("sexe");$$("#sxSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.s===v)));}
+function syncGq(){
+  const y=raw("gy"),v=raw("gv"),m=raw("gm");let k="";
+  if(y==="4"&&v==="5"&&m==="6")k="15";else if(y==="4"&&v==="4"&&m==="6")k="14";else if(y||v||m)k="autre";
+  $$("#gq button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.g===k)));
+}
+function defauts(){
+  const a=$("#adrind .chip");a.setAttribute("aria-pressed","true");a.classList.add("def");
+  if(S.type==="SAP"){const b=$("#actS .chip[data-v='en cours de bilan']");if(b){b.setAttribute("aria-pressed","true");b.classList.add("def");}}
+}
+// Avance automatique entre les constantes
+const QK=["spo2","fc","fr","pas","pad"];
+function complet(id,v){
+  if(!v)return false;
+  if(id==="spo2")return v.length>=3||(v.length===2&&v!=="10");
+  if(id==="fr")return v.length>=2;
+  return v.length>=3||(v.length===2&&!/^[12]/.test(v));
+}
+
 /* ════════ RENDU GÉNÉRAL ════════ */
 function rendre(){
   syncModifs();
@@ -2067,7 +2170,8 @@ function rendre(){
   $("#heurebox").style.display=one("delaic")==="precise"?"block":"none";
   $("#titre").style.display=one("titrec")==="__autre"?"block":"none";
   $("#titreHint").textContent=natureReformulee()?"Annoncé : « "+titrePropre()+" ». Le diagnostic relève du médecin, le secouriste rapporte des signes.":"";
-  $("#adresse").disabled=adrInd();
+  $("#adresse").hidden=adrInd();
+  syncNats();syncSexe();syncGq();
   const ad=$("#atcdef");if(ad)ad.innerHTML=defsHTML(multi("atcd-c"),ATCDEF);
   const md=$("#modifdef");if(md)md.innerHTML=defsHTML(["bpco","beta","hta","pace","sportif","grossesse"].filter(mod),MODDEF);
   $("#qualHint").textContent=one("qual")?"":"Automatique selon le motif : "+qualifAuto();
@@ -2211,7 +2315,9 @@ function reinitialiser(){
   const po=$('#phmode .chip[data-v=ordo]');if(po)po.setAttribute("aria-pressed","true");
   applyMsg("ambiance");
   applyType(keepType,true);
-  $$("details.sec").forEach(d=>d.open=["s1","s2","s3"].includes(d.id)||(d.id==="sR"&&keepType==="ROUTIER"));
+  $$("details.sub,details.sec").forEach(d=>d.open=d.id==="sR"&&keepType==="ROUTIER");
+  $$(".chip.def").forEach(c=>c.classList.remove("def"));
+  defauts();phase("arr");
 }
 function nouvelleIntervention(){
   archiver();reinitialiser();afficherHist();
@@ -2318,7 +2424,26 @@ function evenements(){
   $("#lectS").onclick=()=>{const D=detresses();
     lecture("Annonce SAMU",(D.length?["Détresse "+D.map(d=>d.t).join(" et ")+"."]:[]).concat(phrases(bAnnonce())));};
   $("#imprimer").onclick=()=>window.print();
-  $("#g15").onclick=()=>{$("#gy").value="4";$("#gv").value="5";$("#gm").value="6";rendre();};
+  $("#gq").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+    const g=b.dataset.g;
+    if(g==="15"){$("#gy").value="4";$("#gv").value="5";$("#gm").value="6";}
+    else if(g==="14"){$("#gy").value="4";$("#gv").value="4";$("#gm").value="6";}
+    else $("#gdet").open=true;
+    rendre();});
+  $("#ngrid").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;choisirNature(+b.dataset.i);rendre();});
+  $("#sxSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+    $("#sexe").value=raw("sexe")===b.dataset.s?"":b.dataset.s;rendre();});
+  $("#phSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;phase(b.dataset.p);sauver();});
+  $("#toCodis").onclick=()=>{vue("codis");};
+  $("#toBil").onclick=()=>{phase("bil");sauver();};
+  $("#toSamu").onclick=()=>{vue("samu");};
+  $("#toFin").onclick=()=>{phase("fin");sauver();};
+  $("#toCR").onclick=()=>{applyMsg("cr");rendre();vue("codis");};
+  QK.forEach((id,i)=>{const el=$("#"+id);
+    el.addEventListener("input",()=>{if(complet(id,el.value)&&QK[i+1])$("#"+QK[i+1]).focus();});
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(QK[i+1])$("#"+QK[i+1]).focus();else el.blur();}});});
+  // Une valeur par défaut touchée par l'utilisateur n'est plus marquée comme telle
+  document.addEventListener("click",e=>{const c=e.target.closest(".chip.def");if(c)c.classList.remove("def");},true);
   $("#g0").onclick=()=>{$("#gy").value="";$("#gv").value="";$("#gm").value="";rendre();};
   $("#geo").onclick=geoloc;
   $("#gsearch").oninput=e=>buildGlo(e.target.value);
@@ -2340,10 +2465,11 @@ function evenements(){
   $("#ver").textContent=VERSION;
   let t=null;try{t=store.get(CLE+".theme");}catch(e){}
   theme(t||"nuit");
-  buildMotifs();buildMotif();buildPbs();buildCodisForms();buildGlo("");
+  buildMotifs();buildMotif();buildPbs();buildCodisForms();buildNats();buildGlo("");
   $('#chiffres .chip').setAttribute("aria-pressed","true");
   const d=charger();
-  if(!d)applyType("SAP",false);
+  if(!d){applyType("SAP",false);defauts();}
+  phase(S.phase||"arr");
   brancher();evenements();renderRenf();renderXV();afficherHist();
   // Données d'une intervention précédente : proposer la remise à zéro
   if(d&&S.last&&Date.now()-S.last>30*60*1000&&archiverPossible()){
