@@ -384,7 +384,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
           </div></div></div>
       <span class="mini">Sur un déficit neurologique, préférer l'heure précise : elle conditionne la thrombolyse.</span></div>
 
-    <div class="f"><span class="gl">Élément aggravant</span>
+    <div class="f"><span class="gl">Constaté sur place</span>
       <div class="chips" id="aggrav" data-multi>
         <button class="chip" data-v="victime inconsciente" aria-pressed="false">Inconsciente</button>
         <button class="chip" data-v="en détresse vitale" aria-pressed="false">Détresse vitale</button>
@@ -392,12 +392,9 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
         <button class="chip" data-v="victime incarcérée" aria-pressed="false">Incarcérée</button>
         <button class="chip" data-v="accès difficile" aria-pressed="false">Accès difficile</button>
         <button class="chip" data-v="relevage difficile" aria-pressed="false">Relevage difficile</button>
-        <button class="chip" data-v="personne âgée" aria-pressed="false">Personne âgée</button>
-        <button class="chip" data-v="personne isolée" aria-pressed="false">Personne isolée</button>
-        <button class="chip" data-v="grossesse en cours" aria-pressed="false">Grossesse</button>
       </div>
-      <input type="text" id="aggravlib" placeholder="Autre élément aggravant" style="margin-top:8px">
-      <span class="mini">« Sous anticoagulant » s'ajoute seul si le terrain est renseigné.</span></div>
+      <input type="text" id="aggravlib" placeholder="Autre élément constaté" style="margin-top:8px">
+      <span class="mini">Ce que vous voyez sur place. Ce qui concerne la personne elle-même (anticoagulant, vit seule, grossesse) se coche dans Terrain et s'ajoute seul au message.</span></div>
   </div>
 </details>
 
@@ -455,29 +452,43 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 </details>
 
 <details class="sec" id="s4">
-  <summary><span class="num">4</span><span class="st"><b>Terrain</b><em>Les 2 premiers antécédents cochés passent dans l'annonce</em></span><span class="chev">▼</span></summary>
+  <summary><span class="num">4</span><span class="st"><b>Terrain</b><em>Ce qui concerne la personne : traitements, antécédents, mode de vie</em></span><span class="chev">▼</span></summary>
   <div class="bd">
-    <div class="f"><span class="gl">Antécédents ciblés</span>
-      <div class="chips" id="atcd-c"></div>
-      <input type="text" id="atcd" placeholder="Autres antécédents" style="margin-top:8px">
-      <div class="glose2" id="atcdef"></div></div>
-    <div class="f"><label for="ttt">Traitement en cours</label>
-      <input type="text" id="ttt" placeholder="Ramipril, atorvastatine"></div>
     <div class="f lk" id="lk-a"><span class="gl">Anticoagulant ou antiagrégant<span class="tg">verrou</span></span>
       <div class="chips" id="acg" data-one>
         <button class="chip" data-v="oui" aria-pressed="false">Oui</button>
         <button class="chip" data-v="non" aria-pressed="false">Non</button>
         <button class="chip" data-v="inconnu" aria-pressed="false">Non déterminé</button>
-      </div></div>
-    <div class="f"><label for="allerg">Allergies</label>
-      <input type="text" id="allerg" placeholder="Aucune connue">
-      <div class="chips" style="margin-top:7px"><button class="chip" data-fill="allerg" data-v="Aucune connue">Aucune connue</button></div></div>
-    <div class="f"><label for="viecontexte">Autonomie et entourage</label>
-      <input type="text" id="viecontexte" placeholder="Autonome, vit seul"></div>
-    <div class="f"><span class="gl">Terrain modifiant l'interprétation</span>
+      </div>
+      <span class="mini">« Sous anticoagulant » passe dans les deux messages.</span></div>
+
+    <div class="f"><span class="gl">Antécédents</span>
+      <div class="chips" id="atcd-c"></div>
+      <input type="text" id="atcd" placeholder="Autres antécédents" style="margin-top:8px">
+      <div class="glose2" id="atcdef"></div>
+      <span class="mini">Les deux premiers cochés passent dans l'annonce SAMU.</span></div>
+
+    <div class="f"><span class="gl">Traitements</span>
+      <input type="text" id="ttt" placeholder="Ramipril, atorvastatine">
+      <span class="gl" style="margin-top:10px">Ce qui décale les seuils des constantes</span>
       <div class="chips" id="modif"></div>
       <div class="glose2" id="modifdef"></div>
-      <span class="mini">Décale les seuils de qualification. Un BPCO à 90 % n'est pas désaturé ; un patient bêtabloqué ne tachycardise pas.</span></div>
+      <span class="mini">Se coche seul quand l'antécédent correspondant est coché (BPCO, hypertension, pacemaker).</span></div>
+
+    <div class="f"><span class="gl">Allergies</span>
+      <input type="text" id="allerg" placeholder="Aucune connue">
+      <div class="chips" style="margin-top:7px"><button class="chip" data-fill="allerg" data-v="Aucune connue">Aucune connue</button></div></div>
+
+    <div class="f"><span class="gl">Mode de vie</span>
+      <div class="chips" id="vie" data-multi>
+        <button class="chip" data-v="vit seul" aria-pressed="false">Vit seul(e)</button>
+        <button class="chip" data-v="autonome" aria-pressed="false">Autonome</button>
+        <button class="chip" data-v="aide à domicile" aria-pressed="false">Aide à domicile</button>
+        <button class="chip" data-v="dépendant" aria-pressed="false">Dépendant(e)</button>
+        <button class="chip" data-v="grossesse" aria-pressed="false">Grossesse</button>
+      </div>
+      <input type="text" id="viecontexte" placeholder="Précision : terme de la grossesse, aidant présent…" style="margin-top:8px">
+      <span class="mini">« Vit seul(e) » et « Grossesse » passent dans la phrase CODIS ; la grossesse passe aussi dans l'annonce SAMU.</span></div>
   </div>
 </details>
 
@@ -691,7 +702,7 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.13a";
+const VERSION="2026.10.13b";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -906,7 +917,6 @@ const MODIFS=[
  {id:"bpco",l:"BPCO / O₂ au long cours"},
  {id:"beta",l:"Bêtabloquant"},
  {id:"hta",l:"Hypertendu chronique"},
- {id:"grossesse",l:"Grossesse"},
  {id:"pace",l:"Pacemaker ou défibrillateur"},
  {id:"sportif",l:"Sportif entraîné"}
 ];
@@ -924,7 +934,18 @@ const PEDNORM=[
  {l:"> 12 ans",fr:"12–20",fc:"60–100",pas:"> 90"}
 ];
 
-function mod(id){return $("#modif .chip[data-v='"+id+"']")?.getAttribute("aria-pressed")==="true";}
+// Un antécédent coché suffit à activer le seuil correspondant
+const MOD_ATCD={bpco:["BPCO","oxygénothérapie au long cours"],hta:["hypertension artérielle"],pace:["pacemaker ou défibrillateur implanté"]};
+function modImplicite(id){
+  if(id==="grossesse")return multi("vie").includes("grossesse")||multi("atcd-c").includes("grossesse au 2e ou 3e trimestre");
+  const a=multi("atcd-c");return(MOD_ATCD[id]||[]).some(x=>a.includes(x));
+}
+function mod(id){return modImplicite(id)||$("#modif .chip[data-v='"+id+"']")?.getAttribute("aria-pressed")==="true";}
+function syncModifs(){
+  $$("#modif .chip").forEach(c=>{const id=c.dataset.v;
+    if(modImplicite(id)){c.setAttribute("aria-pressed","true");c.dataset.auto="1";}
+    else if(c.dataset.auto){c.setAttribute("aria-pressed","false");delete c.dataset.auto;}});
+}
 
 // renvoie {mot, anormal, dire}
 function qual(par,v){
@@ -1479,6 +1500,7 @@ function bAnnonce(){
   // 3 — Terrain : deux éléments au maximum, abrégés pour l'oral
   let ter=multi("atcd-c").map(x=>ABREGE[x]!==undefined?ABREGE[x]:x).filter(Boolean).slice(0,2);
   if(one("acg")==="oui")ter.push("sous anticoagulant");
+  if(multi("vie").includes("grossesse")&&!ter.includes("enceinte"))ter.push("enceinte");
   if(ter.length)p.push(pt(cap(liste(ter))));
 
   // 4 — Le saillant : les anomalies d'abord, le normal en une formule
@@ -1539,6 +1561,8 @@ function phraseAmbiance(){
   const lieu=[one("ctxlieu"),raw("ctxdet")].filter(Boolean).join(", ");
   let ag=multi("aggrav").slice();
   if(one("acg")==="oui"&&!ag.includes("sous anticoagulant"))ag.push("sous anticoagulant");
+  if(multi("vie").includes("vit seul"))ag.push("personne isolée");
+  if(multi("vie").includes("grossesse"))ag.push("grossesse en cours");
   const libre=raw("aggravlib");
   if(libre)ag.push(libre.charAt(0).toLowerCase()+libre.slice(1));
   let p=articuler(nat||"intervention");
@@ -1560,7 +1584,7 @@ function reserve(){
   add("Anticoagulant / antiagrégant",g==="oui"?"OUI":g==="non"?"Non":g==="inconnu"?"Non déterminé":"");
   add("Allergies",raw("allerg"));
   add("Dernier repas",raw("dernierrepas"));
-  add("Autonomie, entourage",raw("viecontexte"));
+  add("Mode de vie",liste(multi("vie").map(v=>v==="vit seul"?(FEM()?"vit seule":"vit seul"):v==="dépendant"?(FEM()?"dépendante":"dépendant"):v==="grossesse"?"enceinte":v).concat(raw("viecontexte")?[raw("viecontexte")]:[])));
   add("Poids",raw("poids")?raw("poids")+" kg":"");
   add("Constantes",E.chif.join("  ·  "));
   add("Histoire détaillée",histoire());
@@ -1986,6 +2010,7 @@ function analyseCodis(){
 
 /* ════════ RENDU GÉNÉRAL ════════ */
 function rendre(){
+  syncModifs();
   // Constantes qualifiées
   const g=gcsTot();
   $("#gcs").textContent=g||"—";
@@ -2044,7 +2069,7 @@ function rendre(){
   $("#titreHint").textContent=natureReformulee()?"Annoncé : « "+titrePropre()+" ». Le diagnostic relève du médecin, le secouriste rapporte des signes.":"";
   $("#adresse").disabled=adrInd();
   const ad=$("#atcdef");if(ad)ad.innerHTML=defsHTML(multi("atcd-c"),ATCDEF);
-  const md=$("#modifdef");if(md)md.innerHTML=defsHTML(multi("modif"),MODDEF);
+  const md=$("#modifdef");if(md)md.innerHTML=defsHTML(["bpco","beta","hta","pace","sportif","grossesse"].filter(mod),MODDEF);
   $("#qualHint").textContent=one("qual")?"":"Automatique selon le motif : "+qualifAuto();
   $("#etatHint").textContent=D.length&&one("etat")!=="UA"?"Signes de détresse relevés : voir l'onglet CODIS.":"";
 
