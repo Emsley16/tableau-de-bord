@@ -38,7 +38,7 @@ button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
 [hidden]{display:none!important}
 
 /* en-tête */
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);border-bottom:1px solid var(--border);
+header{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--border);
   padding:calc(8px + env(safe-area-inset-top)) 14px 8px;display:flex;align-items:center;gap:8px}
 .brand{flex:1;min-width:0}
 .brand b{display:block;font-size:15px;font-weight:800;letter-spacing:.1em;color:var(--acc)}
@@ -250,7 +250,8 @@ input[type=file]{width:100%;background:var(--s2);border:1px solid var(--border);
 
 
 /* écrans de saisie */
-.phseg{margin-bottom:12px}
+.phseg{margin:0 -14px 12px;position:sticky;top:var(--hh,60px);z-index:25;background:var(--bg);padding:6px 14px 8px;border:0;border-radius:0;border-bottom:1px solid var(--border)}
+.phseg button{border-radius:8px;margin:0 3px;border:1px solid var(--border)!important}
 .phseg button{font-size:14.5px}
 .sh{padding:12px 14px 0;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)}
 .sh.c{color:var(--blu)}
@@ -756,7 +757,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.14e";
+const VERSION="2026.10.14f";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2514,7 +2515,11 @@ function evenements(){
 }
 
 /* ════════ DÉMARRAGE ════════ */
+// Hauteur réelle de l'en-tête (barre d'état comprise) pour placer le bandeau des écrans juste dessous
+function majHauteurEntete(){const h=document.querySelector("header");if(h)document.documentElement.style.setProperty("--hh",h.offsetHeight+"px");}
+window.addEventListener("resize",majHauteurEntete);window.addEventListener("orientationchange",majHauteurEntete);
 (function init(){
+  majHauteurEntete();
   $("#ver").textContent=VERSION;
   let t=null;try{t=store.get(CLE+".theme");}catch(e){}
   theme(t||"nuit");
