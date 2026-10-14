@@ -756,7 +756,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.14d";
+const VERSION="2026.10.14e";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1262,7 +1262,7 @@ function buildMotif(){
   $("#modif").outerHTML='<div class="chips" id="modif" data-multi="">'+
     MODIFS.map(m=>'<button class="chip" data-v="'+m.id+'" aria-pressed="false">'+m.l+'</button>').join("")+'</div>';
   $("#modif").setAttribute("data-multi","");
-  $("#histoire").innerHTML=M.hist.map(f=>{
+  $("#histoire").innerHTML=M.hist.map(filtreRoute).map(f=>{
     if(f.t==="txt")return '<div class="f"><label for="'+f.id+'">'+f.l+'</label><input type="text" id="'+f.id+'" placeholder="'+(f.ph||"")+'"></div>';
     return '<div class="f"><span class="gl">'+f.l+'</span>'+chipsHTML(f.id,f.v,f.t)+'</div>';
   }).join("");
@@ -1918,6 +1918,9 @@ function applyType(t,defauts){
   $("#adrLbl").textContent=r?"Localisation : voie, sens, point de repère":"Adresse";
   $("#adresse").placeholder=r?"RN141, sens Cognac-Angoulême, PR 12":"12 rue des Vignes";
   buildEtat();
+  // Retour en SAP : la nature « accident de la voie publique » posée par le mode routier est retirée
+  if(!r&&defauts&&one("titrec")==="accident de la voie publique")$$("#titrec .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+  if(motif==="trauma"){const t=one("titrec");buildMotif();if(t){const c=$("#titrec .chip[data-v=\""+t+"\"]");if(c)c.setAttribute("aria-pressed","true");}}
   if(defauts&&r){
     enginDefauts();
     if(motif!=="trauma"){motif="trauma";buildMotif();}
@@ -2144,6 +2147,19 @@ function complet(id,v){
   if(id==="spo2")return v.length>=3||(v.length===2&&v!=="10");
   if(id==="fr")return v.length>=2;
   return v.length>=3||(v.length===2&&!/^[12]/.test(v));
+}
+
+/* ════════ TRAME TRAUMATIQUE HORS ROUTE ════════ */
+// Les items propres à la circulation n'apparaissent qu'en secours routier
+const ITEMS_ROUTE={
+  h_mec:["Accident voiture","Accident deux-roues","Piéton renversé"],
+  h_cin:["Éjecté du véhicule","Autre victime décédée dans le véhicule","Véhicule très déformé","Pas de casque","Pas de ceinture"]
+};
+function filtreRoute(f){
+  if(S.type==="ROUTIER")return f;
+  if(f.id==="h_mecd")return Object.assign({},f,{ph:"hauteur de chute, point d'impact, objet ou animal en cause"});
+  const ex=ITEMS_ROUTE[f.id];if(!ex)return f;
+  return Object.assign({},f,{v:f.v.filter(o=>!ex.includes(o[0]))});
 }
 
 /* ════════ RENDU GÉNÉRAL ════════ */
