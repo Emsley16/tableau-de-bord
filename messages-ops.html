@@ -747,7 +747,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.13c";
+const VERSION="2026.10.14a";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2070,7 +2070,7 @@ const NATS=[
  ["Chute","trauma","chute"],
  ["Accident de la route","trauma","accident de la voie publique"],
  ["Hémorragie","circu","hémorragie"],
- ["Douleur du ventre","autre","douleur du ventre"]
+ ["Traumatisme","trauma","traumatisme"]
 ];
 function buildNats(){
   $("#ngrid").innerHTML=NATS.map((n,i)=>'<button data-i="'+i+'" aria-pressed="false">'+n[0]+'</button>').join("");
