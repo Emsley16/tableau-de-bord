@@ -356,6 +356,9 @@ details.sub[open]>summary::before{content:"－ "}
 
   <div class="f"><span class="gl">Nature</span>
     <div class="ngrid" id="ngrid"></div>
+    <input type="text" id="natlib" placeholder="Préciser : piqûre de guêpe, morsure de chien…" style="margin-top:8px">
+    <span class="auto" id="natHint"></span>
+    <span class="mini">La précision remplace l'intitulé de la tuile dans les deux messages. Gardez la tuile la plus proche : elle règle la trame SAMU et la qualification CODIS.</span>
     <details class="sub" id="natDet"><summary>Autre nature, ou affiner</summary>
       <div class="mgrid" id="motifs" style="margin-top:10px"></div>
       <div class="chips" id="titrec" data-one style="margin-top:10px"></div>
@@ -747,7 +750,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.14a";
+const VERSION="2026.10.14c";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1309,6 +1312,8 @@ function accorder(t){
 
 // Le motif ne doit pas répéter l'âge, le sexe ni le lieu : ils ont leur propre champ
 function titrePropre(){
+  // Une précision libre l'emporte sur l'intitulé de la tuile
+  const lib=raw("natlib");if(lib)return prudence(lib.toLowerCase());
   const c=one("titrec");
   if(c==="__autre")return prudence(raw("titre").trim().toLowerCase());
   return c||"";
@@ -1340,7 +1345,10 @@ function prudence(t){
   }
   return sig(t);
 }
-function natureReformulee(){return one("titrec")==="__autre"&&raw("titre")&&/signes évocateurs/.test(prudence(raw("titre").trim().toLowerCase()))&&!/signe|[ée]vocat/.test(raw("titre").toLowerCase());}
+function natureReformulee(){
+  const src=raw("natlib")||(one("titrec")==="__autre"?raw("titre"):"");
+  return !!src&&/signes évocateurs/.test(prudence(src.toLowerCase()))&&!/signe|[ée]vocat/.test(src.toLowerCase());
+}
 
 // Un régulateur retient mieux un délai écoulé qu'un horaire
 function dureeDepuis(){
@@ -1591,11 +1599,18 @@ function demandeTxt(){
 // par un groupe nominal articulé, en minuscule.
 const NAT_FEM=["chute","plaie","brûlure","hémorragie","douleur","gêne","détresse","crise",
  "décompensation","céphalée","perte","intoxication","fièvre","altération","suspicion",
- "convulsion","agression","explosion","obstruction","noyade","électrisation","intervention"];
+ "convulsion","agression","explosion","obstruction","noyade","électrisation","intervention",
+ "piqûre","piqure","morsure","coupure","blessure","fracture","entorse","luxation","contusion","plaie",
+ "allergie","réaction","ingestion","inhalation","pendaison","tentative","rixe","rupture","déchirure",
+ "hypothermie","hyperthermie","déshydratation","hypoglycémie","hyperglycémie","épistaxis","ecchymose",
+ "dyspnée","toux","paralysie","faiblesse","confusion","agitation","ivresse","alcoolisation","overdose",
+ "insolation","électrocution","asphyxie","strangulation","amputation","section","écrasement"];
 const NAT_PLUR=["palpitations","vomissements","convulsions","brûlures","signes"];
 function articuler(n){
   const p=(n||"").trim();
   const m=p.toLowerCase().split(/[\s']/)[0];
+  // Article déjà saisi par l'utilisateur : on le garde
+  if(/^(un|une|des|le|la|les|l')\b/i.test(p)||/^l'/i.test(p))return p.charAt(0).toLowerCase()+p.slice(1);
   if(NAT_PLUR.includes(m))return"des "+p;
   if(NAT_FEM.includes(m))return"une "+p;
   if(/^[aeiouéèêh]/.test(p))return"un "+p;
@@ -2169,7 +2184,8 @@ function rendre(){
   $("#demlibbox").style.display=one("dem")==="__"?"block":"none";
   $("#heurebox").style.display=one("delaic")==="precise"?"block":"none";
   $("#titre").style.display=one("titrec")==="__autre"?"block":"none";
-  $("#titreHint").textContent=natureReformulee()?"Annoncé : « "+titrePropre()+" ». Le diagnostic relève du médecin, le secouriste rapporte des signes.":"";
+  const hint=natureReformulee()?"Annoncé : « "+titrePropre()+" ». Le diagnostic relève du médecin, le secouriste rapporte des signes.":"";
+  $("#titreHint").textContent=raw("natlib")?"":hint;$("#natHint").textContent=raw("natlib")?hint:"";
   $("#adresse").hidden=adrInd();
   syncNats();syncSexe();syncGq();
   const ad=$("#atcdef");if(ad)ad.innerHTML=defsHTML(multi("atcd-c"),ATCDEF);
