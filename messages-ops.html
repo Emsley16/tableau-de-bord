@@ -264,6 +264,7 @@ details.sub[open]>summary::before{content:"－ "}
 .ngrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .ngrid button{background:var(--s2);border:1px solid var(--border);border-radius:9px;color:var(--text);
   padding:10px 4px;min-height:52px;font-size:13px;font-weight:600;line-height:1.2;cursor:pointer}
+.ngrid button.lib{grid-column:1/-1;border-style:dashed}
 .ngrid button[aria-pressed=true]{background:var(--acc-s);border-color:var(--acc);color:var(--acc)}
 .qk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .qc{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -356,15 +357,20 @@ details.sub[open]>summary::before{content:"－ "}
 
   <div class="f"><span class="gl">Nature</span>
     <div class="ngrid" id="ngrid"></div>
-    <input type="text" id="natlib" placeholder="Préciser : piqûre de guêpe, morsure de chien…" style="margin-top:8px">
-    <span class="auto" id="natHint"></span>
-    <span class="mini">La précision remplace l'intitulé de la tuile dans les deux messages. Gardez la tuile la plus proche : elle règle la trame SAMU et la qualification CODIS.</span>
-    <details class="sub" id="natDet"><summary>Autre nature, ou affiner</summary>
-      <div class="mgrid" id="motifs" style="margin-top:10px"></div>
-      <div class="chips" id="titrec" data-one style="margin-top:10px"></div>
-      <input type="text" id="titre" placeholder="Préciser la nature : ce que vous constatez" style="margin-top:8px;display:none">
-      <span class="auto" id="titreHint"></span>
-    </details></div>
+    <div id="natLibBox" hidden>
+      <input type="text" id="natlib" placeholder="Ce que vous constatez : piqûre de guêpe…" style="margin-top:8px">
+      <div class="seg" id="natType" style="margin-top:8px">
+        <button data-m="autre" aria-pressed="true">Médical</button>
+        <button data-m="trauma" aria-pressed="false">Traumatique</button>
+      </div>
+      <span class="auto" id="natHint"></span>
+    </div>
+    <div hidden>
+      <div class="mgrid" id="motifs"></div>
+      <div class="chips" id="titrec" data-one></div>
+      <input type="text" id="titre">
+      <span id="titreHint"></span>
+    </div></div>
 
   <div class="f"><span class="gl">Victime</span>
     <div class="row">
@@ -750,7 +756,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.10.14c";
+const VERSION="2026.10.14d";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1313,7 +1319,7 @@ function accorder(t){
 // Le motif ne doit pas répéter l'âge, le sexe ni le lieu : ils ont leur propre champ
 function titrePropre(){
   // Une précision libre l'emporte sur l'intitulé de la tuile
-  const lib=raw("natlib");if(lib)return prudence(lib.toLowerCase());
+  if(S.natLibre)return prudence(raw("natlib").toLowerCase());
   const c=one("titrec");
   if(c==="__autre")return prudence(raw("titre").trim().toLowerCase());
   return c||"";
@@ -1346,7 +1352,7 @@ function prudence(t){
   return sig(t);
 }
 function natureReformulee(){
-  const src=raw("natlib")||(one("titrec")==="__autre"?raw("titre"):"");
+  const src=S.natLibre?raw("natlib"):"";
   return !!src&&/signes évocateurs/.test(prudence(src.toLowerCase()))&&!/signe|[ée]vocat/.test(src.toLowerCase());
 }
 
@@ -1915,6 +1921,7 @@ function applyType(t,defauts){
   if(defauts&&r){
     enginDefauts();
     if(motif!=="trauma"){motif="trauma";buildMotif();}
+    S.natLibre=false;$("#natlib").value="";
     const av=$("#titrec .chip[data-v='accident de la voie publique']");
     if(av&&!one("titrec"))av.setAttribute("aria-pressed","true");
     $("#sR").open=true;
@@ -2088,16 +2095,29 @@ const NATS=[
  ["Traumatisme","trauma","traumatisme"]
 ];
 function buildNats(){
-  $("#ngrid").innerHTML=NATS.map((n,i)=>'<button data-i="'+i+'" aria-pressed="false">'+n[0]+'</button>').join("");
+  $("#ngrid").innerHTML=NATS.map((n,i)=>'<button data-i="'+i+'" aria-pressed="false">'+n[0]+'</button>').join("")+
+    '<button data-i="lib" class="lib" aria-pressed="false">Préciser</button>';
 }
 function choisirNature(i){
-  const n=NATS[i];if(!n)return;
+  if(i==="lib"){
+    S.natLibre=true;
+    $$("#titrec .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+    if(motif!=="autre"&&motif!=="trauma"){motif="autre";buildMotif();}
+    $("#natLibBox").hidden=false;$("#natlib").focus();
+    return;
+  }
+  const n=NATS[+i];if(!n)return;
+  S.natLibre=false;$("#natlib").value="";
   if(motif!==n[1]){motif=n[1];buildMotif();}
   $$("#titrec .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.v===n[2])));
 }
 function syncNats(){
   const t=one("titrec");
-  $$("#ngrid button").forEach(b=>{const n=NATS[+b.dataset.i];b.setAttribute("aria-pressed",String(motif===n[1]&&t===n[2]));});
+  $$("#ngrid button").forEach(b=>{
+    if(b.dataset.i==="lib"){b.setAttribute("aria-pressed",String(!!S.natLibre));return;}
+    const n=NATS[+b.dataset.i];b.setAttribute("aria-pressed",String(!S.natLibre&&motif===n[1]&&t===n[2]));});
+  $("#natLibBox").hidden=!S.natLibre;
+  $$("#natType button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===motif)));
 }
 
 /* ════════ ÉCRANS, SEXE, GLASGOW, VALEURS PAR DÉFAUT ════════ */
@@ -2185,7 +2205,7 @@ function rendre(){
   $("#heurebox").style.display=one("delaic")==="precise"?"block":"none";
   $("#titre").style.display=one("titrec")==="__autre"?"block":"none";
   const hint=natureReformulee()?"Annoncé : « "+titrePropre()+" ». Le diagnostic relève du médecin, le secouriste rapporte des signes.":"";
-  $("#titreHint").textContent=raw("natlib")?"":hint;$("#natHint").textContent=raw("natlib")?hint:"";
+  $("#natHint").textContent=hint;
   $("#adresse").hidden=adrInd();
   syncNats();syncSexe();syncGq();
   const ad=$("#atcdef");if(ad)ad.innerHTML=defsHTML(multi("atcd-c"),ATCDEF);
@@ -2446,7 +2466,8 @@ function evenements(){
     else if(g==="14"){$("#gy").value="4";$("#gv").value="4";$("#gm").value="6";}
     else $("#gdet").open=true;
     rendre();});
-  $("#ngrid").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;choisirNature(+b.dataset.i);rendre();});
+  $("#ngrid").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;choisirNature(b.dataset.i);rendre();});
+  $("#natType").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.m===motif)return;motif=b.dataset.m;buildMotif();rendre();});
   $("#sxSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
     $("#sexe").value=raw("sexe")===b.dataset.s?"":b.dataset.s;rendre();});
   $("#phSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;phase(b.dataset.p);sauver();});
