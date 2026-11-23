@@ -690,6 +690,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 </details>
 
 <div class="sec"><div class="sh">4 · Examen clinique</div><div class="bd">
+  <div class="f"><button class="btn2" id="exRas" style="margin-top:0">Examen sans particularité : tout est normal</button></div>
   <div class="f"><span class="gl">Pupilles</span>
     <div class="chips" id="pup" data-multi>
       <button class="chip" data-v="__norm" aria-pressed="false">Égales et réactives</button>
@@ -706,9 +707,25 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
       <button class="chip" data-v="couvert de sueurs" aria-pressed="false">Sueurs</button>
       <button class="chip" data-v="marbré" aria-pressed="false">Marbrures</button>
       <button class="chip" data-v="cyanosé" aria-pressed="false">Cyanose</button>
-      <button class="chip" data-v="ictérique" aria-pressed="false">Ictère</button>
     </div>
     <span class="mini">Pâleur : peau et intérieur des paupières plus clairs que d'habitude. Sueurs : peau moite sans effort ni chaleur. Marbrures : réseau violacé en mailles, d'abord aux genoux, signe de mauvaise circulation. Cyanose : coloration bleutée des lèvres, des ongles ou des extrémités, signe de manque d'oxygène. Ictère : peau et blanc des yeux jaunes.</span></div>
+  <div class="f"><span class="gl">Respiration</span>
+    <div class="chips" id="resp" data-multi>
+      <button class="chip" data-v="__norm" aria-pressed="false">Calme, parle normalement</button>
+      <button class="chip" data-v="difficulté à parler" aria-pressed="false">Phrases courtes, essoufflée</button>
+      <button class="chip" data-v="tirage" aria-pressed="false">Tirage</button>
+      <button class="chip" data-v="sibilants à l'expiration" aria-pressed="false">Sifflement à l'expiration</button>
+      <button class="chip" data-v="stridor à l'inspiration" aria-pressed="false">Sifflement à l'inspiration</button>
+    </div>
+    <span class="mini">Tirage : creux au cou ou entre les côtes à chaque inspiration. Sifflement à l'expiration : sibilants. Sifflement à l'inspiration : stridor.</span></div>
+  <div class="f"><span class="gl">FAST, à la recherche d'un AVC</span>
+    <div class="chips" id="fast" data-multi>
+      <button class="chip" data-v="__norm" aria-pressed="false">Aucun de ces trois signes</button>
+      <button class="chip" data-v="paralysie faciale" aria-pressed="false">Visage : un côté tombe</button>
+      <button class="chip" data-v="déficit moteur d'un bras" aria-pressed="false">Bras : un bras retombe</button>
+      <button class="chip" data-v="trouble de la parole" aria-pressed="false">Parole : mots déformés</button>
+    </div>
+    <input type="text" id="fastlib" placeholder="Autre signe neurologique" style="margin-top:8px"></div>
   <div class="f"><span class="gl">Abdomen</span>
     <div class="chips" id="abdo" data-one>
       <button class="chip" data-v="__norm" aria-pressed="false">Souple, indolore</button>
@@ -886,6 +903,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
     <div class="row"><input type="text" id="ghC" inputmode="numeric" maxlength="5" placeholder="830, 1415…" aria-label="Groupe horaire">
       <button class="btn2" id="ghCNow" style="margin-top:0">Heure actuelle</button></div>
   </div>
+  <div class="chips" id="cdgMode" data-one hidden style="margin-top:10px"><button class="chip" data-v="action" aria-pressed="false">Chef de groupe : pour action</button><button class="chip" data-v="information" aria-pressed="false">Chef de groupe : pour information</button></div>
   <div class="ws" id="wC"></div>
   <div class="olbl"><span id="outLbl">Message à passer à la radio</span><button id="resync">↻ resynchroniser</button></div>
   <textarea id="out" spellcheck="false"></textarea>
@@ -941,7 +959,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23o";
+const VERSION="2026.11.23p";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1779,6 +1797,13 @@ function examenParts(){
   const ab=one("abdo");
   if(ab==="__norm")norm.push("abdomen souple, dépressible et indolore");
   else if(ab)ano.push("abdomen présentant "+ab);
+  const rs=multi("resp");
+  if(rs.includes("__norm"))norm.push("respiration calme");
+  rs.filter(x=>x!=="__norm").forEach(x=>ano.push(x));
+  const fa=multi("fast");
+  if(fa.includes("__norm"))norm.push("FAST négatif");
+  fa.filter(x=>x!=="__norm").forEach(x=>ano.push(x));
+  if(raw("fastlib"))ano.push(raw("fastlib"));
   if(raw("exlibre"))ano.push(raw("exlibre"));
   return{norm,ano,chif,ped};
 }
@@ -2235,7 +2260,7 @@ $("#phgo").onclick=async()=>{
 /* ════════ ÉTAT CODIS ════════ */
 function etatInitial(){
   return{type:"SAP",msg:"ambiance",sup:"radio",
-    renf:{SAP:[NO_NEED],ROUTIER:ENGIN_DEFAULTS.VSAV.renfort.slice()},
+    renf:{SAP:[NO_NEED],ROUTIER:[NO_NEED]},
     sapX:[],rX:[],pqX:[],comp:[],demFaites:[],passe:{},journal:[],acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
 }
 let S=etatInitial();
@@ -2332,7 +2357,8 @@ function renderRenf(){
     '<details class="sub" id="renfPlus" style="width:100%"'+(ouvert?" open":"")+'><summary>Autres moyens</summary><div class="chips" style="margin-top:8px">'+rest.map(chip).join("")+'</div></details>';
 }
 function enginDefauts(){
-  const d=ENGIN_DEFAULTS[raw("engin")==="VSR"?"VSR":"VSAV"];
+  // En intervention, rien n'est coché d'office. Le mode d'essai garde les réglages d'origine, sur lesquels les scénarios de test sont écrits.
+  const d=essai?ENGIN_DEFAULTS[raw("engin")==="VSR"?"VSR":"VSAV"]:{actions:[],renfort:[NO_NEED]};
   S.renf.ROUTIER=d.renfort.slice();
   $$("#actR .chip").forEach(c=>c.setAttribute("aria-pressed",String(d.actions.includes(c.dataset.v))));
   renderRenf();
@@ -2581,10 +2607,12 @@ function bilanRListRadio(){
     return s;
   }).join(" ; ");
 }
+// Le chef de groupe se demande « pour action » ou « pour information »
+function avecCdg(l){const m=one("cdgMode");return m?l.map(x=>/^chef de groupe$/i.test(x)?x+" pour "+m:x):l;}
 function demandeRadio(){
   const a=renfList();
   if(a.length===1&&a[0]===NO_NEED)return"Secours suffisants";
-  return"Je demande : "+(liste(a.filter(x=>x!==NO_NEED))||"[demande]");
+  return"Je demande : "+(liste(avecCdg(a.filter(x=>x!==NO_NEED)))||"[demande]");
 }
 function buildRadioSAP(){
   let desc=phraseAmbiance().replace(/\.$/,"");
@@ -2693,7 +2721,7 @@ function renfList(){
 // La demande n'est énoncée que s'il y en a une
 function demandeLine(){
   const a=renfList().filter(x=>x!==NO_NEED);
-  return a.length?"Je demande : "+liste(a)+".":"";
+  return a.length?"Je demande : "+liste(avecCdg(a))+".":"";
 }
 function actionsAmb(){
   const sel=multi("actS");
@@ -2949,7 +2977,7 @@ function compList(){
   return a;
 }
 function toutesDemandes(){return dejaDemande().concat(compList());}
-function demandeComp(){return"Je demande : "+(liste(compList())||"[demande]");}
+function demandeComp(){return"Je demande : "+(liste(avecCdg(compList()))||"[demande]");}
 function renderComp(){
   const set=S.comp||[],chip=r=>'<button class="chip" data-c="'+esc(r)+'" aria-pressed="'+set.includes(r)+'">'+esc(r)+'</button>';
   const FREQ=["SMUR","Forces de l'ordre","VSR","VSAV supplémentaire","Chef de Groupe","Élu"];
@@ -3124,7 +3152,7 @@ function syncGq(){
   $$("#gq button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.g===k)));
 }
 function defauts(){
-  if(S.type==="SAP"){const b=$("#actS .chip[data-v='"+ACT_BILAN+"']");if(b){b.setAttribute("aria-pressed","true");b.classList.add("def");}}
+  if(essai&&S.type==="SAP"){const b=$("#actS .chip[data-v='"+ACT_BILAN+"']");if(b){b.setAttribute("aria-pressed","true");b.classList.add("def");}}
 }
 // Avance automatique entre les constantes
 const QK=["spo2","fc","fr","pas","pad"];
@@ -3678,8 +3706,8 @@ function ordonnerBilan(){
 function majEtatsBilan(){
   majRoutier();
   if(!$("#exEtat"))return;
-  const n=multi("pup").length+multi("teg").length+multi("abdo").length+(raw("exlibre")?1:0);
-  $("#exEtat").textContent=n?n+" constat"+(n>1?"s":"")+" saisi"+(n>1?"s":""):"Rien de saisi : pupilles, peau, ventre";
+  const n=multi("pup").length+multi("teg").length+multi("resp").length+multi("fast").length+(one("abdo")?1:0)+(raw("exlibre")?1:0)+(raw("fastlib")?1:0);
+  $("#exEtat").textContent=n?n+" constat"+(n>1?"s":"")+" saisi"+(n>1?"s":""):"Rien de saisi : pupilles, peau, respiration, ventre, FAST";
   const m=[multi("atcd-c").length||raw("atcd"),raw("hospit"),raw("ttt"),raw("allerg"),multi("fagg").length||raw("fagglib")].filter(Boolean).length;
   $("#mhEtat").textContent=m?m+" rubrique"+(m>1?"s":"")+" sur 5 renseignée"+(m>1?"s":""):"Rien de saisi : maladies, hospitalisations, traitements, allergies, facteurs aggravants";
   $("#pqEtat").textContent=pqrstTxt()||"Rien de saisi : provoquée par, qualité, région, sévérité, temps";
@@ -3693,6 +3721,8 @@ function vsrManque(){
 function majRoutier(){
   const r=S.type==="ROUTIER";
   $("#vsitBox").hidden=!r;$("#axeBox").hidden=!r;$("#versRoutier").hidden=r;
+  const cdg=x=>/^chef de groupe$/i.test(x);
+  $("#cdgMode").hidden=!(S.msg==="comp"?compList().some(cdg):S.msg==="ambiance"&&renfList().some(cdg));
   const w=$("#wC"),deja=$("#wVsr");
   if(deja)deja.remove();
   if(w&&vsrManque())w.insertAdjacentHTML("afterbegin",'<div class="w am" id="wVsr"><span><b>Victime incarcérée : aucun VSR sur les lieux ni demandé.</b> <button class="btn2" id="ajVsr" style="margin-top:6px">Ajouter le VSR à la demande</button></span></div>');
@@ -3724,6 +3754,9 @@ function initV2(){
   $("#compPasse").addEventListener("click",()=>{if(S.demFaites.length>avant){if(!S.passe)S.passe={};S.passe.comp=(S.passe.comp||0)+1;
     noter("Complément n° "+S.passe.comp+" · "+supTxt(),texteComp);sauver();majAccueil();}});
   $("#copJ").onclick=()=>copier(journalTxt(S.journal),"Messages copiés");
+  // Examen sans particularité : chaque rubrique passe à « normal », les anomalies cochées sont retirées
+  $("#exRas").onclick=()=>{["pup","teg","resp","fast","abdo"].forEach(g=>$$("#"+g+" .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.v==="__norm"))));
+    $("#fastlib").value="";rendre();sauver();toast("Examen noté sans particularité");};
   // Routier : l'accident se déclare depuis le secours à personne, le VSR ouvre le routier, le contrôle ajoute le VSR
   $("#versRoutier").onclick=()=>{applyType("ROUTIER",true);rendre();toast("Ambiance routier");window.scrollTo(0,0);};
   $("#engin").addEventListener("change",()=>{if(raw("engin")==="VSR"&&S.type!=="ROUTIER"){applyType("ROUTIER",true);rendre();}});
@@ -3748,6 +3781,9 @@ function modeEssai(){
     if(d.retirer){if(d.montrer)d.montrer.hidden=false;d.el.remove();}
     else d.parent.insertBefore(d.el,d.suivant);}
   $("#lk-a").style.marginTop="";
+  // réglages d'origine pour les scénarios de test : « En cours de bilan » en secours à personne, demande et actions selon l'engin en routier
+  if(!multi("actS").length&&!S.last0){defauts();}
+  if(S.renf.ROUTIER.length===1&&S.renf.ROUTIER[0]===NO_NEED)S.renf.ROUTIER=ENGIN_DEFAULTS[raw("engin")==="VSR"?"VSR":"VSAV"].renfort.slice();
   $("#v-accueil").hidden=false;$("#v-reglages").hidden=false;$("#passeV2").hidden=true;
   $(".brand b").textContent="MESSAGES OPS";
   vue("saisie");phase("arr");

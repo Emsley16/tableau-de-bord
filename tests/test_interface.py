@@ -46,7 +46,8 @@ def saisir_arrivee(page):
     page.locator("#ctxlieu .chip", has_text="Domicile").first.click()
     page.locator("#surlieux .chip", has_text="Police municipale").first.click()
     page.evaluate("document.querySelector('#renf .chip[data-r=\"SMUR\"]').click()")
-    page.locator("#actS .chip", has_text="Bilan").first.click()
+    # « En cours de bilan » : coché d'office dans la référence, à cocher dans le programme
+    page.evaluate("(()=>{const c=[...document.querySelectorAll('#actS .chip')].find(x=>/bilan/i.test(x.textContent));if(c.getAttribute('aria-pressed')!=='true')c.click();})()")
 
 
 def visible(page, sel):
@@ -89,11 +90,17 @@ with sync_playwright() as pw:
     ordre = page.evaluate("""() => { const y = s => document.querySelector(s).getBoundingClientRect().top;
         return y('#etat') < y('#aggrav') && y('#aggrav') < y('#addxv') && y('#addxv') < y('#commune') && y('#actS') < y('#out'); }""")
     verifier("Ambiance : état de la victime avec la victime, message en bas de page", ordre, True)
-    verifier("Rien de coché d'office : ni l'adresse du départ, ni un service sur les lieux",
-             page.evaluate("[multi('adrind').length, multi('surlieux').length]"), [0, 0])
+    verifier("Rien de coché d'office : ni l'adresse du départ, ni un service sur les lieux, ni une action",
+             page.evaluate("[multi('adrind').length, multi('surlieux').length, multi('actS').length]"), [0, 0, 0])
     verifier("Sans adresse ni case cochée, le message la réclame",
              ["à l'adresse : [adresse]" in page.locator("#out").input_value(), "Adresse manquante" in page.locator("#wC").inner_text()], [True, True])
     saisir_arrivee(page)
+    page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
+    verifier("Chef de groupe demandé : le choix « pour action » ou « pour information » apparaît", visible(page, "#cdgMode"), True)
+    page.locator("#cdgMode .chip", has_text="pour information").click()
+    verifier("Chef de groupe pour information : dit dans la demande", page.locator("#out").input_value().split("\n")[1], "Je demande : SMUR et Chef de Groupe pour information")
+    page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
+    verifier("Chef de groupe retiré : le choix disparaît", [visible(page, "#cdgMode"), page.locator("#out").input_value().split("\n")[1]], [False, "Je demande : SMUR"])
     verifier("Ambiance radio : même message que la version actuelle", page.locator("#out").input_value(), ref["radio ambiance"])
     page.locator("#supSeg button[data-s=ecrit]").click()
     verifier("Ambiance écrite : même message que la version actuelle", page.locator("#out").input_value(), ref["ecrit ambiance"])
@@ -150,6 +157,15 @@ with sync_playwright() as pw:
     verifier("Bilan SAMU : examen, douleur et antécédents repliés ; anticoagulant, température et glycémie sous les yeux",
              [visible(page, "#pup"), visible(page, "#pq_r"), visible(page, "#ttt"), visible(page, "#acg"), visible(page, "#temp"), visible(page, "#gly"), visible(page, "#glyu")],
              [False, False, False, True, True, True, True])
+    page.locator("#dEx > summary").click()
+    verifier("Examen clinique : respiration et FAST présents, ictère retiré",
+             [visible(page, "#resp"), visible(page, "#fast"), page.locator("#teg .chip", has_text="Ictère").count()], [True, True, 0])
+    page.locator("#fast .chip", has_text="Visage").click()
+    page.locator("#resp .chip", has_text="Tirage").click()
+    verifier("Examen clinique : les signes cochés passent dans l'annonce", ["paralysie faciale" in page.evaluate("bAnnonce()").lower(), "tirage" in page.evaluate("bAnnonce()").lower()], [True, True])
+    page.locator("#exRas").click()
+    verifier("Examen sans particularité : tout passe à « normal »",
+             page.evaluate("[multi('pup'), multi('teg'), multi('resp'), multi('fast'), one('abdo')].map(x=>String(x)).join('|')"), "__norm|__norm|__norm|__norm|__norm")
     page.locator("#sPQ > summary").click()
     page.locator("#dMh > summary").click()
     verifier("Bilan SAMU : une flèche déplie le PQRST (avec l'échelle de la douleur) et le MHTAA",
@@ -195,6 +211,8 @@ with sync_playwright() as pw:
     page.locator("#typeSeg button[data-t=ROUTIER]").click()
     page.locator(".carte[data-e=ambiance]").click()
     verifier("Routier : la rubrique accident apparaît dans l'ambiance", [visible(page, "#sR"), visible(page, "#actR")], [True, True])
+    verifier("Routier : rien de coché d'office, ni demande ni action",
+             [page.locator("#out").input_value().split("\n")[1], page.evaluate("multi('actR').length + multi('actRf').length")], ["Secours suffisants", 0])
     page.locator("#aHome").click()
     page.locator("#typeSeg button[data-t=SAP]").click()
 
