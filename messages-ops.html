@@ -722,7 +722,7 @@ details.sub[open]>summary::before{content:"－ "}
 
   <div class="f" id="trXBox"><span class="gl">Transport des autres victimes</span>
     <div id="trX"></div>
-    <span class="mini">Un vecteur et une destination par ligne de l'écran Arrivée. Laisser vide si le groupe n'est pas transporté.</span></div>
+    <span class="mini">Un vecteur et une destination par ligne de l'écran Arrivée. Groupe non transporté : écrire ce qu'il devient dans la troisième case (« restent sur place, pris en charge par l'association »).</span></div>
 
   <div class="f" id="dcdBox"><span class="gl">Décès</span>
     <div class="row"><input type="time" id="hdc" aria-label="Heure du décès"><button class="btn2" id="hdcNow" style="margin-top:0">Maintenant</button></div>
@@ -780,9 +780,12 @@ details.sub[open]>summary::before{content:"－ "}
     <button data-m="cr" aria-pressed="false">Compte rendu</button>
   </div>
   <div id="compBox" hidden>
-    <div class="olbl" style="margin-top:12px"><span>Message complémentaire : une demande après l'ambiance</span></div>
-    <input type="text" id="compLib" placeholder="Motif, si utile : aggravation, seconde victime découverte…">
-    <span class="mini">Reprend ce qui est coché dans « Je demande » (écran 1 · Arrivée). Décochez d'abord ce qui est déjà arrivé.</span>
+    <div class="olbl" style="margin-top:12px"><span>Je demande en plus</span></div>
+    <div id="compRenf"></div>
+    <input type="text" id="compDem" placeholder="Autre demande" style="margin-top:8px">
+    <input type="text" id="compLib" placeholder="Motif, si utile : aggravation, victime découverte…" style="margin-top:8px">
+    <span class="mini" id="compDeja"></span>
+    <button class="btn2" id="compPasse">Message passé : préparer une autre demande</button>
   </div>
   <div id="ghCBox" hidden>
     <div class="olbl" style="margin-top:12px"><span>Groupe horaire du compte rendu</span></div>
@@ -840,7 +843,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23f";
+const VERSION="2026.11.23g";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1467,11 +1470,13 @@ const ACCORDS=[
  ["normotendu","normotendue"],["hypotendu","hypotendue"],
  ["couvert de sueurs","couverte de sueurs"],["marbré","marbrée"],["cyanosé","cyanosée"],
  ["porteur d'un stimulateur","porteuse d'un stimulateur"],
- ["sportif entraîné","sportive entraînée"],["conscient","consciente"]
+ ["sportif entraîné","sportive entraînée"],["conscient","consciente"],
+ ["somnolent","somnolente"],["agité","agitée"],["confus","confuse"],["incarcéré","incarcérée"]
 ];
 function accorder(t){
   if(!FEM())return t;
-  ACCORDS.forEach(([m,f])=>{t=t.split(m).join(f);});
+  // (?!e) : un mot déjà au féminin n'est pas accordé une seconde fois
+  ACCORDS.forEach(([m,f])=>{t=t.replace(new RegExp(m.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?!e)","g"),f);});
   return t;
 }
 
@@ -1795,6 +1800,9 @@ const QUALIF_ADJ={"malade":"malade","blessé":"blessée","brûlé":"brûlée","i
 function qualifParts(q){
   // Un impliqué n'est ni malade ni blessé : la catégorie tient lieu de qualification
   if(one("etat")==="IMP")return{adj:"impliquée",c:"",imp:true};
+  // Nature saisie à la main, sans précision « traumatique » ni qualification choisie :
+  // on ne présume ni « malade » ni « blessée », la victime est dite « une victime »
+  if(S.natLibre&&motif!=="trauma"&&!one("qual")&&!acrConstate())return{adj:"",c:""};
   const m=/^victime\s*(.*)$/.exec(q||"");
   if(m)return m[1]==="indemne"?{adj:"indemne",c:"indemne",seul:true}:{adj:"",c:m[1]};
   return{adj:QUALIF_ADJ[q]||q||"malade",c:""};
@@ -1811,7 +1819,16 @@ function victimeTxt(q,cat){
 }
 // Un événement se rapporte (« à la suite d'une chute »), un signe se présente (« présentant un malaise »)
 const NAT_EVT=["chute","accident","agression","noyade","explosion","rixe","pendaison","tentative",
- "électrisation","électrocution","morsure","piqûre","piqure","ingestion","inhalation","écrasement"];
+ "électrisation","électrocution","morsure","piqûre","piqure","ingestion","inhalation","écrasement",
+ "effondrement","éboulement","ensevelissement","incendie","feu","collision","renversement","défenestration",
+ "bagarre","coup","coups","chutes","glissade","basculement","éclatement","projection","fuite","émanation"];
+// Vrai si la nature décrit ce qui s'est passé (une chute, un effondrement) et non ce que présente la victime
+function natEvenement(nat){
+  const m=articuler(nat||"").toLowerCase().replace(/^(un|une|des|le|la|les)\s+|^l'/,"").split(/[\s']/)[0];
+  return NAT_EVT.includes(m);
+}
+// Lieu dit sans possessif quand il se rapporte à l'événement et non à la victime
+const CTX_NEUTRE={"à son domicile":"à domicile","sur son lieu de travail":"sur un lieu de travail"};
 function motifTxt(q){
   const nat=titrePropre();if(!nat)return"";
   const a=articuler(nat);
@@ -2048,7 +2065,7 @@ $("#phgo").onclick=async()=>{
 function etatInitial(){
   return{type:"SAP",msg:"ambiance",sup:"radio",
     renf:{SAP:[NO_NEED],ROUTIER:ENGIN_DEFAULTS.VSAV.renfort.slice()},
-    sapX:[],rX:[],acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
+    sapX:[],rX:[],comp:[],demFaites:[],acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
 }
 let S=etatInitial();
 
@@ -2175,7 +2192,8 @@ function renderTrX(){
   $("#trX").innerHTML=S.type!=="SAP"?"":S.sapX.map((b,i)=>
     '<span class="mini" style="margin-top:8px">'+libelleGroupe(b)+'</span>'+
     '<div class="g2"><input type="text" data-xi="'+i+'" data-xk="vecteur" value="'+esc(b.vecteur||"")+'" placeholder="Vecteur : VSAV de Jarnac">'+
-    '<input type="text" data-xi="'+i+'" data-xk="ch" value="'+esc(b.ch||"")+'" placeholder="Destination : CH Cognac"></div>').join("");
+    '<input type="text" data-xi="'+i+'" data-xk="ch" value="'+esc(b.ch||"")+'" placeholder="Destination : CH Cognac"></div>'+
+    '<input type="text" data-xi="'+i+'" data-xk="devenir" value="'+esc(b.devenir||"")+'" placeholder="Sinon : restent sur place, prises en charge par…" style="margin-top:6px">').join("");
 }
 function majXV(e){
   const t=e.target,i=t.dataset.xi,k=t.dataset.xk;if(i===undefined||!k)return;
@@ -2242,15 +2260,20 @@ function surLieuxTxt(){
 }
 // Les renforts demandés sont arrivés : ils quittent « Je demande » pour « Sur les lieux »
 function renfortsArrives(){
-  const dem=renfList().filter(x=>x!==NO_NEED);if(!dem.length)return;
+  // toutes les demandes passées : celle de l'ambiance, puis celles des messages complémentaires
+  const dem=toutesDemandes();if(!dem.length)return;
+  const compte=[];
+  dem.forEach(d=>{const c=compte.find(x=>x.nom.toLowerCase()===d.toLowerCase());if(c)c.n++;else compte.push({nom:d,n:1});});
   const autres=raw("surlieuxLib").split(/\s*,\s*/).filter(Boolean);
-  dem.forEach(d=>{
-    const c=$$("#surlieux .chip").find(x=>x.dataset.v.toLowerCase()===d.toLowerCase());
-    if(c)c.setAttribute("aria-pressed","true");
-    else if(!autres.some(x=>x.toLowerCase()===d.toLowerCase()))autres.push(d);
+  compte.forEach(({nom,n})=>{
+    const c=$$("#surlieux .chip").find(x=>x.dataset.v.toLowerCase()===nom.toLowerCase());
+    if(c){c.setAttribute("aria-pressed","true");return;}
+    // le même moyen demandé deux fois : « 2 VSAV supplémentaires »
+    const dernier=nom.split(" ").pop(),txt=n>1?n+" "+nom+(/^[A-ZÉ0-9]+$/.test(dernier)?"":"s"):nom;
+    if(!autres.some(x=>x.toLowerCase()===txt.toLowerCase()))autres.push(txt);
   });
   $("#surlieuxLib").value=autres.join(", ");
-  S.renf[S.type]=[NO_NEED];$("#renfMan").value="";
+  S.renf[S.type]=[NO_NEED];S.comp=[];S.demFaites=[];$("#renfMan").value="";$("#compDem").value="";
   renderRenf();rendre();toast("Renforts passés dans « Sur les lieux »");
 }
 // Bilan humain du secours à personne : il ne compte que par catégorie — impliqué, UR, UA, décédé.
@@ -2319,25 +2342,42 @@ function lieuRadio(){
 function phraseAmbiance(){
   const nat=titrePropre();
   if(!nat&&!raw("sexe")&&!val("age"))return"";
-  const lieu=[one("ctxlieu"),raw("ctxdet")].filter(Boolean).join(", ");
+  const ctx=one("ctxlieu"),det=raw("ctxdet");
   // L'état constaté (en ACR, signes de mort manifeste) suit le sexe : « une femme en ACR, de 63 ans ».
   // Il n'est pas redit quand la nature l'annonce déjà. La catégorie, elle, n'apparaît qu'au bilan humain.
   const qc=qualifParts(qualifP());
   const etatVic=(qc.c&&!qc.seul&&!(nat===NAT_ACR&&/ACR/.test(qc.c)))?qc.c:"";
-  let ag=multi("aggrav").filter(x=>!(x==="en ACR"&&(nat===NAT_ACR||/ACR/.test(etatVic))));
-  if(one("acg")==="oui"&&!ag.includes("sous anticoagulant"))ag.push("sous anticoagulant");
-  if(multi("vie").includes("vit seul"))ag.push("personne isolée");
-  if(multi("vie").includes("grossesse"))ag.push("grossesse en cours");
+  const coche=multi("aggrav").filter(x=>!(x==="en ACR"&&(nat===NAT_ACR||/ACR/.test(etatVic))));
+  // Ce qui décrit la victime, puis ce qui pèse sur l'opération
+  const vic=coche.filter(x=>!/difficile/.test(x)),ops=coche.filter(x=>/difficile/.test(x));
+  if(one("acg")==="oui"&&!vic.includes("sous anticoagulant"))vic.push("sous anticoagulant");
+  if(multi("vie").includes("vit seul"))vic.push("personne isolée");
+  if(multi("vie").includes("grossesse"))vic.push("grossesse en cours");
   const libre=raw("aggravlib");
-  if(libre)ag.push(libre.charAt(0).toLowerCase()+libre.slice(1));
-  let p=articuler(nat||"intervention");
+  if(libre)vic.push(libre.charAt(0).toLowerCase()+libre.slice(1));
   const at=ageTxt();
+  let su="";
   if(raw("sexe")||val("age")){
-    const su=sujet(true);
-    if(etatVic){const nom=at?su.slice(0,su.length-(" de "+at).length):su;p+=" chez "+nom+" "+etatVic+(at?", de "+at:"");}
-    else p+=" chez "+su;
-  } else if(etatVic)p+=" chez une victime "+etatVic;
+    su=sujet(true);
+    if(etatVic){const nom=at?su.slice(0,su.length-(" de "+at).length):su;su=nom+" "+etatVic+(at?", de "+at:"");}
+  } else if(etatVic)su="une victime "+etatVic;
+
+  // Un événement (chute, effondrement) ou plusieurs victimes : l'événement et son lieu d'abord,
+  // la victime ensuite. « … à un effondrement d'estrade, dans un ERP. La victime principale est une femme de 38 ans, inconsciente »
+  if(nat&&(S.sapX.length||natEvenement(nat))){
+    let p=articuler(nat);
+    const l=[CTX_NEUTRE[ctx]||ctx,det?lc(det):""].concat(ops).filter(Boolean);
+    if(l.length)p+=", "+l.join(", ");
+    const dit=vic.map(x=>x==="victime inconsciente"?"inconscient":x==="victime incarcérée"?"incarcéré":x);
+    if(su||dit.length)p+=". "+(S.sapX.length?"La victime principale est ":"La victime est ")+[su].concat(dit).filter(Boolean).join(", ");
+    return accorder(pt(p));
+  }
+  // Un signe présenté par une victime seule : « une douleur thoracique chez une femme de 26 ans à son domicile »
+  let p=articuler(nat||"intervention");
+  if(su)p+=" chez "+su;
+  const lieu=[ctx,det].filter(Boolean).join(", ");
   if(lieu)p+=" "+lieu;
+  const ag=vic.concat(ops);
   if(ag.length)p+=", "+liste(ag);
   return accorder(pt(p));
 }
@@ -2440,9 +2480,9 @@ function analyseRadio(){
   if(S.msg==="cr"&&raw("gh")&&!ghTxt())W.push(["am","<b>Groupe horaire illisible</b> : 3 ou 4 chiffres, 830 pour 8 h 30, 1415 pour 14 h 15."]);
   {const dem=a.map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
     if(dbl.length&&S.msg!=="cr")W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
-    if(S.msg==="cr"&&a.some(x=>x!==NO_NEED))W.push(["am","Des renforts sont encore cochés dans « Je demande » : s'ils sont arrivés, appuyer sur « Les renforts demandés sont arrivés » (écran 3 · Fin) pour les dire sur les lieux."]);
-    if(S.msg==="cr"&&S.type!=="ROUTIER"&&S.sapX.some(b=>(b.gravite==="UA"||b.gravite==="UR")&&!(b.vecteur||"").trim()&&!(b.ch||"").trim()))
-      W.push(["am","Transport non renseigné pour une autre victime UA ou UR : écran 3 · Fin."]);
+    if(S.msg==="cr"&&toutesDemandes().length)W.push(["am","Des renforts sont encore cochés dans « Je demande » : s'ils sont arrivés, appuyer sur « Les renforts demandés sont arrivés » (écran 3 · Fin) pour les dire sur les lieux."]);
+    if(S.msg==="cr"&&S.type!=="ROUTIER"&&S.sapX.some(b=>!(b.vecteur||"").trim()&&!(b.ch||"").trim()&&!(b.devenir||"").trim()))
+      W.push(["am","Devenir non renseigné pour un groupe d'autres victimes (transport, ou ce qu'elles deviennent) : écran 3 · Fin."]);
     if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);
     if(S.msg==="cr"&&S.type!=="ROUTIER"&&devenirP()==="lsp"&&(acrConstate()||multi("actFin").includes(SANS_REA)))
       W.push(["rd","<b>ACR et victime « laissée sur place ».</b> S'il s'agit d'un décès, choisir « Décédée » dans le devenir : le compte rendu annoncera le décès, le certificat et à qui le corps est laissé."]);}
@@ -2564,9 +2604,10 @@ function victimeP(){
 // « 2 victimes UR sont transportées par le VSAV de Jarnac sur le CH de Cognac »
 function transportsAutres(){
   return S.sapX.map(b=>{
-    const v=(b.vecteur||"").trim(),c=(b.ch||"").trim();if(!v&&!c)return"";
-    const pl=Math.max(1,parseInt(b.nb)||1)>1;
-    return cap(libelleGroupe(b).replace(/^1 /,"une "))+(pl?" sont transportées":" est transportée")+(v?" par "+v:"")+(c?" sur "+c:"");
+    const v=(b.vecteur||"").trim(),c=(b.ch||"").trim(),d=(b.devenir||"").trim().replace(/[.\s]+$/,"");
+    const qui=cap(libelleGroupe(b).replace(/^1 /,"une ")),pl=Math.max(1,parseInt(b.nb)||1)>1;
+    if(v||c)return qui+(pl?" sont transportées":" est transportée")+(v?" par "+v:"")+(c?" sur "+c:"");
+    return d?qui+" "+lc(d):"";
   }).filter(Boolean);
 }
 // Écrit : « La régulation CRRA 15 a été effectuée et la victime est transportée par… »
@@ -2644,9 +2685,25 @@ function buildCrR(){
 }
 /* Message complémentaire : une demande formulée après le message d'ambiance.
    Il rappelle le lieu et le bilan humain du moment, puis la demande et son motif. */
-function demandeComp(){
-  const a=renfList().filter(x=>x!==NO_NEED);
-  return"Je demande : "+(liste(a)||"[demande]");
+// Demandes déjà passées : celle de l'ambiance, puis celles des messages complémentaires précédents
+function dejaDemande(){return renfList().filter(x=>x!==NO_NEED).concat(S.demFaites||[]);}
+// Demande du message complémentaire en préparation : elle ne touche pas à la demande initiale
+function compList(){
+  const a=RENFORTS.filter(r=>(S.comp||[]).includes(r));
+  raw("compDem").split(/\s*,\s*/).filter(Boolean).forEach(x=>a.push(lc(x)));
+  return a;
+}
+function toutesDemandes(){return dejaDemande().concat(compList());}
+function demandeComp(){return"Je demande : "+(liste(compList())||"[demande]");}
+function renderComp(){
+  const set=S.comp||[],chip=r=>'<button class="chip" data-c="'+esc(r)+'" aria-pressed="'+set.includes(r)+'">'+esc(r)+'</button>';
+  const FREQ=["SMUR","Forces de l'ordre","VSR","VSAV supplémentaire","Chef de Groupe","Élu"];
+  const rest=RENFORTS.filter(r=>r!==NO_NEED&&!FREQ.includes(r));
+  const ouvert=rest.some(r=>set.includes(r))||($("#compPlus")&&$("#compPlus").open);
+  $("#compRenf").innerHTML='<div class="chips">'+FREQ.map(chip).join("")+'</div>'+
+    '<details class="sub" id="compPlus"'+(ouvert?" open":"")+'><summary>Autres moyens</summary><div class="chips" style="margin-top:8px">'+rest.map(chip).join("")+'</div></details>';
+  const d=dejaDemande();
+  $("#compDeja").textContent=d.length?"Déjà demandé : "+liste(d)+". Inutile de le recocher.":"Aucune demande passée jusqu'ici.";
 }
 function buildComp(){
   const r=S.type==="ROUTIER",ecrit=S.sup==="ecrit",motif=raw("compLib");
@@ -2656,9 +2713,9 @@ function buildComp(){
 }
 function analyseComp(){
   const W=[];
-  if(!renfList().filter(x=>x!==NO_NEED).length)W.push(["am","<b>Aucune demande cochée.</b> Le message complémentaire sert à demander un renfort : écran 1 · Arrivée, « Je demande »."]);
+  if(!compList().length)W.push(["am","<b>Aucune demande cochée.</b> Choisir ci-dessus ce que vous demandez en plus."]);
   if(!raw("commune"))W.push(["am","Commune manquante."]);
-  const dem=renfList().map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
+  const dem=compList().map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
   if(dbl.length)W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
   if(!W.length)W.push(["ok","<b>Message cohérent.</b>"]);
   $("#wC").innerHTML=W.map(([c,t])=>'<div class="w '+c+'"><span>'+t+'</span></div>').join("");
@@ -2746,9 +2803,9 @@ function analyseEcrit(){
   }
   {const dem=a.map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
     if(dbl.length&&S.msg!=="cr")W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
-    if(S.msg==="cr"&&a.some(x=>x!==NO_NEED))W.push(["am","Des renforts sont encore cochés dans « Je demande » : s'ils sont arrivés, appuyer sur « Les renforts demandés sont arrivés » (écran 3 · Fin) pour les dire sur les lieux."]);
-    if(S.msg==="cr"&&S.type!=="ROUTIER"&&S.sapX.some(b=>(b.gravite==="UA"||b.gravite==="UR")&&!(b.vecteur||"").trim()&&!(b.ch||"").trim()))
-      W.push(["am","Transport non renseigné pour une autre victime UA ou UR : écran 3 · Fin."]);
+    if(S.msg==="cr"&&toutesDemandes().length)W.push(["am","Des renforts sont encore cochés dans « Je demande » : s'ils sont arrivés, appuyer sur « Les renforts demandés sont arrivés » (écran 3 · Fin) pour les dire sur les lieux."]);
+    if(S.msg==="cr"&&S.type!=="ROUTIER"&&S.sapX.some(b=>!(b.vecteur||"").trim()&&!(b.ch||"").trim()&&!(b.devenir||"").trim()))
+      W.push(["am","Devenir non renseigné pour un groupe d'autres victimes (transport, ou ce qu'elles deviennent) : écran 3 · Fin."]);
     if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);
     if(S.msg==="cr"&&S.type!=="ROUTIER"&&devenirP()==="lsp"&&(acrConstate()||multi("actFin").includes(SANS_REA)))
       W.push(["rd","<b>ACR et victime « laissée sur place ».</b> S'il s'agit d'un décès, choisir « Décédée » dans le devenir : le compte rendu annoncera le décès, le certificat et à qui le corps est laissé."]);}
@@ -2908,7 +2965,8 @@ function rendre(){
   const ghc=$("#ghC");if(document.activeElement!==ghc)ghc.value=raw("gh");
   $("#ghCBox").hidden=S.msg!=="cr";
   $("#compBox").hidden=S.msg!=="comp";
-  const aDem=renfList().some(x=>x!==NO_NEED);
+  if(S.msg==="comp")renderComp();
+  const aDem=toutesDemandes().length>0;
   $$(".renfArr").forEach(b=>b.hidden=!aDem);$(".renfArrBox").hidden=!aDem;
   $("#trXBox").hidden=rt||!S.sapX.length;
   $("#ghHint").textContent=ghTxt()?"Compte rendu daté de "+ghTxt()+", à la radio comme à l'écrit.":"Sans les deux-points : 830 pour 8 h 30, 1415 pour 14 h 15. Annoncé dans le compte rendu radio, placé en tête du compte rendu écrit.";
@@ -3200,6 +3258,14 @@ function evenements(){
   $("#ghNow").onclick=()=>{const n=new Date();$("#gh").value=ghFormat(n.getHours(),n.getMinutes());rendre();};
   $("#ghCNow").onclick=()=>$("#ghNow").click();
   $$(".renfArr").forEach(b=>b.onclick=renfortsArrives);
+  // Message complémentaire : ses propres puces, indépendantes de la demande initiale
+  $("#compRenf").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;
+    const r=b.dataset.c;S.comp=(S.comp||[]).includes(r)?S.comp.filter(x=>x!==r):(S.comp||[]).concat(r);rendre();});
+  // Le message est passé : sa demande rejoint les demandes déjà faites, la zone est prête pour la suivante
+  $("#compPasse").onclick=()=>{
+    if(!compList().length){toast("Aucune demande à enregistrer");return;}
+    S.demFaites=(S.demFaites||[]).concat(compList());S.comp=[];
+    $("#compDem").value="";$("#compLib").value="";rendre();toast("Demande enregistrée");};
   $("#trX").addEventListener("input",majXV);
   // Une case déjà remplie : le premier appui sélectionne tout (la saisie remplace), le second place le curseur
   const SAISIE='input[type=text],input[type=number],input:not([type])';

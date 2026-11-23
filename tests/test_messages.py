@@ -303,7 +303,7 @@ with sync_playwright() as pw:
     nature(page, "Chute")
     puce(page, "aggrav", "ACR")
     verifier("Radio — « une femme en ACR, de 63 ans », bilan humain limité à la catégorie", message(page, "ambiance", "radio").split("\n")[3],
-             "Nous sommes confrontés à une chute chez une femme en ACR, de 63 ans à son domicile ; bilan humain provisoire : 1 victime UA")
+             "Nous sommes confrontés à une chute, à domicile. La victime est une femme en ACR, de 63 ans ; bilan humain provisoire : 1 victime UA")
     verifier("Aucune erreur JavaScript (cas n° 2)", json.dumps(err), "[]")
     page.close()
 
@@ -326,28 +326,39 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac\n"
              "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
-             "Nous sommes confrontés à une suspicion intoxication co chez un homme de 54 ans à son domicile, somnolent ; bilan humain provisoire : 1 victime UA, 2 victimes UR\n"
+             "Nous sommes confrontés à une suspicion intoxication co, à domicile. La victime principale est un homme de 54 ans, somnolent ; bilan humain provisoire : 1 victime UA, 2 victimes UR\n"
              "En cours de bilan")
     verifier("Cas n° 3 — ambiance écrite", message(page, "ambiance"),
              "Opération de secours sur la commune de CHATEAUBERNARD.\n"
-             "Secours à une victime malade de sexe masculin, UA, âgée de 54 ans, à son domicile, présentant une suspicion intoxication co, somnolente, bilan et régulation en cours.\n"
+             "Secours à une victime de sexe masculin, UA, âgée de 54 ans, à son domicile, présentant une suspicion intoxication co, somnolente, bilan et régulation en cours.\n"
              "Bilan humain provisoire : 1 victime UA, 2 victimes UR.\n"
              "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire.")
     # une demande après l'ambiance : message complémentaire
     vue(page, "codis")
     page.locator("#msgSeg button[data-m=comp]").click()
+    verifier("Message complémentaire — rappel de ce qui est déjà demandé", page.locator("#compDeja").inner_text(),
+             "Déjà demandé : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire. Inutile de le recocher.")
+    page.locator("#compRenf .chip", has_text="Forces de l'ordre").first.click()
+    page.locator("#compRenf .chip", has_text="VSAV supplémentaire").first.click()
     page.fill("#compLib", "aggravation du père")
-    verifier("Cas n° 3 — message complémentaire radio", message(page, "comp", "radio"),
+    verifier("Cas n° 3 — message complémentaire radio : seulement la nouvelle demande", message(page, "comp", "radio"),
              "CODIS 16 de VSAV 1 Cognac — message complémentaire\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
-             "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire\n"
+             "Je demande : Forces de l'ordre et VSAV supplémentaire\n"
              "Bilan humain provisoire : 1 victime UA, 2 victimes UR\n"
              "Aggravation du père")
     verifier("Cas n° 3 — message complémentaire écrit", message(page, "comp"),
              "Message complémentaire — Opération de secours sur la commune de CHATEAUBERNARD.\n"
-             "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire.\n"
+             "Je demande : Forces de l'ordre et VSAV supplémentaire.\n"
              "Bilan humain provisoire : 1 victime UA, 2 victimes UR.\n"
              "Aggravation du père.")
+    verifier("Message complémentaire — la demande initiale n'est pas modifiée",
+             message(page, "ambiance", "radio").split("\n")[1], "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire")
+    page.locator("#msgSeg button[data-m=comp]").click()
+    page.locator("#compPasse").click()
+    verifier("Message complémentaire — « message passé » : demande enregistrée, zone prête pour la suivante",
+             json.dumps(page.evaluate("[S.comp,S.demFaites,raw('compLib')]"), ensure_ascii=False),
+             '[[], ["Forces de l\'ordre", "VSAV supplémentaire"], ""]')
     # compte rendu : les renforts sont arrivés, chaque groupe a son transport
     message(page, "cr", "radio")
     verifier("Compte rendu — renforts encore cochés : le programme propose de les dire sur les lieux",
@@ -357,7 +368,7 @@ with sync_playwright() as pw:
     page.locator(".renfArrBox .renfArr").click()
     verifier("Renforts arrivés — passés dans « Sur les lieux », demande remise à zéro",
              json.dumps(page.evaluate("[multi('surlieux'),raw('surlieuxLib'),S.renf.SAP]"), ensure_ascii=False),
-             '[["SMUR", "chef de groupe", "GRDF"], "VSAV supplémentaire", ["secours suffisants"]]')
+             '[["SMUR", "forces de l\'ordre", "chef de groupe", "GRDF"], "2 VSAV supplémentaires", ["secours suffisants"]]')
     ecran(page, "arr")
     page.fill("#surlieuxLib", "VSAV de Jarnac")
     ecran(page, "fin")
@@ -371,16 +382,16 @@ with sync_playwright() as pw:
     page.locator("#trX input[data-xk=ch]").fill("CH Cognac")
     verifier("Cas n° 3 — compte rendu écrit", message(page, "cr"),
              "GH 1310 — Opération de secours sur la commune de CHATEAUBERNARD, à l'adresse indiquée.\n"
-             "À notre arrivée, nous sommes confrontés à une victime malade de sexe masculin, UA, âgée de 54 ans, à son domicile, présentant une suspicion intoxication co, somnolente.\n"
+             "À notre arrivée, nous sommes confrontés à une victime de sexe masculin, UA, âgée de 54 ans, à son domicile, présentant une suspicion intoxication co, somnolente.\n"
              "Bilan humain définitif : 1 victime UA, 2 victimes UR.\n"
-             "Sur les lieux : SMUR, chef de groupe, GRDF et VSAV de Jarnac.\n"
+             "Sur les lieux : SMUR, forces de l'ordre, chef de groupe, GRDF et VSAV de Jarnac.\n"
              "La régulation CRRA 15 a été effectuée et la victime UA est transportée par SMUR sur CH Angoulême. 2 victimes UR sont transportées par VSAV de Jarnac sur CH Cognac.\n"
              "Fin d'intervention pour les moyens sapeurs-pompiers.")
     verifier("Cas n° 3 — compte rendu radio : plus de demande, on dit qui était là", message(page, "cr", "radio"),
              "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1310\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
-             "Nous sommes confrontés à une suspicion intoxication co chez un homme de 54 ans à son domicile, somnolent ; bilan humain définitif : 1 victime UA, 2 victimes UR\n"
-             "Sur les lieux : SMUR, chef de groupe, GRDF et VSAV de Jarnac\n"
+             "Nous sommes confrontés à une suspicion intoxication co, à domicile. La victime principale est un homme de 54 ans, somnolent ; bilan humain définitif : 1 victime UA, 2 victimes UR\n"
+             "Sur les lieux : SMUR, forces de l'ordre, chef de groupe, GRDF et VSAV de Jarnac\n"
              "Après régulation CRRA 15, la victime UA est transportée par SMUR sur CH Angoulême\n"
              "2 victimes UR sont transportées par VSAV de Jarnac sur CH Cognac\n"
              "Fin d'intervention pour les moyens sapeurs-pompiers")
@@ -392,6 +403,84 @@ with sync_playwright() as pw:
              json.dumps(page.evaluate("[S.sapX[0].vecteur,S.sapX[0].ch,document.querySelector('#trX input[data-xk=vecteur]').value]")),
              '["VSAV de Jarnac", "CH Cognac", "VSAV de Jarnac"]')
     verifier("Aucune erreur JavaScript (cas n° 3)", json.dumps(err), "[]")
+    page.close()
+
+    # Cas n° 4 du 23/11 : événement, plusieurs victimes, complément de demande, compte rendu
+    page, err = ouvrir(nav, NOUVEAU)
+    nature(page, "Préciser")
+    page.fill("#natlib", "effondrement d'une estrade à la salle des fêtes")
+    victime(page, 38, "Femme")
+    page.locator("#etat .chip[data-v=UA]").click()
+    page.locator("#addxv").click()
+    page.locator("#addxv").click()
+    page.locator("#xv input[data-xk=nb]").nth(0).fill("2")
+    page.locator("#xv input[data-xk=nb]").nth(1).fill("3")
+    page.locator("#xv select[data-xk=gravite]").nth(1).select_option("IMP")
+    page.fill("#commune", "Cherves Richemont")
+    puce(page, "ctxlieu", "ERP")
+    puce(page, "aggrav", "Inconsciente")
+    puce(page, "surlieux", "Police municipale")
+    for r in ("SMUR", "Chef de Groupe", "VSAV supplémentaire"):
+        page.evaluate("r=>document.querySelector('#renf .chip[data-r=\"'+r+'\"]').click()", r)
+    puce(page, "actS", "Poursuivons reconnaissance")
+    verifier("Cas n° 4 — ambiance radio : l'événement et son lieu, puis la victime", message(page, "ambiance", "radio"),
+             "CODIS 16 de VSAV 1 Cognac\n"
+             "Je demande : SMUR, Chef de Groupe et VSAV supplémentaire\n"
+             "Opération de secours sur la commune de Cherves Richemont à l'adresse indiquée\n"
+             "Nous sommes confrontés à un effondrement d'une estrade à la salle des fêtes, dans un établissement recevant du public. La victime principale est une femme de 38 ans, inconsciente ; bilan humain provisoire : 1 victime UA, 2 victimes UR, 3 victimes impliquées\n"
+             "Sur les lieux : police municipale\n"
+             "Poursuivons reconnaissance, en cours de bilan")
+    verifier("Cas n° 4 — ambiance écrite, même cohérence", message(page, "ambiance"),
+             "Opération de secours sur la commune de CHERVES RICHEMONT.\n"
+             "Secours à une victime de sexe féminin, UA, âgée de 38 ans, dans un établissement recevant du public, à la suite d'un effondrement d'une estrade à la salle des fêtes, inconsciente, reconnaissance en cours, bilan et régulation en cours.\n"
+             "Bilan humain provisoire : 1 victime UA, 2 victimes UR, 3 victimes impliquées.\n"
+             "Sur les lieux : police municipale.\n"
+             "Je demande : SMUR, Chef de Groupe et VSAV supplémentaire.")
+    # temps 2 : une victime de plus, demande complémentaire
+    vue(page, "saisie")
+    page.locator("#xv input[data-xk=nb]").nth(0).fill("3")
+    vue(page, "codis")
+    page.locator("#msgSeg button[data-m=comp]").click()
+    page.locator("#compRenf .chip", has_text="Forces de l'ordre").first.click()
+    page.locator("#compRenf .chip", has_text="VSAV supplémentaire").first.click()
+    page.fill("#compLib", "Après dégagement de l'estrade, avons découvert une troisième victime, UR")
+    verifier("Cas n° 4 — message complémentaire radio", message(page, "comp", "radio"),
+             "CODIS 16 de VSAV 1 Cognac — message complémentaire\n"
+             "Opération de secours sur la commune de Cherves Richemont à l'adresse indiquée\n"
+             "Je demande : Forces de l'ordre et VSAV supplémentaire\n"
+             "Bilan humain provisoire : 1 victime UA, 3 victimes UR, 3 victimes impliquées\n"
+             "Après dégagement de l'estrade, avons découvert une troisième victime, UR")
+    page.locator("#compPasse").click()
+    # temps 3 : tout le monde est arrivé, chacun a son devenir
+    vue(page, "saisie")
+    ecran(page, "fin")
+    page.locator(".renfArrBox .renfArr").click()
+    page.fill("#gh", "1545")
+    puce(page, "finInter", "Intervention terminée")
+    puce(page, "actFin", "Régulation CRRA 15")
+    puce(page, "devenir", "Transportée")
+    page.fill("#vect", "SMUR")
+    page.fill("#dest", "Urgences CH Angoulême")
+    page.locator("#trX input[data-xk=vecteur]").nth(0).fill("VSAV Cognac, Jarnac et Segonzac")
+    page.locator("#trX input[data-xk=ch]").nth(0).fill("Urgences CH Cognac")
+    page.locator("#trX input[data-xk=devenir]").nth(1).fill("Restent sur place, prises en charge par l'association.")
+    verifier("Cas n° 4 — compte rendu radio", message(page, "cr", "radio"),
+             "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1545\n"
+             "Opération de secours sur la commune de Cherves Richemont à l'adresse indiquée\n"
+             "Nous sommes confrontés à un effondrement d'une estrade à la salle des fêtes, dans un établissement recevant du public. La victime principale est une femme de 38 ans, inconsciente ; bilan humain définitif : 1 victime UA, 3 victimes UR, 3 victimes impliquées\n"
+             "Sur les lieux : SMUR, forces de l'ordre, chef de groupe, police municipale et 2 VSAV supplémentaires\n"
+             "Après régulation CRRA 15, la victime UA est transportée par SMUR sur Urgences CH Angoulême\n"
+             "3 victimes UR sont transportées par VSAV Cognac, Jarnac et Segonzac sur Urgences CH Cognac\n"
+             "3 victimes impliquées restent sur place, prises en charge par l'association\n"
+             "Fin d'intervention pour les moyens sapeurs-pompiers")
+    verifier("Cas n° 4 — compte rendu écrit, même cohérence", message(page, "cr"),
+             "GH 1545 — Opération de secours sur la commune de CHERVES RICHEMONT, à l'adresse indiquée.\n"
+             "À notre arrivée, nous sommes confrontés à une victime de sexe féminin, UA, âgée de 38 ans, dans un établissement recevant du public, à la suite d'un effondrement d'une estrade à la salle des fêtes, inconsciente.\n"
+             "Bilan humain définitif : 1 victime UA, 3 victimes UR, 3 victimes impliquées.\n"
+             "Sur les lieux : SMUR, forces de l'ordre, chef de groupe, police municipale et 2 VSAV supplémentaires.\n"
+             "La régulation CRRA 15 a été effectuée et la victime UA est transportée par SMUR sur Urgences CH Angoulême. 3 victimes UR sont transportées par VSAV Cognac, Jarnac et Segonzac sur Urgences CH Cognac. 3 victimes impliquées restent sur place, prises en charge par l'association.\n"
+             "Fin d'intervention pour les moyens sapeurs-pompiers.")
+    verifier("Aucune erreur JavaScript (cas n° 4)", json.dumps(err), "[]")
     page.close()
 
     # ───── 3. Formulations du motif ─────
@@ -420,7 +509,7 @@ with sync_playwright() as pw:
     puce(page, "aggrav", "Inconsciente")
     puce(page, "aggrav", "Relevage difficile")
     verifier("Motif libre, contexte et constats", message(page, "ambiance").split("\n")[1],
-             "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
+             "Secours à une victime de sexe masculin, UR, âgée de 82 ans, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
     # Nourrisson, autre victime
     vue(page, "saisie")
     page.fill("#age", "8")
@@ -430,7 +519,7 @@ with sync_playwright() as pw:
     page.locator("#xv input[data-xk=nb]").nth(1).fill("2")
     page.locator("#xv select[data-xk=gravite]").nth(1).select_option("IMP")
     amb = message(page, "ambiance").split("\n")
-    verifier("Nourrisson", amb[1], "Secours à une victime malade de sexe masculin, UR, âgée de 8 mois, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
+    verifier("Nourrisson", amb[1], "Secours à une victime de sexe masculin, UR, âgée de 8 mois, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
     verifier("Plusieurs victimes — bilan humain récapitulé et regroupé", amb[2], "Bilan humain provisoire : 2 victimes UR, 2 victimes impliquées.")
     verifier("Autres victimes — bouton sous la victime, hors rubrique repliée",
              str(page.evaluate("!document.getElementById('addxv').closest('details') && document.getElementById('age').closest('.sec').contains(document.getElementById('addxv'))")), "True")
@@ -744,12 +833,12 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac\n"
              "Je demande : SMUR\n"
              "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
-             "Nous sommes confrontés à une douleur thoracique chez une femme en ACR, de 26 ans à son domicile, relevage difficile ; bilan humain provisoire : 1 victime UR, 1 victime\n"
+             "Nous sommes confrontés à une douleur thoracique, à domicile, relevage difficile. La victime principale est une femme en ACR, de 26 ans ; bilan humain provisoire : 1 victime UR, 1 victime\n"
              "En cours de bilan, procédons à la RCP, protection thermique de la victime")
     verifier("Radio — compte rendu SAP : le devenir remplace l'action en cours", r2["_cr_sap"],
              "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
              "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
-             "Nous sommes confrontés à une douleur thoracique chez une femme en ACR, de 26 ans à son domicile, relevage difficile ; bilan humain définitif : 1 victime UR, 1 victime\n"
+             "Nous sommes confrontés à une douleur thoracique, à domicile, relevage difficile. La victime principale est une femme en ACR, de 26 ans ; bilan humain définitif : 1 victime UR, 1 victime\n"
              "La victime UR est transportée par VSAV sur CH Cognac")
     verifier("Aucune erreur JavaScript (scénario 6)", json.dumps(e1 + e2), "[]")
 
