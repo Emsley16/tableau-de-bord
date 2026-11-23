@@ -145,7 +145,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
   border-radius:8px;padding:11px;font-size:13.5px;cursor:pointer}
 
 /* victimes supplémentaires CODIS */
-.xl{display:grid;grid-template-columns:84px 1fr 40px;gap:6px;align-items:center;margin-top:8px}
+.xl{display:grid;grid-template-columns:64px 1fr 1fr 40px;gap:6px;align-items:center;margin-top:8px}
 .xdel{min-height:42px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:1.1rem;cursor:pointer}
 .rc{border:1px solid var(--border);border-radius:9px;padding:10px;margin-top:9px;background:var(--s2)}
 .rc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:10.5px;
@@ -342,7 +342,9 @@ body:not(.essai){padding-bottom:28px}
 body:not(.essai) #phSeg,body:not(.essai) #msgSeg,body:not(.essai) .nav,body:not(.essai) #goSamu,body:not(.essai) .dock .tabs{display:none!important}
 body:not(.essai):not(.e-samu) .dock{display:none!important}
 body:not(.essai) #v-codis.on{border-top:2px solid var(--blu);background:var(--surface);margin-top:10px;padding-bottom:20px}
-body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body.essai #aHome,body.essai #passeV2,body.essai #passeS{display:none!important}
+#copJ{margin:0 0 12px}
+#compVict{margin-top:12px}
+body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body.essai #aHome,body.essai #passeV2,body.essai #passeS{display:none!important}
 </style>
 </head>
 <body>
@@ -362,6 +364,7 @@ body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body.essai #aHome,bod
   <button class="carte" data-e="comp"><span class="cn">2</span><span class="ct"><b>Complément</b><em>Une demande en plus, après l'ambiance</em></span><span class="ce"></span></button>
   <button class="carte" data-e="samu"><span class="cn">3</span><span class="ct"><b>Bilan SAMU</b><em>L'annonce au médecin régulateur</em></span><span class="ce"></span></button>
   <button class="carte" data-e="cr"><span class="cn">4</span><span class="ct"><b>Compte rendu</b><em>Ce qui s'est passé, qui était là</em></span><span class="ce"></span></button>
+  <button class="btn2" id="copJ" hidden></button>
   <div class="acc-outils"><button data-e="glo">Lexique</button><button data-e="reglages">Réglages et historique</button></div>
 </div>
 
@@ -824,6 +827,8 @@ body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body.essai #aHome,bod
     <div id="compRenf"></div>
     <input type="text" id="compDem" placeholder="Autre demande" style="margin-top:8px">
     <input type="text" id="compLib" placeholder="Motif, si utile : aggravation, victime découverte…" style="margin-top:8px">
+    <div class="olbl" style="margin-top:12px"><span>Bilan humain du moment</span></div>
+    <div id="compVict"></div>
     <span class="mini" id="compDeja"></span>
     <button class="btn2" id="compPasse">Message passé : préparer une autre demande</button>
   </div>
@@ -887,7 +892,7 @@ body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body.essai #aHome,bod
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23h";
+const VERSION="2026.11.23i";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2109,7 +2114,7 @@ $("#phgo").onclick=async()=>{
 function etatInitial(){
   return{type:"SAP",msg:"ambiance",sup:"radio",
     renf:{SAP:[NO_NEED],ROUTIER:ENGIN_DEFAULTS.VSAV.renfort.slice()},
-    sapX:[],rX:[],comp:[],demFaites:[],passe:{},acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
+    sapX:[],rX:[],comp:[],demFaites:[],passe:{},journal:[],acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
 }
 let S=etatInitial();
 
@@ -2213,6 +2218,7 @@ function renderXV(){
     $("#xv").innerHTML=S.sapX.map((b,i)=>
       '<div class="xl"><input type="number" min="1" inputmode="numeric" value="'+esc(b.nb)+'" data-xi="'+i+'" data-xk="nb" aria-label="Nombre">'+
       '<select data-xi="'+i+'" data-xk="gravite" aria-label="Catégorie">'+gopt(b.gravite)+'</select>'+
+      '<select data-xi="'+i+'" data-xk="sexe" aria-label="Sexe">'+[["","Sexe"],["masculin","Homme"],["féminin","Femme"]].map(g=>'<option value="'+g[0]+'"'+(g[0]===(b.sexe||"")?" selected":"")+'>'+g[1]+'</option>').join("")+'</select>'+
       '<button class="xdel" data-xd="'+i+'" aria-label="Supprimer">×</button></div>').join("");
     renderTrX();
   } else {
@@ -2641,15 +2647,22 @@ function devenirCorps(){
   return pt(non?"La famille "+refus:"[à qui le corps est laissé]");
 }
 // Plusieurs victimes : la victime principale est désignée par sa catégorie (« la victime UA »)
+function parSexe(){return S.sapX.some(b=>b.sexe&&Math.max(1,parseInt(b.nb)||1)===1);}
 function victimeP(){
-  const et=one("etat");
+  const et=one("etat"),sx=raw("sexe");
+  if(parSexe()&&sx)return"la victime de sexe "+(sx==="Femme"?"féminin":"masculin")+(et==="UA"||et==="UR"?", "+et+",":"");
   return"la victime"+(S.sapX.length&&(et==="UA"||et==="UR")?" "+et:"");
+}
+function quiGroupe(b){
+  const n=Math.max(1,parseInt(b.nb)||1);
+  if(n===1&&b.sexe)return"La victime de sexe "+b.sexe+(b.gravite==="IMP"?", impliquée,":b.gravite==="DCD"?", décédée,":b.gravite?", "+b.gravite+",":"");
+  return cap(libelleGroupe(b).replace(/^1 /,"une "));
 }
 // « 2 victimes UR sont transportées par le VSAV de Jarnac sur le CH de Cognac »
 function transportsAutres(){
   return S.sapX.map(b=>{
     const v=(b.vecteur||"").trim(),c=(b.ch||"").trim(),d=(b.devenir||"").trim().replace(/[.\s]+$/,"");
-    const qui=cap(libelleGroupe(b).replace(/^1 /,"une ")),pl=Math.max(1,parseInt(b.nb)||1)>1;
+    const qui=quiGroupe(b),pl=Math.max(1,parseInt(b.nb)||1)>1;
     if(v||c)return qui+(pl?" sont transportées":" est transportée")+(v?" par "+v:"")+(c?" sur "+c:"");
     return d?qui+" "+lc(d):"";
   }).filter(Boolean);
@@ -2912,7 +2925,6 @@ function syncGq(){
   $$("#gq button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.g===k)));
 }
 function defauts(){
-  const a=$("#adrind .chip");a.setAttribute("aria-pressed","true");a.classList.add("def");
   if(S.type==="SAP"){const b=$("#actS .chip[data-v='"+ACT_BILAN+"']");if(b){b.setAttribute("aria-pressed","true");b.classList.add("def");}}
 }
 // Avance automatique entre les constantes
@@ -3135,13 +3147,18 @@ function archiver(){
   const a=bAnnonce(),c=$("#out").value;
   if(!titrePropre()&&!val("age")&&!raw("adresse")&&!val("fc")&&!val("spo2"))return false;
   const h=lireHist();
-  h.unshift({t:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),c,a});
+  h.unshift({t:new Date().toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),c,a,j:(S.journal||[]).slice()});
   ecrireHist(h);return true;
 }
 function afficherHist(){
   const h=lireHist();
   $("#hist").innerHTML=h.length
-    ? h.map((x,i)=>'<div class="hi"><span>'+esc(x.t)+'</span><div>'+esc(x.c||"—")+'</div>'+
+    ? h.map((x,i)=>(x.j&&x.j.length)
+        // intervention archivée avec son journal : tous les messages passés, dans l'ordre, chacun avec son heure
+        ? '<div class="hi"><span>Intervention archivée le '+esc(x.t)+' · '+x.j.length+' message'+(x.j.length>1?'s':'')+' passé'+(x.j.length>1?'s':'')+'</span>'+
+          x.j.map(m=>'<div class="hp"><b>'+esc(m.l)+' · '+esc(m.h)+'</b>\n'+esc(m.t)+'</div>').join("")+
+          '<button class="btn2" data-hj="'+i+'">Copier tous les messages</button></div>'
+        : '<div class="hi"><span>'+esc(x.t)+' · message à l\'écran au moment de l\'archivage</span><div>'+esc(x.c||"—")+'</div>'+
         (x.a?'<div class="hp">'+esc(x.a)+'</div>':'')+
         '<div class="g2"><button class="btn2" data-hc="'+i+'">Copier CODIS</button><button class="btn2" data-hs="'+i+'">Copier SAMU</button></div></div>').join("")
     : '<div class="hi vide">Aucune intervention archivée.</div>';
@@ -3349,7 +3366,8 @@ function evenements(){
   $("#hist").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
     const h=lireHist();
     if(b.dataset.hc!==undefined)copier((h[+b.dataset.hc]||{}).c,"Message CODIS copié");
-    if(b.dataset.hs!==undefined)copier((h[+b.dataset.hs]||{}).a,"Annonce SAMU copiée");});
+    if(b.dataset.hs!==undefined)copier((h[+b.dataset.hs]||{}).a,"Annonce SAMU copiée");
+    if(b.dataset.hj!==undefined)copier(journalTxt((h[+b.dataset.hj]||{}).j),"Messages copiés");});
   deuxAppuis($("#histvider"),()=>{store.del(CLEH);afficherHist();toast("Historique vidé");});
   deuxAppuis($("#tout"),()=>{store.del(CLE);store.del(CLEH);location.reload();});
   if(/claude\.ai|claudeusercontent/.test(location.hostname))$("#imprimer").hidden=true;
@@ -3390,11 +3408,26 @@ function ecranV2(n){
   document.body.classList.toggle("e-samu",!!(e&&e.samu));
   document.body.classList.toggle("e-ecran",!!e);
   $("#passeV2").hidden=!(e&&e.codis&&e.msg!=="comp");
+  placerVictimes(!!(e&&e.msg==="comp"));
   if(e&&e.msg){applyMsg(e.msg);rendre();}
   if(e&&e.codis)ajusterOut();
   majAccueil();
   window.scrollTo(0,0);
 }
+// Catégorie de la victime et autres victimes : dans l'ambiance d'ordinaire, dans le complément le temps d'un complément
+function placerVictimes(dansComp){
+  const cat=$("#etat").closest(".f"), autres=$("#addxv").closest(".f");
+  if(dansComp){$("#compVict").appendChild(cat);$("#compVict").appendChild(autres);}
+  else{const etatVic=$("#aggrav").closest(".f"), lieu=$("#commune").closest(".f");
+    etatVic.parentNode.insertBefore(cat,etatVic);lieu.parentNode.insertBefore(autres,lieu);}
+}
+// Journal : chaque message noté comme passé est gardé tel qu'il a été passé, avec son heure
+function noter(libelle,texte){
+  if(!S.journal)S.journal=[];
+  S.journal.push({l:libelle,h:new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),t:texte||""});
+}
+function journalTxt(j){return(j||[]).map(m=>m.l+" · "+m.h+"\n"+m.t).join("\n\n");}
+function supTxt(){return S.sup==="ecrit"?"écrit":"radio";}
 function majAccueil(){
   const p=S.passe||{}, n=p.comp||0;
   const etats={ambiance:p.ambiance?"Passé":"À faire",comp:n?(n+(n>1?" passés":" passé")):"Si besoin",samu:p.samu?"Passé":"À faire",cr:p.cr?"Passé":"À faire"};
@@ -3403,9 +3436,13 @@ function majAccueil(){
     c.querySelector(".ce").textContent=etats[k];
     c.classList.toggle("fait",k==="comp"?n>0:!!p[k]);
     c.classList.toggle("actif",k===suivant);});
+  const nj=(S.journal||[]).length;
+  $("#copJ").hidden=!nj;$("#copJ").textContent=nj>1?"Copier les "+nj+" messages passés":"Copier le message passé";
 }
 function passer(k){
   if(!S.passe)S.passe={};
+  if(k==="samu")noter("Bilan SAMU",bAnnonce());
+  else noter((k==="cr"?"Compte rendu":"Ambiance")+" · "+supTxt(),$("#out").value);
   S.passe[k]=true;sauver();ecranV2("accueil");toast(k==="samu"?"Bilan noté comme passé":"Message noté comme passé");
 }
 function initV2(){
@@ -3421,9 +3458,13 @@ function initV2(){
   $("#passeV2").onclick=()=>passer(S.msg==="cr"?"cr":"ambiance");
   $("#passeS").onclick=()=>passer("samu");
   // Un complément passé se compte : la liste des demandes déjà faites s'allonge
-  let avant=0;
-  $("#compPasse").addEventListener("click",()=>{avant=S.demFaites.length;},true);
-  $("#compPasse").addEventListener("click",()=>{if(S.demFaites.length>avant){if(!S.passe)S.passe={};S.passe.comp=(S.passe.comp||0)+1;sauver();majAccueil();}});
+  let avant=0, texteComp="";
+  $("#compPasse").addEventListener("click",()=>{avant=S.demFaites.length;texteComp=$("#out").value;},true);
+  $("#compPasse").addEventListener("click",()=>{if(S.demFaites.length>avant){if(!S.passe)S.passe={};S.passe.comp=(S.passe.comp||0)+1;
+    noter("Complément n° "+S.passe.comp+" · "+supTxt(),texteComp);sauver();majAccueil();}});
+  $("#copJ").onclick=()=>copier(journalTxt(S.journal),"Messages copiés");
+  // L'avertissement « saisie d'une intervention précédente » doit se voir dès l'accueil
+  $("#v-accueil").insertBefore($("#bnPrev"),$("#accTop"));
   ecranV2("accueil");
 }
 // Mode d'essai : rend la navigation d'origine pour faire tourner les tests du moteur sur ce fichier

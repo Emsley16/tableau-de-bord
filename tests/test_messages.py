@@ -30,6 +30,13 @@ def verifier(nom, obtenu, attendu):
         print("  obtenu  :\n    " + obtenu.replace("\n", "\n    "))
 
 
+def adresse_du_depart(page):
+    """Depuis le 23/11 (version i), « adresse indiquée au départ » n'est plus cochée d'office.
+    Les scénarios ont été écrits pour une victime à l'adresse du départ : ils la cochent à l'ouverture
+    et après une remise à zéro. Sans effet sur la référence, où la case est déjà cochée."""
+    page.evaluate("(()=>{const c=document.querySelector('#adrind .chip');if(c&&c.getAttribute('aria-pressed')!=='true')c.click();})()")
+
+
 def ouvrir(nav, url):
     # un contexte neuf par scénario : stockage local vierge, comme une première ouverture
     ctx = nav.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
@@ -41,6 +48,7 @@ def ouvrir(nav, url):
     page.goto(url)
     page.wait_for_selector("#ngrid button", state="attached")
     page.evaluate("typeof modeEssai==='function'&&modeEssai()")
+    adresse_du_depart(page)
     return page, erreurs
 
 
@@ -411,6 +419,33 @@ with sync_playwright() as pw:
     verifier("Aucune erreur JavaScript (cas n° 3)", json.dumps(err), "[]")
     page.close()
 
+    # Cas n° 5 du 23/11 : deux victimes de même catégorie, chacune vers un hôpital différent
+    page, err = ouvrir(nav, NOUVEAU)
+    nature(page, "Chute")
+    victime(page, 58, "Homme")
+    page.fill("#commune", "Merpins")
+    page.locator("#etat .chip[data-v=UR]").click()
+    page.locator("#addxv").click()
+    page.locator("#xv select[data-xk=sexe]").select_option("féminin")
+    ecran(page, "fin")
+    page.fill("#vect", "SMUR")
+    page.fill("#dest", "CH Angoulême")
+    page.locator("#trX input[data-xk=vecteur]").fill("VSAV 2")
+    page.locator("#trX input[data-xk=ch]").fill("CH Cognac")
+    puce(page, "finInter", "Intervention terminée")
+    page.fill("#gh", "1510")
+    cr = message(page, "cr", "radio").split("\n")
+    verifier("Cas n° 5 — compte rendu radio : chaque victime désignée par son sexe", "\n".join(cr[-3:]),
+             "La victime de sexe masculin, UR, est transportée par SMUR sur CH Angoulême\n"
+             "La victime de sexe féminin, UR, est transportée par VSAV 2 sur CH Cognac\n"
+             "Fin d'intervention pour les moyens sapeurs-pompiers")
+    cr = message(page, "cr").split("\n")
+    verifier("Cas n° 5 — compte rendu écrit : même précision", cr[-2],
+             "La victime de sexe masculin, UR, est transportée par SMUR sur CH Angoulême. La victime de sexe féminin, UR, est transportée par VSAV 2 sur CH Cognac.")
+    verifier("Cas n° 5 — bilan humain inchangé : deux victimes UR", [l for l in cr if l.startswith("Bilan humain")][0], "Bilan humain définitif : 2 victimes UR.")
+    verifier("Aucune erreur JavaScript (cas n° 5)", json.dumps(err), "[]")
+    page.close()
+
     # Cas n° 4 du 23/11 : événement, plusieurs victimes, complément de demande, compte rendu
     page, err = ouvrir(nav, NOUVEAU)
     nature(page, "Préciser")
@@ -642,8 +677,10 @@ with sync_playwright() as pw:
     page.locator("#rst").click()
     page.locator("#rst").click()
     verifier("Nouvelle intervention — message remis à zéro", message(page, "ambiance"),
-             "Opération de secours sur la commune de CHÂTEAUBERNARD.\n"
+             "Opération de secours sur la commune de CHÂTEAUBERNARD, [adresse].\n"
              "Secours à une victime malade, bilan et régulation en cours.")
+    verifier("Nouvelle intervention — rien de coché pour l'adresse ni pour les services sur les lieux",
+             json.dumps(page.evaluate("[multi('adrind').length, multi('surlieux').length]")), "[0, 0]")
     verifier("SAP — constats : ACR et relevage difficile présents, incarcérée absente",
              json.dumps(page.evaluate("[...document.querySelectorAll('#aggrav .chip')].map(c=>c.textContent)"), ensure_ascii=False),
              '["Inconsciente", "ACR", "Détresse vitale", "Hémorragie active", "Accès difficile", "Relevage difficile"]')
@@ -783,6 +820,7 @@ with sync_playwright() as pw:
         vue(page, "saisie")
         page.locator("#rst").click()
         page.locator("#rst").click()
+        adresse_du_depart(page)
         page.locator("#typeSeg button[data-t=ROUTIER]").click()
         R["Routier vide"] = message(page, "ambiance", "radio")
         vue(page, "saisie")
