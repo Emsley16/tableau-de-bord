@@ -8,7 +8,7 @@ ANCIEN  : la version du 14/10/2026, gardée comme référence. À saisie égale,
           radio et l'annonce SAMU du programme doivent rester identiques à cette référence,
           sauf changement demandé par Anthony (mettre alors à jour le test concerné).
 """
-import sys, json
+import sys, json, re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -137,7 +137,7 @@ with sync_playwright() as pw:
 
     # Radio, même intervention : groupe horaire en tête, régulation et transport en dernière ligne
     verifier("Compte rendu radio — régulation puis transport", "\n".join(message(page, "cr", "radio").split("\n")[3:]),
-             "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans ; bilan humain définitif : 1 malade UR\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme, UR, de 26 ans ; bilan humain définitif : 1 malade UR\n"
              "Après régulation CRRA 15, la victime est transportée par VSAV médicalisé sur CH Cognac")
     verifier("Compte rendu radio — en-tête", message(page, "cr", "radio").split("\n")[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1415")
     vue(page, "saisie")
@@ -153,7 +153,18 @@ with sync_playwright() as pw:
     puce(page, "devenir", "Laissée sur place")
     page.fill("#devPrec", "Confiée à sa famille")
     verifier("Compte rendu SAP — laissée sur place", message(page, "cr").split("\n")[3],
+             "La régulation CRRA 15 a été effectuée et la victime est laissée sur place sur décision du médecin du SMUR de COGNAC, confiée à sa famille.")
+    vue(page, "saisie")
+    page.fill("#devPrec", "la victime est confié à la famille.")
+    verifier("Devenir — une précision commençant par « la victime est » ne crée pas de redite", message(page, "cr").split("\n")[3],
+             "La régulation CRRA 15 a été effectuée et la victime est laissée sur place sur décision du médecin du SMUR de COGNAC, confié à la famille.")
+    vue(page, "saisie")
+    puce(page, "medqui", "Médecin du SMUR")   # retire le médecin : la décision revient au régulateur
+    page.locator(".chip[data-fill=devPrec]", has_text="Confiée à la famille").click()
+    verifier("Devenir — sans médecin sur place, décision du médecin régulateur", message(page, "cr").split("\n")[3],
              "La régulation CRRA 15 a été effectuée et la victime est laissée sur place sur décision du médecin régulateur, confiée à sa famille.")
+    vue(page, "saisie")
+    puce(page, "medqui", "Médecin du SMUR")
     vue(page, "saisie")
     puce(page, "devenir", "Refus de transport")
     page.fill("#devPrec", "")
@@ -203,7 +214,7 @@ with sync_playwright() as pw:
     puce(page, "corps", "La famille")
     puce(page, "corps", "Les forces de l'ordre")
     puce(page, "corps", "L'élu sur les lieux")
-    puce(page, "dcdoc", "Obstacle médico-légal")
+    puce(page, "dcdoc", "Avec obstacle médico-légal")
     page.fill("#crLib", "RCP arrêtée sur décision du médecin du SMUR")
     lignes = message(page, "cr").split("\n")
     verifier("Compte rendu SAP — décès, OML, phrase libre", lignes[2],
@@ -244,6 +255,52 @@ with sync_playwright() as pw:
     page.locator("#renf .chip", has_text="SMUR").first.click()
     message(page, "ambiance", "radio")
     verifier("Services sur les lieux — alerte si le même service est demandé", str("à la fois demandé et déjà sur les lieux" in page.locator("#wC").inner_text()), "True")
+    page.close()
+
+    # Cas n° 2 du 23/11, compte rendu : ACR, RCP arrêtée par le SMUR, décès, corps laissé à la famille
+    page, err = ouvrir(nav, NOUVEAU)
+    page.locator("#ngrid button", has_text="ACR").first.click()
+    victime(page, 63, "Femme")
+    page.fill("#commune", "Gensac la pallue")
+    page.fill("#adresse", "7 rue des gascards")
+    puce(page, "ctxlieu", "Domicile")
+    puce(page, "surlieux", "SMUR")
+    ecran(page, "fin")
+    page.fill("#gh", "1205")
+    puce(page, "finInter", "Intervention terminée")
+    page.locator("#gestesChips .chip", has_text="RCP · famille").click()
+    puce(page, "medqui", "Médecin du SMUR")
+    puce(page, "actFin", "Aucune manœuvre de réanimation")
+    puce(page, "devenir", "Laissée sur place")
+    message(page, "cr")
+    verifier("Contrôle — ACR « laissée sur place » : le programme oriente vers « Décédée »", str("choisir « Décédée »" in page.locator("#wC").inner_text()), "True")
+    vue(page, "saisie")
+    puce(page, "devenir", "Décédée")
+    page.fill("#hdc", "11:52")
+    puce(page, "dcdoc", "RCP arrêtée sur décision du médecin")
+    puce(page, "dcdoc", "Certificat de décès établi")
+    puce(page, "dcdoc", "Sans obstacle médico-légal")
+    puce(page, "corps", "La famille")
+    puce(page, "eluNon", "La famille ne souhaite pas")
+    verifier("Cas n° 2 — compte rendu écrit d'un décès", message(page, "cr"),
+             "GH 1205 — Opération de secours sur la commune de GENSAC LA PALLUE, au 7 rue des gascards.\n"
+             "À notre arrivée, nous sommes confrontés à une victime de sexe féminin, âgée de 63 ans, à son domicile, en ACR. RCP en cours par la famille.\n"
+             "Sur les lieux : SMUR.\n"
+             "RCP arrêtée sur décision du médecin du SMUR de COGNAC, qui déclare la victime décédée (DCD) à 11h52. Certificat de décès établi sans obstacle médico-légal. Aucune manœuvre de réanimation engagée par les moyens sapeurs-pompiers.\n"
+             "Le corps est laissé à la responsabilité de la famille, qui ne souhaite pas le déplacement d'un élu.\n"
+             "Fin d'intervention pour les moyens sapeurs-pompiers.")
+    verifier("Cas n° 2 — compte rendu radio d'un décès", message(page, "cr", "radio"),
+             "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1205\n"
+             "Secours suffisants\n"
+             "Opération de secours sur la commune de Gensac la pallue à l'adresse indiquée\n"
+             "Nous sommes confrontés à un arrêt cardio-respiratoire chez une femme de 63 ans à son domicile ; bilan humain définitif : 1 décédé\n"
+             "Sur les lieux : SMUR\n"
+             "RCP arrêtée sur décision du médecin du SMUR de COGNAC, qui déclare la victime décédée (DCD) à 11h52. Certificat de décès établi sans obstacle médico-légal. Aucune manœuvre de réanimation engagée par les moyens sapeurs-pompiers.\n"
+             "Le corps est laissé à la responsabilité de la famille, qui ne souhaite pas le déplacement d'un élu.\n"
+             "Fin d'intervention pour les moyens sapeurs-pompiers")
+    verifier("Cas n° 2 — ambiance radio : UA après « femme »", message(page, "ambiance", "radio").split("\n")[3],
+             "Nous sommes confrontés à un arrêt cardio-respiratoire chez une femme, UA, de 63 ans à son domicile ; bilan humain provisoire : 1 victime en ACR UA")
+    verifier("Aucune erreur JavaScript (cas n° 2)", json.dumps(err), "[]")
     page.close()
 
     # ───── 3. Formulations du motif ─────
@@ -574,12 +631,14 @@ with sync_playwright() as pw:
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)
     for k in r1:
         if not k.startswith("_"):
-            verifier("Radio inchangée — " + k, r2[k], r1[k])
+            verifier("Radio inchangée (hors catégorie après le sexe) — " + k, re.sub(r", (UA|UR), de ", " de ", r2[k]), r1[k])
+    verifier("Radio — catégorie après le sexe", r2["SAP ambiance"].split("\n")[3],
+             "Nous sommes confrontés à une douleur thoracique chez une femme, UR, de 26 ans à son domicile, relevage difficile ; bilan humain provisoire : 1 malade UR")
     verifier("Radio — compte rendu SAP : le devenir remplace l'action en cours", r2["_cr_sap"],
              "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
              "Je demande : SMUR\n"
              "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
-             "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans à son domicile, relevage difficile ; bilan humain définitif : 1 victime en ACR UR, 1 victime indemne\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme, UR, de 26 ans à son domicile, relevage difficile ; bilan humain définitif : 1 victime en ACR UR, 1 victime indemne\n"
              "La victime est transportée par VSAV sur CH Cognac")
     print("\n  Exemple, message radio conservé :\n    " + r2["SAP ambiance"].replace("\n", "\n    "))
     verifier("Aucune erreur JavaScript (scénario 6)", json.dumps(e1 + e2), "[]")

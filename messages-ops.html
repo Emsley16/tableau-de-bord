@@ -724,8 +724,14 @@ details.sub[open]>summary::before{content:"－ "}
     <div class="chips" id="corps" data-multi></div>
     <div class="chips" id="eluNon" data-multi style="margin-top:6px"></div></div>
 
-  <div class="f" id="devPrecBox"><label for="devPrec">Précision sur le devenir</label>
-    <input type="text" id="devPrec" placeholder="confiée à sa famille, décharge signée…"></div>
+  <div class="f" id="devPrecBox"><label for="devPrec">Précision, à la suite de la phrase</label>
+    <div class="chips" style="margin-bottom:8px">
+      <button class="chip" data-fill="devPrec" data-v="confiée à sa famille" aria-pressed="false">Confiée à la famille</button>
+      <button class="chip" data-fill="devPrec" data-v="confiée aux forces de l'ordre" aria-pressed="false">Confiée aux forces de l'ordre</button>
+      <button class="chip" data-fill="devPrec" data-v="décharge signée" aria-pressed="false">Décharge signée</button>
+    </div>
+    <input type="text" id="devPrec" placeholder="confiée à sa famille">
+    <span class="mini">S'ajoute après une virgule : « … laissée sur place sur décision du médecin régulateur, confiée à sa famille ». Inutile de réécrire « la victime est ».</span></div>
 
   <div class="f" id="rFinBox"><span class="gl">État du site au départ</span>
     <div class="chips" id="rFin" data-multi></div></div>
@@ -821,7 +827,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23b";
+const VERSION="2026.11.23c";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2066,7 +2072,8 @@ function buildCodisForms(){
   $("#medqui").outerHTML=chipsHTML("medqui",MEDECINS,"one");
   $("#actFin").outerHTML=chipsHTML("actFin",ACTIONS_FIN.map(a=>[a.l,a.v]),"multi");
   $("#devenir").outerHTML=chipsHTML("devenir",DEVENIRS,"one");
-  $("#dcdoc").outerHTML=chipsHTML("dcdoc",[["Certificat de décès établi","certificat"],["Obstacle médico-légal","oml"]],"multi");
+  $("#dcdoc").outerHTML=chipsHTML("dcdoc",[["RCP arrêtée sur décision du médecin","arretrcp"],["Certificat de décès établi","certificat"],
+    ["Sans obstacle médico-légal","sansoml"],["Avec obstacle médico-légal","oml"]],"multi");
   $("#dcdoc").style.marginTop="8px";
   $("#corps").outerHTML=chipsHTML("corps",CORPS,"multi");
   $("#eluNon").outerHTML=chipsHTML("eluNon",[["La famille ne souhaite pas le déplacement d'un élu","1"]],"multi");
@@ -2257,13 +2264,22 @@ function phraseAmbiance(){
   const libre=raw("aggravlib");
   if(libre)ag.push(libre.charAt(0).toLowerCase()+libre.slice(1));
   let p=articuler(nat||"intervention");
-  if(raw("sexe")||val("age"))p+=" chez "+sujet(true);
-  if(lieu)p+=" "+lieu;
+  // UR ou UA après le sexe ; au compte rendu d'un décès, c'est le bilan humain qui l'annonce
+  const et=one("etat"),at=ageTxt(),deces=S.msg==="cr"&&devenirP()==="dcd";
+  const cat=!deces&&(et==="UA"||et==="UR")?et:"";
+  let sansAge=false;
+  if(raw("sexe")||val("age")){
+    const su=sujet(true);
+    if(cat){const nom=at?su.slice(0,su.length-(" de "+at).length):su;p+=" chez "+nom+", "+cat+(at?", de "+at:"");sansAge=!at;}
+    else p+=" chez "+su;
+  }
+  if(lieu)p+=(sansAge?", ":" ")+lieu;
   if(ag.length)p+=", "+liste(ag);
   return accorder(pt(p));
 }
 function bilanSAPRadio(){
-  let p=qualifText({nb:1,qualif:qualifP(),gravite:one("etat")});
+  // Bilan définitif d'un décès : « 1 décédé », quelle que soit la catégorie relevée à l'arrivée
+  let p=qualifText({nb:1,qualif:qualifP(),gravite:S.msg==="cr"&&devenirP()==="dcd"?"DCD":one("etat")});
   // le transport est annoncé en dernière ligne du compte rendu (finRadioSAP)
   return[p].concat(S.sapX.map(qualifText)).join(", ");
 }
@@ -2364,7 +2380,9 @@ function analyseRadio(){
   if(S.msg==="cr"&&raw("gh")&&!ghTxt())W.push(["am","<b>Groupe horaire illisible</b> : 3 ou 4 chiffres, 830 pour 8 h 30, 1415 pour 14 h 15."]);
   {const dem=a.map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
     if(dbl.length)W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
-    if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);}
+    if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);
+    if(S.msg==="cr"&&S.type!=="ROUTIER"&&devenirP()==="lsp"&&(acrConstate()||multi("actFin").includes(SANS_REA)))
+      W.push(["rd","<b>ACR et victime « laissée sur place ».</b> S'il s'agit d'un décès, choisir « Décédée » dans le devenir : le compte rendu annoncera le décès, le certificat et à qui le corps est laissé."]);}
   if(!W.length)W.push(["ok","<b>Message cohérent.</b> Ordre et contenu conformes."]);
   $("#wC").innerHTML=W.map(([c,t])=>'<div class="w '+c+'"><span>'+t+'</span></div>').join("");
 }
@@ -2428,18 +2446,21 @@ function medecinTxt(){
 function heureCourte(id){const h=raw(id);if(!h)return"";const[hh,mm]=h.split(":");return(+hh)+"h"+mm;}
 function deQui(x){return/^les /.test(x)?"des "+x.slice(4):"de "+x;}
 function regule(){return multi("actFin").includes(REGUL);}
+// « le médecin du SMUR de COGNAC » → « du médecin du SMUR de COGNAC »
+function duMedecin(m){return m.replace(/^le /,"du ").replace(/^un /,"d'un ");}
 function blocActionsSAP(){
   const P=[],dev=devenirP(),med=medecinTxt();
   if(dev==="dcd"){
     if(regule())P.push("Régulation CRRA 15 effectuée.");
-    let p="Victime déclarée décédée (DCD)";
-    if(med)p+=" par "+med;
-    const h=heureCourte("hdc");if(h)p+=" à "+h;
-    P.push(p+".");
-    const d=multi("dcdoc"),cert=d.includes("certificat"),oml=d.includes("oml");
-    if(cert)P.push("Certificat de décès établi"+(oml?" avec obstacle médico-légal.":"."));
+    const d=multi("dcdoc"),cert=d.includes("certificat"),oml=d.includes("oml"),sans=d.includes("sansoml");
+    const h=heureCourte("hdc"),a=h?" à "+h:"";
+    // RCP arrêtée par le médecin : une seule phrase, le médecin n'est nommé qu'une fois
+    if(d.includes("arretrcp"))P.push("RCP arrêtée sur décision "+(med?duMedecin(med)+", qui déclare la victime décédée (DCD)"+a:"médicale. Victime déclarée décédée (DCD)"+a)+".");
+    else P.push("Victime déclarée décédée (DCD)"+(med?" par "+med:"")+a+".");
+    if(cert)P.push("Certificat de décès établi"+(oml?" avec obstacle médico-légal.":sans?" sans obstacle médico-légal.":"."));
     else if(oml)P.push("Obstacle médico-légal posé.");
-  } else if(med){
+    else if(sans)P.push("Pas d'obstacle médico-légal.");
+  } else if(med&&dev!=="lsp"){
     P.push("Victime "+(one("medqui")==="smur"?"médicalisée":"examinée")+" par "+med+".");
   }
   const a=multi("actFin"),g=ACTIONS_FIN.filter(x=>x.v!==SANS_REA&&x.v!==REGUL&&a.includes(x.v)).map(x=>x.v);
@@ -2454,10 +2475,13 @@ function devenirVivante(){
   const dev=devenirP(),prec=raw("devPrec");
   let p="";
   if(dev==="transport")p="est "+(transportTxt(raw("vect"),raw("dest"),true)||"transportée par [vecteur] sur [destination]");
-  else if(dev==="lsp")p="est laissée sur place sur décision du médecin régulateur";
+  // Un médecin est sur les lieux : c'est lui qui décide ; sinon le médecin régulateur
+  else if(dev==="lsp")p="est laissée sur place sur décision "+(medecinTxt()?duMedecin(medecinTxt()):"du médecin régulateur");
   else if(dev==="refus")p="refuse le transport et est laissée sur place";
   else return"";
-  return p+(prec?", "+lc(prec):"");
+  // La précision complète la phrase : un début « la victime est… » saisi par habitude est retiré
+  const suite=lc(prec).replace(/^(la victime|elle)\s+(est\s+)?/i,"").replace(/[.\s]+$/,"");
+  return p+(suite?", "+suite:"");
 }
 function devenirCorps(){
   const c=multi("corps"),non=multi("eluNon").length>0,refus="ne souhaite pas le déplacement d'un élu";
@@ -2622,7 +2646,9 @@ function analyseEcrit(){
   }
   {const dem=a.map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
     if(dbl.length)W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
-    if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);}
+    if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);
+    if(S.msg==="cr"&&S.type!=="ROUTIER"&&devenirP()==="lsp"&&(acrConstate()||multi("actFin").includes(SANS_REA)))
+      W.push(["rd","<b>ACR et victime « laissée sur place ».</b> S'il s'agit d'un décès, choisir « Décédée » dans le devenir : le compte rendu annoncera le décès, le certificat et à qui le corps est laissé."]);}
   if(!W.length)W.push(["ok","<b>Message cohérent.</b> Ordre et contenu conformes."]);
   $("#wC").innerHTML=W.map(([c,t])=>'<div class="w '+c+'"><span>'+t+'</span></div>').join("");
 }
