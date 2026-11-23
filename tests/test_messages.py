@@ -339,7 +339,7 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac\n"
              "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
-             "Nous sommes confrontés à une suspicion intoxication co, à domicile. La première victime est un homme de 54 ans, somnolent ; bilan humain provisoire : 1 victime UA, 2 victimes UR\n"
+             "Nous sommes confrontés à une suspicion intoxication co, à domicile. La première victime est un homme UA de 54 ans, somnolent\nBilan humain provisoire : 1 victime UA, 2 victimes UR\n"
              "En cours de bilan")
     verifier("Cas n° 3 — ambiance écrite", message(page, "ambiance"),
              "Opération de secours sur la commune de CHATEAUBERNARD.\n"
@@ -358,12 +358,10 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac — message complémentaire\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
              "Je demande : Forces de l'ordre et VSAV supplémentaire\n"
-             "Bilan humain provisoire : 1 victime UA, 2 victimes UR\n"
              "Aggravation du père")
     verifier("Cas n° 3 — message complémentaire écrit", message(page, "comp"),
              "Message complémentaire — Opération de secours sur la commune de CHATEAUBERNARD.\n"
              "Je demande : Forces de l'ordre et VSAV supplémentaire.\n"
-             "Bilan humain provisoire : 1 victime UA, 2 victimes UR.\n"
              "Aggravation du père.")
     verifier("Message complémentaire — la demande initiale n'est pas modifiée",
              message(page, "ambiance", "radio").split("\n")[1], "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire")
@@ -403,7 +401,7 @@ with sync_playwright() as pw:
     verifier("Cas n° 3 — compte rendu radio : plus de demande, on dit qui était là", message(page, "cr", "radio"),
              "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1310\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
-             "Nous sommes confrontés à une suspicion intoxication co, à domicile. La première victime est un homme de 54 ans, somnolent ; bilan humain définitif : 1 victime UA, 2 victimes UR\n"
+             "Nous sommes confrontés à une suspicion intoxication co, à domicile. La première victime est un homme UA de 54 ans, somnolent\nBilan humain définitif : 1 victime UA, 2 victimes UR\n"
              "Sur les lieux : SMUR, forces de l'ordre, chef de groupe, GRDF et VSAV de Jarnac\n"
              "Après régulation CRRA 15, la première victime, de sexe masculin, UA, est transportée par SMUR sur CH Angoulême\n"
              "2 victimes UR sont transportées par VSAV de Jarnac sur CH Cognac\n"
@@ -448,16 +446,16 @@ with sync_playwright() as pw:
     ecran(page, "arr")
     page.fill("#aggravlib", "Une plaie du cuir chevelu avec saignement important")
     verifier("État libre commençant par un article : introduit par « présentant » (radio)",
-             "La première victime est un homme de 58 ans, présentant une plaie du cuir chevelu avec saignement important ;" in message(page, "ambiance", "radio"), True)
+             "La première victime est un homme UR de 58 ans, présentant une plaie du cuir chevelu avec saignement important. La deuxième victime est une femme UR" in message(page, "ambiance", "radio"), True)
     verifier("État libre commençant par un article : « présentant » (écrit, après une chute)",
              "à la suite d'une chute, présentant une plaie du cuir chevelu avec saignement important" in message(page, "ambiance"), True)
     vue(page, "saisie")
     page.fill("#aggravlib", "présente une plaie")
     verifier("État libre : un « présente » saisi par habitude n'est pas doublé",
-             "58 ans, présentant une plaie ;" in message(page, "ambiance", "radio"), True)
+             "UR de 58 ans, présentant une plaie. La deuxième victime" in message(page, "ambiance", "radio"), True)
     vue(page, "saisie")
     page.fill("#aggravlib", "Agité")
-    verifier("État libre sans article (adjectif) : laissé tel quel", "58 ans, agité ;" in message(page, "ambiance", "radio"), True)
+    verifier("État libre sans article (adjectif) : laissé tel quel", "UR de 58 ans, agité. La deuxième victime" in message(page, "ambiance", "radio"), True)
     vue(page, "saisie")
     page.fill("#aggravlib", "")
     ecran(page, "bil")
@@ -487,7 +485,7 @@ with sync_playwright() as pw:
     ecran(page, "arr")
     page.fill("#natprec", "D'une échelle, d'environ 3 mètres")
     verifier("Précision de la nature — radio",
-             "Nous sommes confrontés à une chute d'une échelle, d'environ 3 mètres. La première victime est un homme de 58 ans" in message(page, "ambiance", "radio"), True)
+             "Nous sommes confrontés à une chute d'une échelle, d'environ 3 mètres. La première victime est un homme UR de 58 ans" in message(page, "ambiance", "radio"), True)
     verifier("Précision de la nature — écrit",
              "à la suite d'une chute d'une échelle, d'environ 3 mètres" in message(page, "ambiance"), True)
     verifier("Précision de la nature — annonce SAMU", "pour chute d'une échelle, d'environ 3 mètres" in page.evaluate("bAnnonce()"), True)
@@ -497,7 +495,62 @@ with sync_playwright() as pw:
              [page.input_value("#natprec"), page.locator("#natprec").is_visible()], ["", True])
     nature(page, "Préciser")
     verifier("Précision de la nature — masquée en saisie libre", page.locator("#natprec").is_visible(), False)
+    # 23/11, version m : bilan SAMU — PQRST, unité de glycémie, MHTAA, nouvelles demandes
+    page.evaluate("""() => { $('#pq_r').value='Au poignet gauche'; $('#pq_p').value="Par le mouvement"; $('#en').value='8';
+        document.querySelector('#pq_q .chip[data-v="pulsatile"]').click(); rendre(); }""")
+    verifier("PQRST : la douleur a sa phrase dans l'annonce",
+             "Douleur pulsatile au poignet gauche, cotée 8 sur 10, provoquée par le mouvement." in page.evaluate("bAnnonce()"), True)
+    page.evaluate("""() => { $('#pq_r').value=''; $('#pq_p').value=''; document.querySelector('#pq_q .chip[data-v="pulsatile"]').click(); rendre(); }""")
+    verifier("PQRST : cotée seule, la douleur est quand même annoncée", "Douleur cotée 8 sur 10." in page.evaluate("bAnnonce()"), True)
+    verifier("Glycémie : même seuil dans les trois unités",
+             json.dumps(page.evaluate("""() => [['0,6','g'],['60','mg'],['3,3','mmol'],['5,2','mmol'],['45','mg']].map(x => { $('#gly').value=x[0]; $('#glyu').value=x[1]; return qual('gly',glyGL()).m; })"""), ensure_ascii=False),
+             '["hypoglycémie à 0,6 gramme par litre", "hypoglycémie à 60 milligrammes par décilitre", "hypoglycémie à 3,3 millimoles par litre", "glycémie normale", "hypoglycémie sévère à 45 milligrammes par décilitre"]')
+    page.evaluate("""() => { $('#gly').value=''; $('#glyu').value='g'; $('#hospit').value='Pontage en 2019';
+        document.querySelector('#fagg .chip[data-v="tabagisme"]').click(); document.querySelector('#dem .chip[data-v="la mise en œuvre du protocole anti-douleur"]').click(); rendre(); }""")
+    verifier("MHTAA : hospitalisations et facteurs aggravants dans les réponses de réserve",
+             json.dumps(page.evaluate("reserve().filter(x=>/Hospitalisations|Facteurs/.test(x.q)).map(x=>x.q+' : '+x.r)"), ensure_ascii=False),
+             '["Hospitalisations : Pontage en 2019", "Facteurs aggravants : tabagisme"]')
+    verifier("Demande au SAMU : protocole anti-douleur",
+             page.evaluate("bAnnonce()").endswith("Je demande la mise en œuvre du protocole anti-douleur."), True)
+    # 23/11, version m : les victimes suivantes sont décrites comme la première, avant le bilan humain
+    vue(page, "saisie")
+    nature(page, "Chute")
+    page.locator("#xv input[data-xk=age]").fill("72")
+    page.locator("#xv input[data-xk=pb]").fill("Une douleur à la poitrine")
+    page.locator("#xv select[data-xk=gravite]").select_option("UA")
+    verifier("Victimes suivantes décrites avant le bilan humain — radio",
+             "La première victime est un homme UR de 58 ans. La deuxième victime est une femme UA de 72 ans, présentant une douleur à la poitrine\nBilan humain définitif : 1 victime UA, 1 victime UR" in message(page, "cr", "radio"), True)
+    verifier("Victimes suivantes décrites avant le bilan humain — écrit",
+             [l for l in message(page, "cr").split("\n") if l.startswith("À notre arrivée")][0].endswith("La deuxième victime est de sexe féminin, UA, âgée de 72 ans, présentant une douleur à la poitrine."), True)
+    verifier("Message complémentaire : plus de bilan humain",
+             ["Bilan humain" in message(page, "comp", "radio"), "Bilan humain" in message(page, "comp")], [False, False])
     verifier("Aucune erreur JavaScript (cas n° 5)", json.dumps(err), "[]")
+    page.close()
+
+    # Cas n° 6 du 23/11 au soir : chaque victime décrite avec sa catégorie, puis le bilan humain sur sa ligne
+    page, err = ouvrir(nav, NOUVEAU)
+    nature(page, "Chute")
+    page.fill("#natprec", "dans un escalier, d'une hauteur de 2 m environ")
+    victime(page, 9, "Femme")
+    page.fill("#commune", "Chateaubernard")
+    page.locator("#etat .chip[data-v=UR]").click()
+    puce(page, "ctxlieu", "ERP")
+    page.fill("#aggravlib", "déformation au poignet gauche")
+    page.locator("#addxv").click()
+    page.locator("#xv select[data-xk=gravite]").select_option("UA")
+    page.locator("#xv select[data-xk=sexe]").select_option("masculin")
+    page.locator("#xv input[data-xk=age]").fill("72")
+    page.locator("#xv input[data-xk=pb]").fill("douleur à la poitrine")
+    cr = message(page, "cr", "radio").split("\n")
+    verifier("Cas n° 6 — compte rendu radio : les deux victimes décrites, puis le bilan humain", "\n".join(cr[2:4]),
+             "Nous sommes confrontés à une chute dans un escalier, d'une hauteur de 2 m environ, dans un établissement recevant du public. "
+             "La première victime est une fille UR de 9 ans, présentant une déformation au poignet gauche. "
+             "La deuxième victime est un homme UA de 72 ans, présentant une douleur à la poitrine\n"
+             "Bilan humain définitif : 1 victime UA, 1 victime UR")
+    verifier("Cas n° 6 — une seule victime : rien ne change",
+             page.evaluate("(()=>{const x=S.sapX;S.sapX=[];const t=buildCodis();S.sapX=x;return t.split('\\n')[2];})()"),
+             "Nous sommes confrontés à une chute dans un escalier, d'une hauteur de 2 m environ, dans un établissement recevant du public. La victime est une fille de 9 ans, présentant une déformation au poignet gauche ; bilan humain définitif : 1 victime UR")
+    verifier("Aucune erreur JavaScript (cas n° 6)", json.dumps(err), "[]")
     page.close()
 
     # Cas n° 4 du 23/11 : événement, plusieurs victimes, complément de demande, compte rendu
@@ -522,7 +575,7 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac\n"
              "Je demande : SMUR, Chef de Groupe et VSAV supplémentaire\n"
              "Opération de secours sur la commune de Cherves Richemont à l'adresse indiquée\n"
-             "Nous sommes confrontés à un effondrement d'une estrade à la salle des fêtes, dans un établissement recevant du public. La première victime est une femme de 38 ans, inconsciente ; bilan humain provisoire : 1 victime UA, 2 victimes UR, 3 victimes impliquées\n"
+             "Nous sommes confrontés à un effondrement d'une estrade à la salle des fêtes, dans un établissement recevant du public. La première victime est une femme UA de 38 ans, inconsciente\nBilan humain provisoire : 1 victime UA, 2 victimes UR, 3 victimes impliquées\n"
              "Sur les lieux : police municipale\n"
              "Poursuivons reconnaissance, en cours de bilan")
     verifier("Cas n° 4 — ambiance écrite, même cohérence", message(page, "ambiance"),
@@ -543,7 +596,6 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac — message complémentaire\n"
              "Opération de secours sur la commune de Cherves Richemont à l'adresse indiquée\n"
              "Je demande : Forces de l'ordre et VSAV supplémentaire\n"
-             "Bilan humain provisoire : 1 victime UA, 3 victimes UR, 3 victimes impliquées\n"
              "Après dégagement de l'estrade, avons découvert une troisième victime, UR")
     page.locator("#compPasse").click()
     # temps 3 : tout le monde est arrivé, chacun a son devenir
@@ -562,7 +614,7 @@ with sync_playwright() as pw:
     verifier("Cas n° 4 — compte rendu radio", message(page, "cr", "radio"),
              "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1545\n"
              "Opération de secours sur la commune de Cherves Richemont à l'adresse indiquée\n"
-             "Nous sommes confrontés à un effondrement d'une estrade à la salle des fêtes, dans un établissement recevant du public. La première victime est une femme de 38 ans, inconsciente ; bilan humain définitif : 1 victime UA, 3 victimes UR, 3 victimes impliquées\n"
+             "Nous sommes confrontés à un effondrement d'une estrade à la salle des fêtes, dans un établissement recevant du public. La première victime est une femme UA de 38 ans, inconsciente\nBilan humain définitif : 1 victime UA, 3 victimes UR, 3 victimes impliquées\n"
              "Sur les lieux : SMUR, forces de l'ordre, chef de groupe, police municipale et 2 VSAV supplémentaires\n"
              "Après régulation CRRA 15, la première victime, de sexe féminin, UA, est transportée par SMUR sur Urgences CH Angoulême\n"
              "3 victimes UR sont transportées par VSAV Cognac, Jarnac et Segonzac sur Urgences CH Cognac\n"
@@ -931,12 +983,12 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac\n"
              "Je demande : SMUR\n"
              "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
-             "Nous sommes confrontés à une douleur thoracique, à domicile, relevage difficile. La première victime est une femme en ACR, de 26 ans ; bilan humain provisoire : 1 victime UR, 1 victime\n"
+             "Nous sommes confrontés à une douleur thoracique, à domicile, relevage difficile. La première victime est une femme UR en ACR, de 26 ans\nBilan humain provisoire : 1 victime UR, 1 victime\n"
              "En cours de bilan, procédons à la RCP, protection thermique de la victime")
     verifier("Radio — compte rendu SAP : le devenir remplace l'action en cours", r2["_cr_sap"],
              "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
              "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
-             "Nous sommes confrontés à une douleur thoracique, à domicile, relevage difficile. La première victime est une femme en ACR, de 26 ans ; bilan humain définitif : 1 victime UR, 1 victime\n"
+             "Nous sommes confrontés à une douleur thoracique, à domicile, relevage difficile. La première victime est une femme UR en ACR, de 26 ans\nBilan humain définitif : 1 victime UR, 1 victime\n"
              "La première victime, de sexe féminin, UR, est transportée par VSAV sur CH Cognac")
     verifier("Aucune erreur JavaScript (scénario 6)", json.dumps(e1 + e2), "[]")
 

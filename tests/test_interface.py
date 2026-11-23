@@ -126,7 +126,8 @@ with sync_playwright() as pw:
              [True, False, True, False, "comp"])
     verifier("Complément : catégorie et autres victimes modifiables sur place", [visible(page, "#etat"), visible(page, "#addxv")], [True, True])
     page.locator("#addxv").click()
-    verifier("Complément : une victime ajoutée entre dans le bilan humain", "Bilan humain provisoire : 2 victimes UR" in page.locator("#out").input_value(), True)
+    verifier("Complément : une victime ajoutée compte pour les messages suivants, sans bilan humain dans le complément",
+             [page.evaluate("bilanHumain()"), "Bilan humain" in page.locator("#out").input_value()], ["2 victimes UR", False])
     page.evaluate("document.querySelector('#compRenf .chip').click()")
     page.locator("#compPasse").click()
     page.locator("#aHome").click()
@@ -142,6 +143,20 @@ with sync_playwright() as pw:
     verifier("Bilan SAMU : saisie du bilan, annonce et témoins",
              [visible(page, "#ph-bil"), visible(page, "#scr"), visible(page, ".dock .locks"), visible(page, ".dock .tabs"), visible(page, "#out")],
              [True, True, True, False, False])
+    verifier("Bilan SAMU : les sept étapes dans l'ordre de la maquette",
+             page.evaluate("""() => Array.from(document.querySelectorAll('#ph-bil > *')).filter(e => !e.hidden && e.offsetParent !== null)
+                 .map(e => ((e.querySelector('.sh, summary b, .gl') || {}).textContent || '').replace('verrou', '')).slice(0, 7)"""),
+             ["1 · Depuis quand", "2 · Constantes", "3 · Anticoagulant ou antiagrégant", "Examen clinique", "Douleur : PQRST", "Antécédents : MHTAA", "7 · Régulation CRRA 15 : je demande"])
+    verifier("Bilan SAMU : examen, douleur et antécédents repliés ; anticoagulant, température et glycémie sous les yeux",
+             [visible(page, "#pup"), visible(page, "#pq_r"), visible(page, "#ttt"), visible(page, "#acg"), visible(page, "#temp"), visible(page, "#gly"), visible(page, "#glyu")],
+             [False, False, False, True, True, True, True])
+    page.locator("#sPQ > summary").click()
+    page.locator("#dMh > summary").click()
+    verifier("Bilan SAMU : une flèche déplie le PQRST (avec l'échelle de la douleur) et le MHTAA",
+             [visible(page, "#pq_p"), visible(page, "#pq_q"), visible(page, "#en"), visible(page, "#hospit"), visible(page, "#fagg"), visible(page, "#allerg")],
+             [True, True, True, True, True, True])
+    page.fill("#en", "6")
+    verifier("Bilan SAMU : la ligne repliée résume ce qui est saisi", page.locator("#pqEtat").inner_text(), "Douleur cotée 6 sur 10.")
     page.locator("#passeS").click()
     verifier("Bilan passé : noté à l'accueil", page.locator(".carte .ce").all_inner_texts(), ["Passé", "1 passé", "Passé", "À faire"])
     verifier("Journal : ambiance, complément et bilan, dans l'ordre",

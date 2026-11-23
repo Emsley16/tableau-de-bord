@@ -146,6 +146,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
 
 /* victimes supplémentaires CODIS */
 .xl{display:grid;grid-template-columns:64px 1fr 1fr 40px;gap:6px;align-items:center;margin-top:8px}
+.xl2{display:grid;grid-template-columns:64px 1fr;gap:6px;margin-top:6px}
 .xdel{min-height:42px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:1.1rem;cursor:pointer}
 .rc{border:1px solid var(--border);border-radius:9px;padding:10px;margin-top:9px;background:var(--s2)}
 .rc-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:10.5px;
@@ -342,6 +343,10 @@ body:not(.essai){padding-bottom:28px}
 body:not(.essai) #phSeg,body:not(.essai) #msgSeg,body:not(.essai) .nav,body:not(.essai) #goSamu,body:not(.essai) .dock .tabs{display:none!important}
 body:not(.essai):not(.e-samu) .dock{display:none!important}
 body:not(.essai) #v-codis.on{border-top:2px solid var(--blu);background:var(--surface);margin-top:10px;padding-bottom:20px}
+.chip.c2{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border-radius:10px;padding:8px 10px;width:calc(50% - 4px);white-space:normal;height:auto}
+.chip.c2 b{font-size:13.5px;font-weight:600}
+.chip.c2 small{font-size:11.5px;opacity:.75}
+#glyu{margin-top:4px;width:100%}
 .pk{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .pk button{min-height:40px;padding:0 11px;border-radius:20px;border:1px solid var(--border);background:var(--s2);color:var(--text);font:500 13.5px var(--sans);cursor:pointer}
 #copJ{margin:0 0 12px}
@@ -508,7 +513,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <div class="ph" id="ph-bil" hidden>
 
 <div class="sec"><div class="bd">
-  <div class="f lk" id="lk-h"><span class="gl">Depuis quand<span class="tg">verrou</span></span>
+  <div class="f lk" id="lk-h"><span class="gl">1 · Depuis quand<span class="tg">verrou</span></span>
     <div class="chips" id="delaic" data-one>
       <button class="chip" data-v="5" aria-pressed="false">5 min</button>
       <button class="chip" data-v="15" aria-pressed="false">15 min</button>
@@ -528,7 +533,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
     <span class="mini">Sur un déficit neurologique, préférer l'heure précise : elle conditionne la thrombolyse.</span></div>
 </div></div>
 
-<div class="sec"><div class="sh">Constantes</div><div class="bd">
+<div class="sec"><div class="sh">2 · Constantes</div><div class="bd">
   <div class="qk">
     <label class="qc"><span>SpO₂ %</span><input type="number" id="spo2" inputmode="numeric" enterkeyhint="next"><i class="q x" id="q-spo2">—</i></label>
     <label class="qc"><span>FC</span><input type="number" id="fc" inputmode="numeric" enterkeyhint="next"><i class="q x" id="q-fc">—</i></label>
@@ -579,34 +584,57 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
   <details class="sub" id="mesDet"><summary>Autres mesures : recoloration, température, glycémie, douleur, poids</summary>
     <div class="cst"><label>Recoloration</label><input type="text" id="trc" inputmode="decimal" placeholder="sec"><div class="q x" id="q-trc">—</div></div>
     <div class="cst"><label>Température</label><input type="text" id="temp" inputmode="decimal" placeholder="°C"><div class="q x" id="q-temp">—</div></div>
-    <div class="cst"><label>Glycémie</label><input type="text" id="gly" inputmode="decimal" placeholder="g/L"><div class="q x" id="q-gly">—</div></div>
+    <div class="cst"><label>Glycémie</label><input type="text" id="gly" inputmode="decimal" placeholder="valeur"><select id="glyu" data-keep aria-label="Unité de la glycémie"><option value="g">g/L</option><option value="mg">mg/dL</option><option value="mmol">mmol/L</option></select><div class="q x" id="q-gly">—</div></div>
     <div class="cst"><label>Douleur (EN)</label><input type="number" id="en" inputmode="numeric" placeholder="/10"><div class="q x" id="q-en">—</div></div>
     <input type="text" id="poids" inputmode="decimal" placeholder="Poids en kg (enfant, ou thérapeutique envisagée)" style="margin-top:10px">
   </details>
 </div></div>
 
-<div class="sec"><div class="sh">Terrain</div><div class="bd">
+<details class="sec" id="sPQ">
+  <summary><span class="num">5</span><span class="st"><b>Douleur : PQRST</b><em id="pqEtat">Provoquée par, qualité, région, sévérité, temps</em></span><span class="chev">▼</span></summary>
+  <div class="bd">
+    <div class="f"><span class="gl">P · Provoquée par</span>
+      <input type="text" id="pq_p" placeholder="l'effort, le mouvement, l'appui…"></div>
+    <div class="f"><span class="gl">Q · Qualité : le ressenti de la victime</span>
+      <div class="chips" id="pq_q" data-multi><button class="chip c2" data-v="constrictive" aria-pressed="false"><b>Ça serre, comme un étau</b><small>douleur constrictive</small></button><button class="chip c2" data-v="oppressive" aria-pressed="false"><b>Ça pèse, ça écrase</b><small>douleur oppressive</small></button><button class="chip c2" data-v="à type de brûlure" aria-pressed="false"><b>Ça brûle</b><small>douleur à type de brûlure</small></button><button class="chip c2" data-v="à type de piqûre" aria-pressed="false"><b>Ça pique</b><small>douleur à type de piqûre</small></button><button class="chip c2" data-v="en coup de poignard" aria-pressed="false"><b>Coup de poignard</b><small>douleur en coup de poignard</small></button><button class="chip c2" data-v="à type de déchirement" aria-pressed="false"><b>Ça déchire</b><small>douleur à type de déchirement</small></button><button class="chip c2" data-v="pulsatile" aria-pressed="false"><b>Ça lance, ça bat</b><small>douleur pulsatile</small></button><button class="chip c2" data-v="à type de décharge électrique" aria-pressed="false"><b>Décharge électrique</b><small>douleur à type de décharge électrique</small></button><button class="chip c2" data-v="à type de crampe, par spasmes" aria-pressed="false"><b>Ça tord, par crises</b><small>douleur à type de crampe, par spasmes</small></button><button class="chip c2" data-v="diffuse" aria-pressed="false"><b>Diffuse, mal localisée</b><small>douleur diffuse</small></button></div>
+      <input type="text" id="pq_qlib" placeholder="Autre ressenti, avec les mots de la victime" style="margin-top:8px">
+      <span class="mini">En gras, les mots de la victime. En petit, ce que dira l'annonce.</span></div>
+    <div class="f"><span class="gl">R · Région : où la victime souffre</span>
+      <input type="text" id="pq_r" placeholder="dans la poitrine, au poignet gauche…"></div>
+    <div class="f"><span class="gl">S · Sévérité : échelle de la douleur, de 0 à 10</span>
+      <div id="pqS"></div></div>
+    <div class="f"><span class="gl">T · Temps : depuis combien de temps</span>
+      <span class="mini" id="pqT"></span></div>
+  </div>
+</details>
+
+<div class="sec"><div class="sh">6 · Antécédents : MHTAA</div><div class="bd">
   <div class="f"><button class="btn2" id="terrainRas" style="margin-top:0">Rien à signaler : ni antécédent, ni traitement, ni allergie connus</button>
     <span class="mini">Un appui remplit les champs encore vides et répond « non » à l'anticoagulant. Tout reste modifiable.</span></div>
-  <div class="f lk" id="lk-a"><span class="gl">Anticoagulant ou antiagrégant<span class="tg">verrou</span></span>
+  <div class="f lk" id="lk-a"><span class="gl">3 · Anticoagulant ou antiagrégant<span class="tg">verrou</span></span>
     <div class="chips" id="acg" data-one>
       <button class="chip" data-v="oui" aria-pressed="false">Oui</button>
       <button class="chip" data-v="non" aria-pressed="false">Non</button>
       <button class="chip" data-v="inconnu" aria-pressed="false">Non déterminé</button>
     </div></div>
-  <div class="f"><span class="gl">Antécédents</span>
+  <div class="f"><span class="gl">M · Maladies / Antécédents</span>
     <div class="chips" id="atcd-c"></div>
     <div class="row" style="margin-top:8px"><input type="text" id="atcd" placeholder="Autres antécédents" style="flex:2">
       <button class="chip" data-fill="atcd" data-v="Aucun antécédent connu" style="flex:1">Aucun connu</button></div>
     <div class="glose2" id="atcdef"></div>
     <span class="mini">Les deux premiers cochés passent dans l'annonce SAMU.</span></div>
-  <div class="f"><span class="gl">Traitements</span>
+  <div class="f"><span class="gl">H · Hospitalisations</span>
+    <input type="text" id="hospit" placeholder="Hospitalisations et opérations"></div>
+  <div class="f"><span class="gl">T · Traitements</span>
     <div class="row"><input type="text" id="ttt" placeholder="Ramipril, atorvastatine" style="flex:2">
       <button class="chip" data-fill="ttt" data-v="Aucun traitement" style="flex:1">Aucun</button></div>
     <button class="btn2" id="phOrdo">Photographier l'ordonnance</button></div>
-  <div class="f"><span class="gl">Allergies</span>
+  <div class="f"><span class="gl">A · Allergies</span>
     <div class="row"><input type="text" id="allerg" placeholder="Allergies" style="flex:2">
       <button class="chip" data-fill="allerg" data-v="Aucune connue" style="flex:1">Aucune connue</button></div></div>
+  <div class="f"><span class="gl">A · Facteurs aggravants</span>
+    <div class="chips" id="fagg" data-multi><button class="chip" data-v="tabagisme" aria-pressed="false">Fumeur</button><button class="chip" data-v="consommation d'alcool" aria-pressed="false">Alcool</button><button class="chip" data-v="obésité" aria-pressed="false">Obésité</button><button class="chip" data-v="usage de drogues" aria-pressed="false">Drogues</button><button class="chip" data-v="sédentarité" aria-pressed="false">Sédentarité</button><button class="chip" data-v="antécédents familiaux" aria-pressed="false">Antécédents familiaux</button><button class="chip" data-v="alitement ou long voyage récent" aria-pressed="false">Alitement ou long voyage récent</button></div>
+    <input type="text" id="fagglib" placeholder="Autre facteur aggravant" style="margin-top:8px"></div>
   <details class="sub" id="terrainPlus"><summary>Plus : grossesse, mode de vie, seuils des constantes</summary>
     <div class="f"><span class="gl">Mode de vie</span>
       <div class="chips" id="vie" data-multi>
@@ -647,7 +675,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
   </div>
 </details>
 
-<div class="sec"><div class="sh">Examen</div><div class="bd">
+<div class="sec"><div class="sh">4 · Examen clinique</div><div class="bd">
   <div class="f"><span class="gl">Pupilles</span>
     <div class="chips" id="pup" data-multi>
       <button class="chip" data-v="__norm" aria-pressed="false">Égales et réactives</button>
@@ -704,12 +732,14 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
   </div>
 </details>
 
-<div class="sec"><div class="sh">Régulation</div><div class="bd">
+<div class="sec"><div class="sh">7 · Régulation CRRA 15 : je demande</div><div class="bd">
   <div class="f lk" id="lk-d"><span class="gl">Ma demande<span class="tg">verrou</span></span>
     <div class="chips" id="dem" data-one>
       <button class="chip" data-v="un renfort médicalisé" aria-pressed="false">Renfort médicalisé</button>
       <button class="chip" data-v="votre orientation et l'autorisation de transport" aria-pressed="false">Orientation et transport</button>
       <button class="chip" data-v="l'autorisation de laisser sur place" aria-pressed="false">Laisser sur place</button>
+      <button class="chip" data-v="l'engagement d'un VLI" aria-pressed="false">VLI</button>
+      <button class="chip" data-v="la mise en œuvre du protocole anti-douleur" aria-pressed="false">Protocole anti-douleur</button>
       <button class="chip" data-v="un avis sur la conduite à tenir" aria-pressed="false">Avis</button>
       <button class="chip" data-v="__" aria-pressed="false">Autre</button>
     </div>
@@ -832,7 +862,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
     <div id="compRenf"></div>
     <input type="text" id="compDem" placeholder="Autre demande" style="margin-top:8px">
     <input type="text" id="compLib" placeholder="Motif, si utile : aggravation, victime découverte…" style="margin-top:8px">
-    <div class="olbl" style="margin-top:12px"><span>Bilan humain du moment</span></div>
+    <div class="olbl" style="margin-top:12px"><span>Victimes : à ajouter ou à modifier</span></div>
     <div id="compVict"></div>
     <span class="mini" id="compDeja"></span>
     <button class="btn2" id="compPasse">Message passé : préparer une autre demande</button>
@@ -897,7 +927,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23l";
+const VERSION="2026.11.23m";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1211,6 +1241,9 @@ function syncModifs(){
     else if(c.dataset.auto){c.setAttribute("aria-pressed","false");delete c.dataset.auto;}});
 }
 
+// Glycémie : saisie en g/L, mg/dL ou mmol/L. glyGL la ramène en g/L pour les seuils ; glyDire l'énonce dans son unité.
+function glyGL(){const v=val("gly");if(v===""||v===null||isNaN(v))return v;const u=raw("glyu");return u==="mg"?+v/100:u==="mmol"?+v/5.55:+v;}
+function glyDire(){const u=raw("glyu");return fr2(val("gly"))+(u==="mg"?" milligrammes par décilitre":u==="mmol"?" millimoles par litre":" gramme par litre");}
 // renvoie {mot, anormal, dire}
 function qual(par,v){
   if(v===""||v===null||isNaN(v))return null;
@@ -1256,11 +1289,12 @@ function qual(par,v){
     if(v<38)return{m:"subfébrile à "+fr2(v)+" degrés",a:true};
     return{m:"fébrile à "+fr2(v)+" degrés",a:true};
   case"gly":
-    if(v<0.5)return{m:"hypoglycémie sévère à "+fr2(v)+" gramme par litre",a:true};
-    if(v<0.7)return{m:"hypoglycémie à "+fr2(v)+" gramme par litre",a:true};
+    // v est en g/L pour les seuils ; la valeur est énoncée dans l'unité du lecteur
+    if(v<0.5)return{m:"hypoglycémie sévère à "+glyDire(),a:true};
+    if(v<0.7)return{m:"hypoglycémie à "+glyDire(),a:true};
     if(v<=1.4)return{m:"glycémie normale",a:false};
-    if(v<=2.5)return{m:"hyperglycémie à "+fr2(v)+" gramme par litre",a:true};
-    return{m:"hyperglycémie franche à "+fr2(v)+" gramme par litre",a:true};
+    if(v<=2.5)return{m:"hyperglycémie à "+glyDire(),a:true};
+    return{m:"hyperglycémie franche à "+glyDire(),a:true};
   case"en":
     if(v===0)return{m:"indolore",a:false};
     if(v<=3)return{m:"douleur légère cotée "+v+" sur 10",a:true};
@@ -1706,7 +1740,7 @@ function examenParts(){
   if(val("pas"))chif.push("PA "+val("pas")+"/"+(val("pad")||"?"));
   if(val("trc"))chif.push("TRC "+fr2(val("trc"))+" s");
   if(val("temp"))chif.push("T "+fr2(val("temp"))+" °C");
-  if(val("gly"))chif.push("Glycémie "+fr2(val("gly"))+" g/L");
+  if(val("gly"))chif.push("Glycémie "+fr2(val("gly"))+" "+({mg:"mg/dL",mmol:"mmol/L"}[raw("glyu")]||"g/L"));
   if(val("en"))chif.push("EN "+val("en")+"/10");
 
   if(ped){
@@ -1721,7 +1755,7 @@ function examenParts(){
     // Ordre de gravité : seules les trois premières anomalies passent dans l'annonce
     push(qual("gcs",g));push(qual("spo2",val("spo2")));push(qualPA());
     push(qual("fc",val("fc")));push(qual("fr",val("fr")));push(qual("trc",val("trc")));
-    push(qual("temp",val("temp")));push(qual("gly",val("gly")));push(qual("en",val("en")));
+    push(qual("temp",val("temp")));push(qual("gly",glyGL()));push(qual("en",val("en")));
   }
   const pu=multi("pup");
   if(pu.includes("__norm"))norm.push("pupilles symétriques et réactives");
@@ -1791,7 +1825,12 @@ function bAnnonce(){
   // 4 — Le saillant : les anomalies d'abord, le normal en une formule
   const sail=[];
   let anos=E.ano.slice();
-  if(motif==="trauma"&&raw("h_les")&&/douleur/i.test(raw("h_les")))
+  // La douleur a sa phrase dès que le PQRST la décrit. Cotée seule, elle garde l'ancienne rédaction quand la
+  // description des lésions parle déjà de douleur (« douleur cotée 7 sur 10 au dos… »), sinon elle a sa phrase aussi.
+  const decrite=multi("pq_q").length||raw("pq_qlib")||raw("pq_r")||raw("pq_p");
+  const lesDl=motif==="trauma"&&raw("h_les")&&/douleur/i.test(raw("h_les"));
+  const dl=(decrite||!lesDl)?pqrstTxt():"";
+  if(dl||(motif==="trauma"&&raw("h_les")&&/douleur/i.test(raw("h_les"))))
     anos=anos.filter(x=>!/^douleur (légère|modérée|sévère)/.test(x));
   if(anos.length){
     sail.push(cap(liste(anos.slice(0,3))));
@@ -1802,12 +1841,13 @@ function bAnnonce(){
   if(motif==="trauma"&&raw("h_les")){
     let les=raw("h_les").trim();
     les=les.charAt(0).toLowerCase()+les.slice(1);
-    if(val("en")&&/douleur/i.test(les))les=les.replace(/douleurs?/i,m=>m+" cotée "+val("en")+" sur 10");
+    if(!dl&&val("en")&&/douleur/i.test(les))les=les.replace(/douleurs?/i,m=>m+" cotée "+val("en")+" sur 10");
     sail.push(les);
   }
   const vf=vittelFort();
   if(vf.length)sail.push("critère de Vittel : "+liste(vf.slice(0,2)));
   if(sail.length)p.push(pt(sail.join(", ")));
+  if(dl)p.push(dl);
 
   // 5 — Conclusion et demande
   if(raw("conclu"))p.push(pt(raw("conclu").replace(/^ma conclusion\s*:?\s*/i,"")));
@@ -1817,6 +1857,19 @@ function bAnnonce(){
   return accorder(p.join(" "));
 }
 
+// Douleur décrite par le PQRST : « Douleur constrictive dans la poitrine, cotée 7 sur 10, provoquée par l'effort. »
+// La cotation seule suffit à produire la phrase : une douleur cotée est toujours annoncée.
+function pqrstTxt(){
+  const q=multi("pq_q"),ql=raw("pq_qlib").trim(),r=raw("pq_r").trim().replace(/[.\s]+$/,""),
+        pr=raw("pq_p").trim().replace(/^(provoqu[ée]e? )?par\s+/i,"").replace(/[.\s]+$/,""),s=val("en");
+  const cote=s!==""&&s!==null&&!isNaN(s)&&+s>0;
+  if(!q.length&&!ql&&!r&&!pr&&!cote)return"";
+  let t="Douleur"+(q.length?" "+liste(q):"")+(ql?(q.length?", ":" ")+"décrite ainsi : "+ql.charAt(0).toLowerCase()+ql.slice(1):"");
+  if(r)t+=(ql?", ":" ")+r.charAt(0).toLowerCase()+r.slice(1);
+  if(cote)t+=(q.length||ql||r?", ":" ")+"cotée "+(+s)+" sur 10";
+  if(pr)t+=", provoquée par "+pr.charAt(0).toLowerCase()+pr.slice(1);
+  return t+".";
+}
 function demandeTxt(){
   const d=one("dem");if(!d)return"";
   let q=d==="__"?raw("demlib"):d;if(!q)return"";
@@ -1914,11 +1967,24 @@ function auFeminin(t){
 // est introduit par « présentant » ; un « présente » ou « présentant » saisi par habitude est retiré.
 // À l'écrit, quand le motif dit déjà « présentant une douleur thoracique », la suite s'enchaîne par « avec ».
 // Un adjectif (« somnolent ») reste tel quel : null est rendu et l'appelant garde l'ancienne rédaction.
-function etatLibre(mot){
-  const t=raw("aggravlib").trim().replace(/^(pr[ée]sent(e|ant)|avec)\s+/i,"").replace(/[.\s]+$/,"");
+const ARTICLES={"déformation":"une","douleur":"une","douleurs":"des","plaie":"une","plaies":"des","saignement":"un","hématome":"un","brûlure":"une",
+  "brûlures":"des","fracture":"une","œdème":"un","oedème":"un","gonflement":"un","hémorragie":"une","gêne":"une","difficulté":"une","difficultés":"des",
+  "trouble":"un","troubles":"des","perte":"une","vomissements":"des","nausées":"des","sueurs":"des","pâleur":"une","fièvre":"une","toux":"une",
+  "suspicion":"une","traumatisme":"un","malaise":"un","impotence":"une","paralysie":"une","faiblesse":"une","essoufflement":"un","céphalée":"une",
+  "céphalées":"des","vertiges":"des","entorse":"une","luxation":"une","coupure":"une","morsure":"une","contusion":"une","ecchymose":"une"};
+// Rend le constat avec son article (« déformation au poignet » → « une déformation au poignet »), ou "" si ce n'est pas un nom reconnu
+function avecArticle(t){
+  t=t.trim().replace(/^(pr[ée]sent(e|ant)|avec|qui pr[ée]sente)\s+/i,"").replace(/[.\s]+$/,"");
   if(!t)return"";
-  if(!/^(une?|des|du|de la|de l'|l'|le|la|les|plusieurs|deux|trois)\b|^(de l'|l')/i.test(t))return null;
-  return(mot||"présentant")+" "+t.charAt(0).toLowerCase()+t.slice(1);
+  t=t.charAt(0).toLowerCase()+t.slice(1);
+  if(/^(une?|des|du|de la|de l'|l'|le|la|les|plusieurs|deux|trois)\b|^(de l'|l')/i.test(t))return t;
+  const a=ARTICLES[t.split(/[\s,]/)[0]];
+  return a?a+" "+t:"";
+}
+function etatLibre(mot){
+  if(!raw("aggravlib").trim())return"";
+  const t=avecArticle(raw("aggravlib"));
+  return t?(mot||"présentant")+" "+t:null;
 }
 function constatsTxt(q){
   const ag=multi("aggrav"),vic=[],ops=[];
@@ -1962,6 +2028,9 @@ function reserve(){
   const g=one("acg");
   add("Anticoagulant / antiagrégant",g==="oui"?"OUI":g==="non"?"Non":g==="inconnu"?"Non déterminé":"");
   add("Allergies",raw("allerg"));
+  add("Hospitalisations",raw("hospit"));
+  add("Facteurs aggravants",liste(multi("fagg").concat(raw("fagglib")?[raw("fagglib")]:[])));
+  add("Douleur (PQRST)",pqrstTxt());
   add("Dernier repas",raw("dernierrepas"));
   add("Mode de vie",liste(multi("vie").map(v=>v==="vit seul"?(FEM()?"vit seule":"vit seul"):v==="dépendant"?(FEM()?"dépendante":"dépendant"):v==="grossesse"?"enceinte":v).concat(raw("viecontexte")?[raw("viecontexte")]:[])));
   add("Poids",raw("poids")?raw("poids")+" kg":"");
@@ -2237,7 +2306,9 @@ function renderXV(){
       '<div class="xl"><input type="number" min="1" inputmode="numeric" value="'+esc(b.nb)+'" data-xi="'+i+'" data-xk="nb" aria-label="Nombre">'+
       '<select data-xi="'+i+'" data-xk="gravite" aria-label="Catégorie">'+gopt(b.gravite)+'</select>'+
       '<select data-xi="'+i+'" data-xk="sexe" aria-label="Sexe">'+[["","Sexe"],["masculin","Homme"],["féminin","Femme"]].map(g=>'<option value="'+g[0]+'"'+(g[0]===(b.sexe||"")?" selected":"")+'>'+g[1]+'</option>').join("")+'</select>'+
-      '<button class="xdel" data-xd="'+i+'" aria-label="Supprimer">×</button></div>').join("");
+      '<button class="xdel" data-xd="'+i+'" aria-label="Supprimer">×</button></div>'+
+      '<div class="xl2"><input type="text" inputmode="numeric" data-xi="'+i+'" data-xk="age" value="'+esc(b.age||"")+'" placeholder="Âge" aria-label="Âge">'+
+      '<input type="text" data-xi="'+i+'" data-xk="pb" value="'+esc(b.pb||"")+'" placeholder="Ce qu\'elle présente : une douleur à la poitrine" aria-label="Ce que la victime présente"></div>').join("");
     renderTrX();
   } else {
     renderTrX();
@@ -2360,6 +2431,9 @@ function bilanHumain(){
     .concat(S.sapX.map(b=>({nb:Math.max(1,parseInt(b.nb)||1),gravite:b.gravite})));
   const G=[];
   L.forEach(v=>{const g=G.find(x=>x.gravite===v.gravite);if(g)g.nb+=v.nb;else G.push({nb:v.nb,gravite:v.gravite});});
+  // la plus grave d'abord : UA, UR, impliquées, décédées
+  const rg=g=>({UA:0,UR:1,IMP:2,DCD:3}[g.gravite]??4);
+  G.sort((a,b)=>rg(a)-rg(b));
   return G.map(g=>{const pl=g.nb>1?"s":"";
     // toujours le mot « victime » : 1 victime impliquée, 2 victimes UR, 1 victime décédée
     const cat=g.gravite==="IMP"?" impliquée"+pl:g.gravite==="DCD"?" décédée"+pl:g.gravite?" "+g.gravite:"";
@@ -2443,8 +2517,13 @@ function phraseAmbiance(){
     const l=[CTX_NEUTRE[ctx]||ctx,det?lc(det):""].concat(ops).filter(Boolean);
     if(l.length)p+=", "+l.join(", ");
     const dit=vic.map(x=>x==="victime inconsciente"?"inconscient":x==="victime incarcérée"?"incarcéré":x);
-    if(su||dit.length)p+=". "+(S.sapX.length?"La première victime est ":"La victime est ")+[su].concat(dit).filter(Boolean).join(", ");
-    return accorder(pt(p));
+    // plusieurs victimes : « une fille UR de 9 ans », la catégorie suit le nom
+    const et1=one("etat"),su1=S.sapX.length&&su&&(et1==="UA"||et1==="UR")?su.replace(/^(une? \S+)/,"$1 "+et1):su;
+    if(su||dit.length)p+=". "+(S.sapX.length?"La première victime est ":"La victime est ")+[su1].concat(dit).filter(Boolean).join(", ");
+    p=accorder(pt(p));
+    // les victimes suivantes, décrites après l'accord de la première pour ne pas mêler les genres
+    const suite=autresDecrites(false);
+    return suite.length?p.replace(/[.\s]+$/,"")+". "+suite.join(". "):p;
   }
   // Un signe présenté par une victime seule : « une douleur thoracique chez une femme de 26 ans à son domicile »
   let p=articuler(nat||"intervention");
@@ -2491,7 +2570,8 @@ function buildRadioSAP(){
   const suite=fin?fin.concat(clos?[FIN_RADIO]:[]):clos?[FIN_RADIO]:[cap(f.join(", "))||"[action]"];
   // La demande appartient au message d'ambiance ; le compte rendu dit qui était sur les lieux
   return[codisTete(),S.msg==="cr"?"":demandeRadio(),lieuRadio(),
-    "Nous sommes confrontés à "+desc+" ; bilan humain "+prov+" : "+bilanSAPRadio(),
+    S.sapX.length?"Nous sommes confrontés à "+desc.replace(/[.\s]+$/,"")+"\nBilan humain "+prov+" : "+bilanSAPRadio()
+                 :"Nous sommes confrontés à "+desc+" ; bilan humain "+prov+" : "+bilanSAPRadio(),
     surLieuxTxt()].filter(Boolean).concat(suite).join("\n");
 }
 function buildRadioR(){
@@ -2595,7 +2675,7 @@ function actionsAmb(){
 }
 function buildAmbSAP(){
   return[lieuCodis(),
-    "Secours à "+descSAP()+", "+(actionsAmb().join(", ")||"[action en cours]")+".",
+    ["Secours à "+descSAP()+", "+(actionsAmb().join(", ")||"[action en cours]")+"."].concat(autresDecrites(true)).join(" "),
     bilanEcritSAP(),surLieuxEcrit(),demandeLine()].filter(Boolean).join("\n");
 }
 
@@ -2682,6 +2762,31 @@ function victimeRang(rang,sexe,cat){
   if(cat==="IMP")d.push("impliquée");else if(cat==="DCD")d.push("décédée");else if(cat)d.push(cat);
   return"la "+ordinale(rang)+" victime"+(d.length?", "+d.join(", ")+",":"");
 }
+// Les autres victimes saisies une par une sont décrites comme la première, avant le bilan humain :
+// à la radio « La deuxième victime est un homme de 72 ans, présentant une douleur à la poitrine »,
+// à l'écrit « La deuxième victime est de sexe masculin, UA, âgée de 72 ans, présentant une douleur à la poitrine. »
+function autresDecrites(ecrit){
+  let rang=1;const L=[];
+  S.sapX.forEach(b=>{
+    const n=Math.max(1,parseInt(b.nb)||1);rang+=n;
+    const age=parseInt(b.age)||0,pb=(b.pb||"").trim().replace(/^pr[ée]sent(e|ant)\s+/i,"").replace(/[.\s]+$/,"");
+    if(n!==1||(!b.sexe&&!age&&!pb))return;
+    const fem=b.sexe!=="masculin",pres=pb?"présentant "+(avecArticle(pb)||pb.charAt(0).toLowerCase()+pb.slice(1)):"";
+    const cat=b.gravite==="UA"||b.gravite==="UR"?" "+b.gravite:b.gravite==="IMP"?" impliquée":b.gravite==="DCD"?" décédée":"";
+    if(ecrit){
+      const d=[];
+      if(b.sexe)d.push("de sexe "+b.sexe);
+      if(b.gravite==="IMP")d.push("impliquée");else if(b.gravite==="DCD")d.push("décédée");else if(b.gravite)d.push(b.gravite);
+      if(age)d.push("âgée de "+age+" ans");
+      if(pres)d.push(pres);
+      L.push("La "+ordinale(rang)+" victime est "+d.join(", ")+".");
+    } else {
+      const nom=!b.sexe?"une victime":age&&age<15?(fem?"une fille":"un garçon"):(fem?"une femme":"un homme");
+      L.push("La "+ordinale(rang)+" victime est "+nom+cat+(age?" de "+age+" ans":"")+(pres?", "+pres:""));
+    }
+  });
+  return L;
+}
 function victimeP(){
   if(!S.sapX.length)return"la victime";
   const et=one("etat"),sx=raw("sexe");
@@ -2716,7 +2821,7 @@ function finRadioSAP(){
 function buildCrSAP(){
   const g=raw("gestes");
   return[lieuCr(),
-    "À notre arrivée, nous sommes confrontés à "+descSAP()+"."+(g?" "+pt(cap(g)):""),
+    ["À notre arrivée, nous sommes confrontés à "+descSAP()+"."+(g?" "+pt(cap(g)):"")].concat(autresDecrites(true)).join(" "),
     bilanEcritSAP(),surLieuxEcrit(),blocActionsSAP(),blocDevenirSAP(),
     enCours()?(actionsAmb().length?cap(actionsAmb().join(", "))+".":""):FIN_SP].filter(Boolean).join("\n");
 }
@@ -2795,9 +2900,8 @@ function renderComp(){
 }
 function buildComp(){
   const r=S.type==="ROUTIER",ecrit=S.sup==="ecrit",motif=raw("compLib");
-  const bilan="Bilan humain provisoire : "+(r?(ecrit?bilanRAmb():bilanRAmbRadio()):bilanHumain());
-  if(ecrit)return["Message complémentaire — "+lieuCodis(),demandeComp()+".",bilan+".",motif?pt(cap(motif)):""].filter(Boolean).join("\n");
-  return[codisTete(),lieuRadio(),demandeComp(),bilan,motif?cap(motif):""].filter(Boolean).join("\n");
+  if(ecrit)return["Message complémentaire — "+lieuCodis(),demandeComp()+".",motif?pt(cap(motif)):""].filter(Boolean).join("\n");
+  return[codisTete(),lieuRadio(),demandeComp(),motif?cap(motif):""].filter(Boolean).join("\n");
 }
 function analyseComp(){
   const W=[];
@@ -3000,7 +3104,7 @@ function rendre(){
   setq("fr",qual("fr",val("fr")));setq("spo2",qual("spo2",val("spo2")));
   setq("fc",qual("fc",val("fc")));setq("pa",qualPA());
   setq("trc",qual("trc",val("trc")));setq("temp",qual("temp",val("temp")));
-  setq("gly",qual("gly",val("gly")));setq("en",qual("en",val("en")));
+  setq("gly",qual("gly",glyGL()));setq("en",qual("en",val("en")));
   setq("gcs",g?qual("gcs",g):null);
 
   $("#pedbox").innerHTML=ped?
@@ -3478,7 +3582,48 @@ function passer(k){
   else noter((k==="cr"?"Compte rendu":"Ambiance")+" · "+supTxt(),$("#out").value);
   S.passe[k]=true;sauver();ecranV2("accueil");toast(k==="samu"?"Bilan noté comme passé":"Message noté comme passé");
 }
+// ── Écran du bilan SAMU : l'ordre de la maquette, obtenu en déplaçant les rubriques existantes.
+// Chaque déplacement est noté pour que le mode d'essai puisse remettre l'écran d'origine.
+const deplaces=[];
+function deplacer(el,parent,avant){deplaces.push({el,parent:el.parentNode,suivant:el.nextSibling});parent.insertBefore(el,avant||null);}
+function repliable(id,num,titre,idEtat,corps,avant){
+  const d=document.createElement("details");d.className="sec";d.id=id;
+  d.innerHTML='<summary><span class="num">'+num+'</span><span class="st"><b>'+titre+'</b><em id="'+idEtat+'"></em></span><span class="chev">▼</span></summary>';
+  avant.parentNode.insertBefore(d,avant);
+  const origine=corps.parentNode;
+  deplacer(corps,d,null);origine.hidden=true;
+  deplaces.push({el:d,retirer:true,montrer:origine});
+  return d;
+}
+function ordonnerBilan(){
+  const cst=$("#spo2").closest(".sec"),exam=$("#pup").closest(".sec"),terrain=$("#atcd").closest(".sec"),regul=$("#dem").closest(".sec"),pq=$("#sPQ"),P=pq.parentNode;
+  // 3 · anticoagulant : sa propre rubrique, juste après les constantes
+  const acg=document.createElement("div");acg.className="sec";acg.id="secAcg";acg.innerHTML='<div class="bd"></div>';
+  P.insertBefore(acg,pq);deplaces.push({el:acg,retirer:true});
+  deplacer($("#lk-a"),acg.firstChild,null);$("#lk-a").style.marginTop="0";
+  // 4 · examen clinique, repliable, avant la douleur ; 6 · MHTAA, repliable ; 7 · régulation juste après
+  deplacer(exam,P,pq);
+  repliable("dEx","4","Examen clinique","exEtat",exam.querySelector(".bd"),exam);
+  repliable("dMh","6","Antécédents : MHTAA","mhEtat",terrain.querySelector(".bd"),terrain);
+  deplacer(regul,P,terrain.nextSibling);
+  // température et glycémie avec les constantes ; l'échelle de la douleur dans le PQRST
+  const mes=$("#mesDet");
+  deplacer($("#temp").closest(".cst"),mes.parentNode,mes);
+  deplacer($("#gly").closest(".cst"),mes.parentNode,mes);
+  deplacer($("#en").closest(".cst"),$("#pqS"),null);
+}
+function majEtatsBilan(){
+  if(!$("#exEtat"))return;
+  const n=multi("pup").length+multi("teg").length+multi("abdo").length+(raw("exlibre")?1:0);
+  $("#exEtat").textContent=n?n+" constat"+(n>1?"s":"")+" saisi"+(n>1?"s":""):"Rien de saisi : pupilles, peau, ventre";
+  const m=[multi("atcd-c").length||raw("atcd"),raw("hospit"),raw("ttt"),raw("allerg"),multi("fagg").length||raw("fagglib")].filter(Boolean).length;
+  $("#mhEtat").textContent=m?m+" rubrique"+(m>1?"s":"")+" sur 5 renseignée"+(m>1?"s":""):"Rien de saisi : maladies, hospitalisations, traitements, allergies, facteurs aggravants";
+  $("#pqEtat").textContent=pqrstTxt()||"Rien de saisi : provoquée par, qualité, région, sévérité, temps";
+  $("#pqT").textContent=quandTxt()?cap(quandTxt())+", repris de l'étape 1.":"À renseigner à l'étape 1, « Depuis quand ».";
+}
 function initV2(){
+  ordonnerBilan();
+  { const base=rendre; rendre=function(){base.apply(this,arguments);majEtatsBilan();}; }
   // Le choix de l'engin et du type d'intervention se fait à l'accueil ; les réglages ont leur écran
   $("#accTop").appendChild($("#typeSeg").closest(".f"));
   $("#v-reglages").appendChild($("#s10"));
@@ -3508,6 +3653,11 @@ function initV2(){
 // Mode d'essai : rend la navigation d'origine pour faire tourner les tests du moteur sur ce fichier
 function modeEssai(){
   essai=true;document.body.classList.add("essai");document.body.classList.remove("e-samu","e-ecran");
+  // l'écran du bilan reprend sa disposition d'origine, dans l'ordre inverse des déplacements
+  while(deplaces.length){const d=deplaces.pop();
+    if(d.retirer){if(d.montrer)d.montrer.hidden=false;d.el.remove();}
+    else d.parent.insertBefore(d.el,d.suivant);}
+  $("#lk-a").style.marginTop="";
   $("#v-accueil").hidden=false;$("#v-reglages").hidden=false;$("#passeV2").hidden=true;
   $(".brand b").textContent="MESSAGES OPS";
   vue("saisie");phase("arr");
