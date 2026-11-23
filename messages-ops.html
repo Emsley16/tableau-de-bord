@@ -959,7 +959,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23q";
+const VERSION="2026.11.23r";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -3748,6 +3748,9 @@ function majRoutier(){
   if($("#secCharg"))$("#secCharg").hidden=!r;
   const cdg=x=>/^chef de groupe$/i.test(x);
   $("#cdgMode").hidden=!(S.msg==="comp"?compList().some(cdg):S.msg==="ambiance"&&renfList().some(cdg));
+  // le choix se place juste sous les demandes : celles de l'ambiance, ou celles du complément
+  const sous=S.msg==="comp"?$("#compRenf"):$("#renf");
+  if(sous&&$("#cdgMode").previousElementSibling!==sous)sous.parentNode.insertBefore($("#cdgMode"),sous.nextSibling);
   const w=$("#wC"),deja=$("#wVsr");
   if(deja)deja.remove();
   if(w&&vsrManque())w.insertAdjacentHTML("afterbegin",'<div class="w am" id="wVsr"><span><b>Victime incarcérée : aucun VSR sur les lieux ni demandé.</b> <button class="btn2" id="ajVsr" style="margin-top:6px">Ajouter le VSR à la demande</button></span></div>');

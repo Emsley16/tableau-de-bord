@@ -96,7 +96,8 @@ with sync_playwright() as pw:
              ["à l'adresse : [adresse]" in page.locator("#out").input_value(), "Adresse manquante" in page.locator("#wC").inner_text()], [True, True])
     saisir_arrivee(page)
     page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
-    verifier("Chef de groupe demandé : le choix « pour action » ou « pour information » apparaît", visible(page, "#cdgMode"), True)
+    verifier("Chef de groupe demandé : le choix « pour action » ou « pour information » apparaît, juste sous les demandes",
+             [visible(page, "#cdgMode"), page.evaluate("document.querySelector('#cdgMode').previousElementSibling.id")], [True, "renf"])
     page.locator("#cdgMode .chip", has_text="pour information").click()
     verifier("Chef de groupe pour information : dit dans la demande", page.locator("#out").input_value().split("\n")[1], "Je demande : SMUR et Chef de Groupe pour information")
     page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
@@ -213,6 +214,12 @@ with sync_playwright() as pw:
     verifier("Routier : la rubrique accident apparaît dans l'ambiance", [visible(page, "#sR"), visible(page, "#actR")], [True, True])
     verifier("Routier : le chargement est une rubrique à part, après « Je fais »",
              page.evaluate("(()=>{const y=q=>document.querySelector(q).getBoundingClientRect().top;return y('#actR')<y('#charg')&&!!document.querySelector('#secCharg #charg');})()"), True)
+    page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
+    ecart = page.evaluate("(()=>{const y=q=>document.querySelector(q).getBoundingClientRect();return Math.round(y('#cdgMode').top-y('#renf').bottom);})()")
+    verifier("Routier : le choix du chef de groupe apparaît collé aux demandes", [visible(page, "#cdgMode"), 0 <= ecart < 40], [True, True])
+    page.locator("#cdgMode .chip", has_text="pour action").click()
+    verifier("Routier : chef de groupe pour action, dit dans la demande", page.locator("#out").input_value().split("\n")[1], "Je demande : Chef de Groupe pour action")
+    page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
     verifier("Routier : rien de coché d'office, ni demande ni action",
              [page.locator("#out").input_value().split("\n")[1], page.evaluate("multi('actR').length + multi('actRf').length")], ["Secours suffisants", 0])
     page.locator("#aHome").click()
