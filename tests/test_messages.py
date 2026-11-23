@@ -137,7 +137,7 @@ with sync_playwright() as pw:
 
     # Radio, même intervention : groupe horaire en tête, régulation et transport en dernière ligne
     verifier("Compte rendu radio — régulation puis transport", "\n".join(message(page, "cr", "radio").split("\n")[3:]),
-             "Nous sommes confrontés à une douleur thoracique chez une femme, UR, de 26 ans ; bilan humain définitif : 1 malade\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans ; bilan humain définitif : 1 victime UR\n"
              "Après régulation CRRA 15, la victime est transportée par VSAV médicalisé sur CH Cognac")
     verifier("Compte rendu radio — en-tête", message(page, "cr", "radio").split("\n")[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1415")
     vue(page, "saisie")
@@ -293,13 +293,18 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1205\n"
              "Secours suffisants\n"
              "Opération de secours sur la commune de Gensac la pallue à l'adresse indiquée\n"
-             "Nous sommes confrontés à un arrêt cardio-respiratoire chez une femme de 63 ans à son domicile ; bilan humain définitif : 1 décédé\n"
+             "Nous sommes confrontés à un arrêt cardio-respiratoire chez une femme de 63 ans à son domicile ; bilan humain définitif : 1 victime décédée\n"
              "Sur les lieux : SMUR\n"
              "RCP arrêtée sur décision du médecin du SMUR de COGNAC, qui déclare la victime décédée (DCD) à 11h52. Certificat de décès établi sans obstacle médico-légal. Aucune manœuvre de réanimation engagée par les moyens sapeurs-pompiers.\n"
              "Le corps est laissé à la responsabilité de la famille, qui ne souhaite pas le déplacement d'un élu.\n"
              "Fin d'intervention pour les moyens sapeurs-pompiers")
-    verifier("Cas n° 2 — ambiance radio : UA après « femme »", message(page, "ambiance", "radio").split("\n")[3],
-             "Nous sommes confrontés à un arrêt cardio-respiratoire chez une femme, UA, de 63 ans à son domicile ; bilan humain provisoire : 1 victime en ACR")
+    verifier("Cas n° 2 — ambiance radio : la nature dit l'ACR, le bilan humain dit UA", message(page, "ambiance", "radio").split("\n")[3],
+             "Nous sommes confrontés à un arrêt cardio-respiratoire chez une femme de 63 ans à son domicile ; bilan humain provisoire : 1 victime UA")
+    # ACR constaté sur une autre nature : l'état suit le sexe, il ne figure pas au bilan humain
+    nature(page, "Chute")
+    puce(page, "aggrav", "ACR")
+    verifier("Radio — « une femme en ACR, de 63 ans », bilan humain limité à la catégorie", message(page, "ambiance", "radio").split("\n")[3],
+             "Nous sommes confrontés à une chute chez une femme en ACR, de 63 ans à son domicile ; bilan humain provisoire : 1 victime UA")
     verifier("Aucune erreur JavaScript (cas n° 2)", json.dumps(err), "[]")
     page.close()
 
@@ -322,12 +327,12 @@ with sync_playwright() as pw:
              "CODIS 16 de VSAV 1 Cognac\n"
              "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire\n"
              "Opération de secours sur la commune de Chateaubernard à l'adresse indiquée\n"
-             "Nous sommes confrontés à une suspicion intoxication co chez un homme, UA, de 54 ans à son domicile, somnolent ; bilan humain provisoire : 1 malade UA, 2 malades UR\n"
+             "Nous sommes confrontés à une suspicion intoxication co chez un homme de 54 ans à son domicile, somnolent ; bilan humain provisoire : 1 victime UA, 2 victimes UR\n"
              "En cours de bilan")
     verifier("Cas n° 3 — ambiance écrite", message(page, "ambiance"),
              "Opération de secours sur la commune de CHATEAUBERNARD.\n"
              "Secours à une victime malade de sexe masculin, UA, âgée de 54 ans, à son domicile, présentant une suspicion intoxication co, somnolente, bilan et régulation en cours.\n"
-             "Bilan humain provisoire : 1 malade UA, 2 malades UR.\n"
+             "Bilan humain provisoire : 1 victime UA, 2 victimes UR.\n"
              "Je demande : SMUR, Chef de Groupe, GRDF et VSAV supplémentaire.")
     verifier("Aucune erreur JavaScript (cas n° 3)", json.dumps(err), "[]")
     page.close()
@@ -369,7 +374,7 @@ with sync_playwright() as pw:
     page.locator("#xv select[data-xk=gravite]").nth(1).select_option("IMP")
     amb = message(page, "ambiance").split("\n")
     verifier("Nourrisson", amb[1], "Secours à une victime malade de sexe masculin, UR, âgée de 8 mois, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
-    verifier("Plusieurs victimes — bilan humain récapitulé et regroupé", amb[2], "Bilan humain provisoire : 2 malades UR, 2 impliqués.")
+    verifier("Plusieurs victimes — bilan humain récapitulé et regroupé", amb[2], "Bilan humain provisoire : 2 victimes UR, 2 victimes impliquées.")
     verifier("Autres victimes — bouton sous la victime, hors rubrique repliée",
              str(page.evaluate("!document.getElementById('addxv').closest('details') && document.getElementById('age').closest('.sec').contains(document.getElementById('addxv'))")), "True")
     verifier("Aucune erreur JavaScript (scénario 3)", json.dumps(err), "[]")
@@ -514,7 +519,7 @@ with sync_playwright() as pw:
     page.locator("#etat .chip[data-v=IMP]").click()
     verifier("SAP écrit — impliqué", message(page, "ambiance").split("\n")[1],
              "Secours à une victime impliquée de sexe masculin, âgée de 30 ans, bilan et régulation en cours.")
-    verifier("SAP radio — impliqué", message(page, "ambiance", "radio").split("\n")[3][-36:], "bilan humain provisoire : 1 impliqué")
+    verifier("SAP radio — impliqué", message(page, "ambiance", "radio").split("\n")[3].split(" ; ")[1], "bilan humain provisoire : 1 victime impliquée")
     vue(page, "saisie")
     page.locator("#etat .chip[data-v=IMP]").click()   # retire la catégorie
     puce(page, "aggrav", "ACR")
@@ -594,15 +599,15 @@ with sync_playwright() as pw:
         R = {}
         page, err = ouvrir(nav, url)
         # état de départ, sans rien saisir
-        R["vide ambiance"] = message(page, "ambiance", "radio")
+        R["_vide ambiance"] = message(page, "ambiance", "radio")
         nature(page, "Douleur thoracique")
         victime(page, 26, "Femme")
         page.fill("#commune", "Javrezac")
         page.locator("#etat .chip[data-v=UR]").click()
         assurer(page, "ctxlieu", "Domicile")
         puce(page, "aggrav", "Relevage difficile")
-        R["SAP ambiance"] = message(page, "ambiance", "radio")
-        R["SAP ambiance — contrôles"] = page.locator("#wC").inner_text()
+        R["_SAP ambiance"] = message(page, "ambiance", "radio")
+        R["_SAP ambiance — contrôles"] = page.locator("#wC").inner_text()
         vue(page, "saisie")
         page.locator("#renf .chip", has_text="SMUR").first.click()
         puce(page, "adrind", "Adresse indiquée au départ")
@@ -611,11 +616,12 @@ with sync_playwright() as pw:
         page.locator("#codDet summary").click()
         puce(page, "qual", "En ACR")
         page.locator("#addxv").click()
-        page.locator("#xv select[data-xk=qualif]").select_option("victime indemne")
+        if page.locator("#xv select[data-xk=qualif]").count():   # la référence demandait une qualification
+            page.locator("#xv select[data-xk=qualif]").select_option("victime indemne")
         page.locator("#xv select[data-xk=gravite]").select_option("")
         page.fill("#faisMan", "Protection thermique de la victime")
-        R["SAP ambiance ACR"] = message(page, "ambiance", "radio")
-        R["SAP ambiance ACR — contrôles"] = page.locator("#wC").inner_text()
+        R["_SAP ambiance ACR"] = message(page, "ambiance", "radio")
+        R["_SAP ambiance ACR — contrôles"] = page.locator("#wC").inner_text()
         vue(page, "saisie")
         ecran(page, "fin")
         page.fill("#vect", "VSAV")
@@ -660,18 +666,31 @@ with sync_playwright() as pw:
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)
     for k in r1:
         if not k.startswith("_"):
-            # la référence ne plaçait pas la catégorie après le sexe et la répétait dans le bilan : on compare hors catégorie
-            sans = lambda t: re.sub(r",? \b(UA|UR)\b,?", "", t)
-            verifier("Radio inchangée (hors place de la catégorie) — " + k, sans(r2[k]), sans(r1[k]))
-    verifier("Radio — catégorie après le sexe", r2["SAP ambiance"].split("\n")[3],
-             "Nous sommes confrontés à une douleur thoracique chez une femme, UR, de 26 ans à son domicile, relevage difficile ; bilan humain provisoire : 1 malade")
+            verifier("Radio routier inchangée — " + k, r2[k], r1[k])
+    verifier("Radio SAP — message vide", r2["_vide ambiance"],
+             "CODIS 16 de VSAV 1 Cognac\n"
+             "Secours suffisants\n"
+             "Opération de secours sur la commune de [commune] à l'adresse indiquée\n"
+             "Nous sommes confrontés à [description] ; bilan humain provisoire : 1 victime\n"
+             "En cours de bilan")
+    verifier("Radio SAP — ambiance", r2["_SAP ambiance"],
+             "CODIS 16 de VSAV 1 Cognac\n"
+             "Secours suffisants\n"
+             "Opération de secours sur la commune de Javrezac à l'adresse indiquée\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans à son domicile, relevage difficile ; bilan humain provisoire : 1 victime UR\n"
+             "En cours de bilan")
+    verifier("Radio SAP — ambiance, ACR constaté et seconde victime", r2["_SAP ambiance ACR"],
+             "CODIS 16 de VSAV 1 Cognac\n"
+             "Je demande : SMUR\n"
+             "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme en ACR, de 26 ans à son domicile, relevage difficile ; bilan humain provisoire : 1 victime UR, 1 victime\n"
+             "En cours de bilan, procédons à la RCP, protection thermique de la victime")
     verifier("Radio — compte rendu SAP : le devenir remplace l'action en cours", r2["_cr_sap"],
              "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
              "Je demande : SMUR\n"
              "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
-             "Nous sommes confrontés à une douleur thoracique chez une femme, UR, de 26 ans à son domicile, relevage difficile ; bilan humain définitif : 1 victime en ACR UR, 1 victime indemne\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme en ACR, de 26 ans à son domicile, relevage difficile ; bilan humain définitif : 1 victime UR, 1 victime\n"
              "La victime est transportée par VSAV sur CH Cognac")
-    print("\n  Exemple, message radio conservé :\n    " + r2["SAP ambiance"].replace("\n", "\n    "))
     verifier("Aucune erreur JavaScript (scénario 6)", json.dumps(e1 + e2), "[]")
 
     # Bascule Radio / Écrit : par défaut radio, retour à radio à chaque nouvelle intervention
