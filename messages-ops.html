@@ -827,7 +827,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23c";
+const VERSION="2026.11.23d";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1814,6 +1814,15 @@ function motifTxt(q){
   return"présentant "+a;
 }
 // Éléments cochés à l'arrivée : ceux qui décrivent la victime, puis ceux qui pèsent sur l'opération
+// « somnolent » → « somnolente » : dans le message écrit, le sujet est toujours « une victime »
+const AU_FEMININ=[["somnolent","somnolente"],["inconscient","inconsciente"],["conscient","consciente"],["agité","agitée"],
+  ["confus","confuse"],["désorienté","désorientée"],["alcoolisé","alcoolisée"],["allongé","allongée"],["assis","assise"],
+  ["tombé","tombée"],["retrouvé","retrouvée"],["coincé","coincée"],["choqué","choquée"],["essoufflé","essoufflée"],
+  ["fatigué","fatiguée"],["nauséeux","nauséeuse"],["obnubilé","obnubilée"],["prostré","prostrée"],["agressif","agressive"]];
+function auFeminin(t){
+  AU_FEMININ.forEach(([m,f])=>{t=t.replace(new RegExp("(^|[^a-zà-ÿ])"+m+"(?![a-zà-ÿ])","gi"),(x,avant)=>avant+f);});
+  return t;
+}
 function constatsTxt(q){
   const ag=multi("aggrav"),vic=[],ops=[];
   const grave=/ACR|mort manifeste/.test(q.c);
@@ -1827,7 +1836,7 @@ function constatsTxt(q){
   if(multi("vie").includes("grossesse"))vic.push("grossesse en cours");
   if(ag.includes("accès difficile"))ops.push("accès difficile");
   if(ag.includes("relevage difficile"))ops.push("relevage difficile");
-  const libre=raw("aggravlib");if(libre)ops.push(lc(libre));
+  const libre=raw("aggravlib");if(libre)ops.push(auFeminin(lc(libre)));
   return{vic,ops};
 }
 function descSAP(){
@@ -2206,8 +2215,24 @@ function surLieuxTxt(){
   if(raw("surlieuxLib"))a.push(lc(raw("surlieuxLib")));
   return a.length?"Sur les lieux : "+liste(a):"";
 }
-function autresVictimes(){
-  return S.sapX.length?"Autres victimes : "+S.sapX.map(qualifText).join(", ")+".":"";
+// Bilan humain du secours à personne : victime principale puis autres victimes,
+// regroupées quand elles ont la même qualification et la même catégorie (« 3 malades UR »).
+// Compte rendu d'un décès : « 1 décédé », quelle que soit la catégorie relevée à l'arrivée.
+function bilanHumain(sansCategorie){
+  const deces=S.msg==="cr"&&devenirP()==="dcd";
+  const L=[{nb:1,qualif:qualifP(),gravite:deces?"DCD":sansCategorie?"":one("etat")}]
+    .concat(S.sapX.map(b=>({nb:Math.max(1,parseInt(b.nb)||1),qualif:b.qualif,gravite:b.gravite})));
+  const G=[];
+  L.forEach(v=>{
+    const cle=(v.gravite==="IMP"||v.gravite==="DCD")?v.gravite:v.qualif+"|"+v.gravite;
+    const g=G.find(x=>x.cle===cle);
+    if(g)g.nb+=v.nb;else G.push({cle,nb:v.nb,qualif:v.qualif,gravite:v.gravite});
+  });
+  return G.map(qualifText).join(", ");
+}
+// Écrit : le bilan humain n'est récapitulé que s'il y a plusieurs victimes
+function bilanEcritSAP(){
+  return S.sapX.length?"Bilan humain "+(S.msg==="cr"?"définitif":"provisoire")+" : "+bilanHumain(false)+".":"";
 }
 function victimesR(){
   const sx=raw("sexe")==="Femme"?"féminin":raw("sexe")==="Homme"?"masculin":"";
@@ -2278,10 +2303,10 @@ function phraseAmbiance(){
   return accorder(pt(p));
 }
 function bilanSAPRadio(){
-  // Bilan définitif d'un décès : « 1 décédé », quelle que soit la catégorie relevée à l'arrivée
-  let p=qualifText({nb:1,qualif:qualifP(),gravite:S.msg==="cr"&&devenirP()==="dcd"?"DCD":one("etat")});
-  // le transport est annoncé en dernière ligne du compte rendu (finRadioSAP)
-  return[p].concat(S.sapX.map(qualifText)).join(", ");
+  // Victime seule : UR ou UA vient d'être dit après le sexe, le bilan ne le répète pas.
+  // Plusieurs victimes : le bilan récapitule toutes les catégories.
+  const et=one("etat"),dite=(raw("sexe")||val("age"))&&(et==="UA"||et==="UR");
+  return bilanHumain(!S.sapX.length&&dite);
 }
 function bilanRAmbRadio(){
   const V=victimesR(),n=V.length,ua=V.filter(v=>v.etat==="UA").length,inc=V.filter(v=>v.inc).length;
@@ -2418,7 +2443,7 @@ function actionsAmb(){
 function buildAmbSAP(){
   return[lieuCodis(),
     "Secours à "+descSAP()+", "+(actionsAmb().join(", ")||"[action en cours]")+".",
-    autresVictimes(),surLieuxEcrit(),demandeLine()].filter(Boolean).join("\n");
+    bilanEcritSAP(),surLieuxEcrit(),demandeLine()].filter(Boolean).join("\n");
 }
 
 /* Compte rendu — secours à personne */
@@ -2511,7 +2536,7 @@ function buildCrSAP(){
   const g=raw("gestes");
   return[lieuCr(),
     "À notre arrivée, nous sommes confrontés à "+descSAP()+"."+(g?" "+pt(cap(g)):""),
-    autresVictimes(),surLieuxEcrit(),blocActionsSAP(),blocDevenirSAP(),
+    bilanEcritSAP(),surLieuxEcrit(),blocActionsSAP(),blocDevenirSAP(),
     enCours()?(actionsAmb().length?cap(actionsAmb().join(", "))+".":""):FIN_SP].filter(Boolean).join("\n");
 }
 
