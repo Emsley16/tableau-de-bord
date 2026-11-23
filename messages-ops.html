@@ -434,7 +434,8 @@ details.sub[open]>summary::before{content:"－ "}
 <div class="sec"><div class="sh c">CODIS</div><div class="bd cod">
   <div class="f"><span class="gl">Déjà sur les lieux</span>
     <div class="chips" id="surlieux" data-multi></div>
-    <input type="text" id="surlieuxLib" placeholder="Autre service sur les lieux" style="margin-top:8px"></div>
+    <input type="text" id="surlieuxLib" placeholder="Autre service sur les lieux" style="margin-top:8px">
+    <button class="btn2 renfArr" hidden>Les renforts demandés sont arrivés</button></div>
   <div class="f"><span class="gl">Je demande</span>
     <div class="chips" id="renf"></div></div>
   <div class="f"><span class="gl">Je fais</span>
@@ -691,6 +692,8 @@ details.sub[open]>summary::before{content:"－ "}
     <div class="row"><input type="text" id="gh" inputmode="numeric" maxlength="5" placeholder="830, 1415…"><button class="btn2" id="ghNow" style="margin-top:0">Heure actuelle</button></div>
     <span class="mini" id="ghHint"></span>
     <span class="mini">Le même champ se trouve dans l'onglet CODIS, au-dessus du compte rendu.</span></div>
+  <div class="f renfArrBox" hidden><button class="btn2 renfArr" style="margin-top:0">Les renforts demandés sont arrivés</button>
+    <span class="mini">Fait passer les services cochés dans « Je demande » vers « Sur les lieux », pour que le compte rendu dise qui était là. Vous pouvez ensuite préciser (VSAV de Jarnac) dans l'écran 1 · Arrivée.</span></div>
   <div class="f"><span class="gl">Où en est l'intervention</span>
     <div class="chips" id="finInter" data-one></div>
     <span class="mini">Terminée : le compte rendu se clôt par « Fin d'intervention pour les moyens sapeurs-pompiers ». Encore en cours : il se clôt par ce que vous faites (« Nous procédons à… »).</span></div>
@@ -716,6 +719,10 @@ details.sub[open]>summary::before{content:"－ "}
   <div class="f" id="trBox"><span class="gl">Transport</span>
     <div class="g2"><input type="text" id="vect" placeholder="Vecteur : VSAV, SMUR"><input type="text" id="dest" placeholder="Destination : CH Cognac"></div>
     <span class="mini">Victime principale, repris aussi dans le compte rendu radio. Les autres victimes routières ont leur propre transport dans « Plus » de l'écran Arrivée.</span></div>
+
+  <div class="f" id="trXBox"><span class="gl">Transport des autres victimes</span>
+    <div id="trX"></div>
+    <span class="mini">Un vecteur et une destination par ligne de l'écran Arrivée. Laisser vide si le groupe n'est pas transporté.</span></div>
 
   <div class="f" id="dcdBox"><span class="gl">Décès</span>
     <div class="row"><input type="time" id="hdc" aria-label="Heure du décès"><button class="btn2" id="hdcNow" style="margin-top:0">Maintenant</button></div>
@@ -769,7 +776,13 @@ details.sub[open]>summary::before{content:"－ "}
   </div>
   <div class="seg big" id="msgSeg">
     <button data-m="ambiance" aria-pressed="true">Ambiance</button>
+    <button data-m="comp" aria-pressed="false">Complément</button>
     <button data-m="cr" aria-pressed="false">Compte rendu</button>
+  </div>
+  <div id="compBox" hidden>
+    <div class="olbl" style="margin-top:12px"><span>Message complémentaire : une demande après l'ambiance</span></div>
+    <input type="text" id="compLib" placeholder="Motif, si utile : aggravation, seconde victime découverte…">
+    <span class="mini">Reprend ce qui est coché dans « Je demande » (écran 1 · Arrivée). Décochez d'abord ce qui est déjà arrivé.</span>
   </div>
   <div id="ghCBox" hidden>
     <div class="olbl" style="margin-top:12px"><span>Groupe horaire du compte rendu</span></div>
@@ -827,7 +840,7 @@ details.sub[open]>summary::before{content:"－ "}
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23e";
+const VERSION="2026.11.23f";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2140,7 +2153,9 @@ function renderXV(){
       '<div class="xl"><input type="number" min="1" inputmode="numeric" value="'+esc(b.nb)+'" data-xi="'+i+'" data-xk="nb" aria-label="Nombre">'+
       '<select data-xi="'+i+'" data-xk="gravite" aria-label="Catégorie">'+gopt(b.gravite)+'</select>'+
       '<button class="xdel" data-xd="'+i+'" aria-label="Supprimer">×</button></div>').join("");
+    renderTrX();
   } else {
+    renderTrX();
     $("#xv").innerHTML=S.rX.map((b,i)=>
       '<div class="rc"><div class="rc-h">Victime '+(i+2)+'<button data-xd="'+i+'" aria-label="Supprimer">×</button></div>'+
       '<div class="rg"><select data-xi="'+i+'" data-xk="sexe">'+sopt(b.sexe)+'</select>'+
@@ -2150,6 +2165,17 @@ function renderXV(){
       '<input type="text" data-xi="'+i+'" data-xk="ch" value="'+esc(b.ch)+'" placeholder="Destination (CR)"></div>'+
       '<label class="ck"><input type="checkbox" data-xi="'+i+'" data-xk="inc"'+(b.inc?" checked":"")+'> Incarcérée</label></div>').join("");
   }
+}
+// Écran Fin : vecteur et destination de chaque groupe d'autres victimes (secours à personne)
+function libelleGroupe(b){
+  const n=Math.max(1,parseInt(b.nb)||1),pl=n>1?"s":"";
+  return n+" victime"+pl+(b.gravite==="IMP"?" impliquée"+pl:b.gravite==="DCD"?" décédée"+pl:b.gravite?" "+b.gravite:"");
+}
+function renderTrX(){
+  $("#trX").innerHTML=S.type!=="SAP"?"":S.sapX.map((b,i)=>
+    '<span class="mini" style="margin-top:8px">'+libelleGroupe(b)+'</span>'+
+    '<div class="g2"><input type="text" data-xi="'+i+'" data-xk="vecteur" value="'+esc(b.vecteur||"")+'" placeholder="Vecteur : VSAV de Jarnac">'+
+    '<input type="text" data-xi="'+i+'" data-xk="ch" value="'+esc(b.ch||"")+'" placeholder="Destination : CH Cognac"></div>').join("");
 }
 function majXV(e){
   const t=e.target,i=t.dataset.xi,k=t.dataset.xk;if(i===undefined||!k)return;
@@ -2211,8 +2237,21 @@ function qualifText(b){
 // « Sur les lieux : SMUR, forces de l'ordre et élu »
 function surLieuxTxt(){
   const sel=multi("surlieux"),a=SERVICES.filter(x=>sel.includes(x[1])).map(x=>x[1]);
-  if(raw("surlieuxLib"))a.push(lc(raw("surlieuxLib")));
+  raw("surlieuxLib").split(/\s*,\s*/).filter(Boolean).forEach(x=>a.push(lc(x)));
   return a.length?"Sur les lieux : "+liste(a):"";
+}
+// Les renforts demandés sont arrivés : ils quittent « Je demande » pour « Sur les lieux »
+function renfortsArrives(){
+  const dem=renfList().filter(x=>x!==NO_NEED);if(!dem.length)return;
+  const autres=raw("surlieuxLib").split(/\s*,\s*/).filter(Boolean);
+  dem.forEach(d=>{
+    const c=$$("#surlieux .chip").find(x=>x.dataset.v.toLowerCase()===d.toLowerCase());
+    if(c)c.setAttribute("aria-pressed","true");
+    else if(!autres.some(x=>x.toLowerCase()===d.toLowerCase()))autres.push(d);
+  });
+  $("#surlieuxLib").value=autres.join(", ");
+  S.renf[S.type]=[NO_NEED];$("#renfMan").value="";
+  renderRenf();rendre();toast("Renforts passés dans « Sur les lieux »");
 }
 // Bilan humain du secours à personne : il ne compte que par catégorie — impliqué, UR, UA, décédé.
 // Ni la qualification (malade, blessé) ni l'état constaté (ACR) n'y figurent.
@@ -2336,7 +2375,8 @@ function buildRadioSAP(){
   // Compte rendu : le devenir remplace l'action en cours ; intervention terminée, on le dit en dernier
   const fin=finRadioSAP(),clos=S.msg==="cr"&&one("finInter")==="fin";
   const suite=fin?fin.concat(clos?[FIN_RADIO]:[]):clos?[FIN_RADIO]:[cap(f.join(", "))||"[action]"];
-  return[codisTete(),demandeRadio(),lieuRadio(),
+  // La demande appartient au message d'ambiance ; le compte rendu dit qui était sur les lieux
+  return[codisTete(),S.msg==="cr"?"":demandeRadio(),lieuRadio(),
     "Nous sommes confrontés à "+desc+" ; bilan humain "+prov+" : "+bilanSAPRadio(),
     surLieuxTxt()].filter(Boolean).concat(suite).join("\n");
 }
@@ -2358,8 +2398,8 @@ function buildRadioR(){
   const acts=liste(ACTIONS_R.filter(a=>multi("actR").includes(a.id)).map(a=>a.phrase(n)))||"[action]";
   const prov=S.msg==="cr"?"définitif":"provisoire";
   // accidentTxt() : même formulation, avec le contexte et sa précision lorsqu'ils sont renseignés
-  const L=[codisTete(),demandeRadio(),lieuRadio(),
-    "Nous sommes confrontés à "+accidentTxt()];
+  const L=[codisTete()].concat(S.msg==="cr"?[]:[demandeRadio()],[lieuRadio(),
+    "Nous sommes confrontés à "+accidentTxt()]);
   if(acrRoutier())L.push(acrRoutier());
   if(ch)L.push(ch);
   L.push("Bilan humain "+prov+" : "+(S.msg==="cr"?bilanRListRadio():bilanRAmbRadio()));
@@ -2376,8 +2416,8 @@ function analyseRadio(){
   if(!raw("commune"))W.push(["am","Commune manquante."]);
   if(S.type==="ROUTIER"){
     const V=victimesR();
-    if(V.some(v=>v.etat==="UA")&&seul)W.push(["am","Victime UA avec « secours suffisants » seul : cohérence à vérifier."]);
-    if(V.some(v=>v.inc)&&!a.includes("VSR")&&!/d[ée]sincar/i.test(raw("renfMan"))&&raw("engin")!=="VSR")
+    if(S.msg!=="cr"&&V.some(v=>v.etat==="UA")&&seul)W.push(["am","Victime UA avec « secours suffisants » seul : cohérence à vérifier."]);
+    if(S.msg!=="cr"&&V.some(v=>v.inc)&&!a.includes("VSR")&&!/d[ée]sincar/i.test(raw("renfMan"))&&raw("engin")!=="VSR")
       W.push(["am","<b>Victime incarcérée sans VSR demandé.</b> Cohérence à vérifier."]);
     const col=COLLISIONS.find(c=>c.v===raw("collision"));
     if(col&&col.antag&&!raw("antag"))W.push(["am","Collision "+col.v+" : préciser l'antagoniste."]);
@@ -2387,7 +2427,7 @@ function analyseRadio(){
     if(multi("chargRisk").length&&!raw("chargPrec"))W.push(["am","Risque lié au chargement : préciser sa nature si elle est connue."]);
   } else {
     const q=qualifP(),acr=q==="victime en ACR"||S.sapX.some(x=>x.qualif==="victime en ACR");
-    if((et==="UA"||acr)&&seul&&!multi("surlieux").includes("SMUR"))W.push(["am","<b>Gravité élevée avec « secours suffisants » seul.</b> Cohérence à vérifier."]);
+    if(S.msg!=="cr"&&(et==="UA"||acr)&&seul&&!multi("surlieux").includes("SMUR"))W.push(["am","<b>Gravité élevée avec « secours suffisants » seul.</b> Cohérence à vérifier."]);
     if(S.msg!=="cr"&&acr&&!multi("actS").includes(ACT_RCP))W.push(["am","<b>ACR annoncé sans RCP dans le « je fais ».</b>"]);
     if(S.msg!=="cr"&&!multi("actS").length&&!raw("faisMan"))W.push(["am","<b>Aucune action dans le « je fais ».</b>"]);
     if(!titrePropre())W.push(["am","Nature de l'événement non choisie : la description sera incomplète."]);
@@ -2399,7 +2439,10 @@ function analyseRadio(){
   }
   if(S.msg==="cr"&&raw("gh")&&!ghTxt())W.push(["am","<b>Groupe horaire illisible</b> : 3 ou 4 chiffres, 830 pour 8 h 30, 1415 pour 14 h 15."]);
   {const dem=a.map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
-    if(dbl.length)W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
+    if(dbl.length&&S.msg!=="cr")W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
+    if(S.msg==="cr"&&a.some(x=>x!==NO_NEED))W.push(["am","Des renforts sont encore cochés dans « Je demande » : s'ils sont arrivés, appuyer sur « Les renforts demandés sont arrivés » (écran 3 · Fin) pour les dire sur les lieux."]);
+    if(S.msg==="cr"&&S.type!=="ROUTIER"&&S.sapX.some(b=>(b.gravite==="UA"||b.gravite==="UR")&&!(b.vecteur||"").trim()&&!(b.ch||"").trim()))
+      W.push(["am","Transport non renseigné pour une autre victime UA ou UR : écran 3 · Fin."]);
     if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);
     if(S.msg==="cr"&&S.type!=="ROUTIER"&&devenirP()==="lsp"&&(acrConstate()||multi("actFin").includes(SANS_REA)))
       W.push(["rd","<b>ACR et victime « laissée sur place ».</b> S'il s'agit d'un décès, choisir « Décédée » dans le devenir : le compte rendu annoncera le décès, le certificat et à qui le corps est laissé."]);}
@@ -2413,7 +2456,8 @@ function analyseRadio(){
    devenir, fin d'intervention. Une ligne = une phrase à dire. */
 function codisTete(){
   const g=ghTxt();
-  return(raw("destCodis")||"CODIS")+" de "+(indicatif()||"[indicatif]")+(S.msg==="cr"?" — compte rendu"+(g?", groupe horaire "+g:""):"");
+  return(raw("destCodis")||"CODIS")+" de "+(indicatif()||"[indicatif]")+
+    (S.msg==="cr"?" — compte rendu"+(g?", groupe horaire "+g:""):S.msg==="comp"?" — message complémentaire":"");
 }
 const FIN_SP="Fin d'intervention pour les moyens sapeurs-pompiers.";
 const FIN_RADIO="Fin d'intervention pour les moyens sapeurs-pompiers";
@@ -2512,20 +2556,33 @@ function devenirCorps(){
   }
   return pt(non?"La famille "+refus:"[à qui le corps est laissé]");
 }
+// Plusieurs victimes : la victime principale est désignée par sa catégorie (« la victime UA »)
+function victimeP(){
+  const et=one("etat");
+  return"la victime"+(S.sapX.length&&(et==="UA"||et==="UR")?" "+et:"");
+}
+// « 2 victimes UR sont transportées par le VSAV de Jarnac sur le CH de Cognac »
+function transportsAutres(){
+  return S.sapX.map(b=>{
+    const v=(b.vecteur||"").trim(),c=(b.ch||"").trim();if(!v&&!c)return"";
+    const pl=Math.max(1,parseInt(b.nb)||1)>1;
+    return cap(libelleGroupe(b).replace(/^1 /,"une "))+(pl?" sont transportées":" est transportée")+(v?" par "+v:"")+(c?" sur "+c:"");
+  }).filter(Boolean);
+}
 // Écrit : « La régulation CRRA 15 a été effectuée et la victime est transportée par… »
 function blocDevenirSAP(){
-  const dev=devenirP(),r=regule();
-  if(dev==="dcd")return devenirCorps();
+  const dev=devenirP(),r=regule(),autres=transportsAutres().map(x=>x+".").join(" ");
+  if(dev==="dcd")return[devenirCorps(),autres].filter(Boolean).join(" ");
   const v=devenirVivante();
-  if(!v)return(r?"La régulation CRRA 15 a été effectuée. ":"")+"[devenir de la victime]";
-  return pt((r?"La régulation CRRA 15 a été effectuée et la victime ":"La victime ")+v);
+  if(!v)return[(r?"La régulation CRRA 15 a été effectuée. ":"")+"[devenir de la victime]",autres].filter(Boolean).join(" ");
+  return[pt((r?"La régulation CRRA 15 a été effectuée et "+victimeP()+" ":cap(victimeP())+" ")+v),autres].filter(Boolean).join(" ");
 }
 // Radio : au compte rendu, le devenir remplace l'action en cours (on ne transporte pas « en cours de bilan »)
 function finRadioSAP(){
   const dev=devenirP();
   if(S.msg!=="cr"||!dev)return null;
-  if(dev==="dcd")return[blocActionsSAP(),devenirCorps()].filter(Boolean);
-  return[(regule()?"Après régulation CRRA 15, la victime ":"La victime ")+devenirVivante()];
+  if(dev==="dcd")return[blocActionsSAP(),devenirCorps()].filter(Boolean).concat(transportsAutres());
+  return[(regule()?"Après régulation CRRA 15, "+victimeP()+" ":cap(victimeP())+" ")+devenirVivante()].concat(transportsAutres());
 }
 function buildCrSAP(){
   const g=raw("gestes");
@@ -2585,8 +2642,30 @@ function buildCrR(){
     raw("crLib")?pt(cap(raw("crLib"))):"",
     fin,enCours()?"":FIN_SP].filter(Boolean).join("\n");
 }
+/* Message complémentaire : une demande formulée après le message d'ambiance.
+   Il rappelle le lieu et le bilan humain du moment, puis la demande et son motif. */
+function demandeComp(){
+  const a=renfList().filter(x=>x!==NO_NEED);
+  return"Je demande : "+(liste(a)||"[demande]");
+}
+function buildComp(){
+  const r=S.type==="ROUTIER",ecrit=S.sup==="ecrit",motif=raw("compLib");
+  const bilan="Bilan humain provisoire : "+(r?(ecrit?bilanRAmb():bilanRAmbRadio()):bilanHumain());
+  if(ecrit)return["Message complémentaire — "+lieuCodis(),demandeComp()+".",bilan+".",motif?pt(cap(motif)):""].filter(Boolean).join("\n");
+  return[codisTete(),lieuRadio(),demandeComp(),bilan,motif?cap(motif):""].filter(Boolean).join("\n");
+}
+function analyseComp(){
+  const W=[];
+  if(!renfList().filter(x=>x!==NO_NEED).length)W.push(["am","<b>Aucune demande cochée.</b> Le message complémentaire sert à demander un renfort : écran 1 · Arrivée, « Je demande »."]);
+  if(!raw("commune"))W.push(["am","Commune manquante."]);
+  const dem=renfList().map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
+  if(dbl.length)W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
+  if(!W.length)W.push(["ok","<b>Message cohérent.</b>"]);
+  $("#wC").innerHTML=W.map(([c,t])=>'<div class="w '+c+'"><span>'+t+'</span></div>').join("");
+}
 function buildCodis(){
   const r=S.type==="ROUTIER";
+  if(S.msg==="comp")return buildComp();
   if(S.sup!=="ecrit")return r?buildRadioR():buildRadioSAP();
   if(r)return S.msg==="cr"?buildCrR():buildAmbR();
   return S.msg==="cr"?buildCrSAP():buildAmbSAP();
@@ -2618,7 +2697,7 @@ function detresses(){
 }
 
 /* ════════ CONTRÔLES DE COHÉRENCE CODIS ════════ */
-function analyseCodis(){return S.sup==="ecrit"?analyseEcrit():analyseRadio();}
+function analyseCodis(){return S.msg==="comp"?analyseComp():S.sup==="ecrit"?analyseEcrit():analyseRadio();}
 function analyseEcrit(){
   const W=[],D=detresses(),et=one("etat"),a=renfList(),seul=a.length===1&&a[0]===NO_NEED,cr=S.msg==="cr";
   const dv=devenirP(),sap=S.type!=="ROUTIER";
@@ -2666,7 +2745,10 @@ function analyseEcrit(){
     if(!titrePropre()&&!qualifParts(q).c)W.push(["am","Nature de l'événement non choisie : la description sera incomplète."]);
   }
   {const dem=a.map(x=>x.toLowerCase()),dbl=multi("surlieux").filter(x=>dem.includes(x.toLowerCase()));
-    if(dbl.length)W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
+    if(dbl.length&&S.msg!=="cr")W.push(["am","<b>"+cap(liste(dbl))+"</b> : à la fois demandé et déjà sur les lieux."]);
+    if(S.msg==="cr"&&a.some(x=>x!==NO_NEED))W.push(["am","Des renforts sont encore cochés dans « Je demande » : s'ils sont arrivés, appuyer sur « Les renforts demandés sont arrivés » (écran 3 · Fin) pour les dire sur les lieux."]);
+    if(S.msg==="cr"&&S.type!=="ROUTIER"&&S.sapX.some(b=>(b.gravite==="UA"||b.gravite==="UR")&&!(b.vecteur||"").trim()&&!(b.ch||"").trim()))
+      W.push(["am","Transport non renseigné pour une autre victime UA ou UR : écran 3 · Fin."]);
     if(S.msg==="cr"&&!one("finInter"))W.push(["am","Préciser si l'intervention est terminée ou encore en cours : écran 3 · Fin."]);
     if(S.msg==="cr"&&S.type!=="ROUTIER"&&devenirP()==="lsp"&&(acrConstate()||multi("actFin").includes(SANS_REA)))
       W.push(["rd","<b>ACR et victime « laissée sur place ».</b> S'il s'agit d'un décès, choisir « Décédée » dans le devenir : le compte rendu annoncera le décès, le certificat et à qui le corps est laissé."]);}
@@ -2825,6 +2907,10 @@ function rendre(){
   // Même groupe horaire dans l'écran Fin et dans l'onglet CODIS
   const ghc=$("#ghC");if(document.activeElement!==ghc)ghc.value=raw("gh");
   $("#ghCBox").hidden=S.msg!=="cr";
+  $("#compBox").hidden=S.msg!=="comp";
+  const aDem=renfList().some(x=>x!==NO_NEED);
+  $$(".renfArr").forEach(b=>b.hidden=!aDem);$(".renfArrBox").hidden=!aDem;
+  $("#trXBox").hidden=rt||!S.sapX.length;
   $("#ghHint").textContent=ghTxt()?"Compte rendu daté de "+ghTxt()+", à la radio comme à l'écrit.":"Sans les deux-points : 830 pour 8 h 30, 1415 pour 14 h 15. Annoncé dans le compte rendu radio, placé en tête du compte rendu écrit.";
   $("#rFinBox").hidden=!rt;
   $("#trBox").hidden=!rt&&dv!==""&&dv!=="transport";
@@ -3061,6 +3147,7 @@ function evenements(){
     applyType(b.dataset.t,true);rendre();});
   $("#engin").addEventListener("change",()=>{if(S.type==="ROUTIER")enginDefauts();});
   $("#msgSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+    if(S.manual&&b.dataset.m!==S.msg){S.manual=false;S.manualTxt="";}
     applyMsg(b.dataset.m);if(b.dataset.m==="cr"&&!S.manual)toast(S.sup==="ecrit"?"Compte rendu écrit : compléter l'écran Fin":"Compte rendu : bilan définitif");rendre();});
   $("#supSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.s===S.sup)return;
     applySup(b.dataset.s);
@@ -3076,7 +3163,7 @@ function evenements(){
     else S.rX.push({sexe:"masculin",age:"",etat:"UR",inc:false,vecteur:"",ch:""});
     renderXV();rendre();};
   $("#xv").addEventListener("input",majXV);
-  $("#xv").addEventListener("change",majXV);
+  $("#xv").addEventListener("change",e=>{majXV(e);renderTrX();});
   $("#xv").addEventListener("click",e=>{const d=e.target.closest("[data-xd]");if(!d)return;
     (S.type==="SAP"?S.sapX:S.rX).splice(+d.dataset.xd,1);renderXV();rendre();});
   $("#vtSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
@@ -3112,6 +3199,8 @@ function evenements(){
   $("#toCR").onclick=()=>{applyMsg("cr");rendre();vue("codis");};
   $("#ghNow").onclick=()=>{const n=new Date();$("#gh").value=ghFormat(n.getHours(),n.getMinutes());rendre();};
   $("#ghCNow").onclick=()=>$("#ghNow").click();
+  $$(".renfArr").forEach(b=>b.onclick=renfortsArrives);
+  $("#trX").addEventListener("input",majXV);
   // Une case déjà remplie : le premier appui sélectionne tout (la saisie remplace), le second place le curseur
   const SAISIE='input[type=text],input[type=number],input:not([type])';
   document.addEventListener("focusin",e=>{const t=e.target;
