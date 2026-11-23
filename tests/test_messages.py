@@ -95,8 +95,8 @@ with sync_playwright() as pw:
     page.fill("#commune", "Javrezac")
     page.locator("#etat .chip[data-v=UR]").click()
     verifier("Ambiance SAP — malade UR avec motif", message(page, "ambiance"),
-             "Opération commune de JAVREZAC.\n"
-             "Secours à un malade de sexe féminin, âgé de 26 ans, présentant une douleur thoracique, UR, bilan et régulation en cours.")
+             "Opération de secours sur la commune de JAVREZAC.\n"
+             "Secours à une victime malade de sexe féminin, UR, âgée de 26 ans, présentant une douleur thoracique, bilan et régulation en cours.")
     verifier("Aucun contexte présélectionné en SAP", page.evaluate("one('ctxlieu')"), "")
     vue(page, "saisie")
 
@@ -105,7 +105,7 @@ with sync_playwright() as pw:
     page.locator("#ngrid button", has_text="Douleur thoracique").first.click()  # second appui : rien ne change, on désélectionne via le motif
     page.evaluate("document.querySelectorAll('#titrec .chip').forEach(c=>c.setAttribute('aria-pressed','false'));rendre()")
     verifier("Ambiance SAP — sans motif ni contexte (votre exemple)", message(page, "ambiance").split("\n")[1],
-             "Secours à un malade de sexe féminin, âgé de 26 ans, UR, bilan et régulation en cours.")
+             "Secours à une victime malade de sexe féminin, UR, âgée de 26 ans, bilan et régulation en cours.")
 
     # Demande de renfort + adresse différente de celle du départ
     nature(page, "Douleur thoracique")
@@ -114,38 +114,43 @@ with sync_playwright() as pw:
     puce(page, "adrind", "Adresse indiquée au départ")  # décoche
     page.fill("#adresse", "12 rue des Vignes")
     verifier("Ambiance SAP — renfort et adresse différente", message(page, "ambiance"),
-             "Opération commune de JAVREZAC, au 12 rue des Vignes.\n"
-             "Secours à un malade de sexe féminin, âgé de 26 ans, présentant une douleur thoracique, UR, bilan et régulation en cours.\n"
+             "Opération de secours sur la commune de JAVREZAC, au 12 rue des Vignes.\n"
+             "Secours à une victime malade de sexe féminin, UR, âgée de 26 ans, présentant une douleur thoracique, bilan et régulation en cours.\n"
              "Je demande : SMUR et Forces de l'ordre.")
 
     # Compte rendu de la même intervention : transport
     vue(page, "saisie")
     ecran(page, "fin")
     puce(page, "medqui", "Médecin du SMUR")
-    puce(page, "actFin", "Bilan transmis au SAMU")
+    puce(page, "actFin", "Régulation CRRA 15")
     puce(page, "actFin", "Oxygène")
     puce(page, "devenir", "Transportée")
     page.fill("#vect", "VSAV médicalisé")
     page.fill("#dest", "CH Cognac")
     page.fill("#gh", "1415")
     verifier("Compte rendu SAP — transport médicalisé, groupe horaire", message(page, "cr"),
-             "1415 — Opération commune de JAVREZAC, au 12 rue des Vignes.\n"
-             "À notre arrivée, nous sommes confrontés à un malade de sexe féminin, âgé de 26 ans, présentant une douleur thoracique, UR.\n"
-             "Victime médicalisée par le médecin du SMUR de COGNAC. Actions des moyens sapeurs-pompiers : bilan transmis au médecin régulateur et mise sous oxygène.\n"
-             "La victime est transportée par VSAV médicalisé sur CH Cognac.\n"
+             "GH 1415 — Opération de secours sur la commune de JAVREZAC, au 12 rue des Vignes.\n"
+             "À notre arrivée, nous sommes confrontés à une victime malade de sexe féminin, UR, âgée de 26 ans, présentant une douleur thoracique.\n"
+             "Victime médicalisée par le médecin du SMUR de COGNAC. Actions des moyens sapeurs-pompiers : mise sous oxygène.\n"
+             "La régulation CRRA 15 a été effectuée et la victime est transportée par VSAV médicalisé sur CH Cognac.\n"
              "Fin d'intervention pour les moyens sapeurs-pompiers.")
 
+    # Radio, même intervention : groupe horaire en tête, régulation et transport en dernière ligne
+    verifier("Compte rendu radio — régulation puis transport", "\n".join(message(page, "cr", "radio").split("\n")[3:]),
+             "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans ; bilan humain définitif : 1 malade UR\n"
+             "Après régulation CRRA 15, la victime est transportée par VSAV médicalisé sur CH Cognac")
+    verifier("Compte rendu radio — en-tête", message(page, "cr", "radio").split("\n")[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1415")
     # Laissée sur place, refus
     vue(page, "saisie")
     puce(page, "devenir", "Laissée sur place")
     page.fill("#devPrec", "Confiée à sa famille")
     verifier("Compte rendu SAP — laissée sur place", message(page, "cr").split("\n")[3],
-             "La victime est laissée sur place sur décision du médecin régulateur, confiée à sa famille.")
+             "La régulation CRRA 15 a été effectuée et la victime est laissée sur place sur décision du médecin régulateur, confiée à sa famille.")
     vue(page, "saisie")
     puce(page, "devenir", "Refus de transport")
     page.fill("#devPrec", "")
     verifier("Compte rendu SAP — refus de transport", message(page, "cr").split("\n")[3],
-             "La victime refuse le transport et est laissée sur place.")
+             "La régulation CRRA 15 a été effectuée et la victime refuse le transport et est laissée sur place.")
 
     # Persistance : rechargement de la page, le message doit être identique
     avant = page.locator("#out").input_value()
@@ -175,7 +180,7 @@ with sync_playwright() as pw:
     puce(page, "corps", "La famille")
     puce(page, "eluNon", "La famille ne souhaite pas")
     verifier("Compte rendu SAP — décès (votre texte de référence)", message(page, "cr"),
-             "Opération commune de GENSAC-LA-PALLUE, au 7 rue des Gascards.\n"
+             "Opération de secours sur la commune de GENSAC-LA-PALLUE, au 7 rue des Gascards.\n"
              "À notre arrivée, nous sommes confrontés à une victime de sexe féminin, âgée de 63 ans, en ACR. RCP en cours par un témoin.\n"
              "Victime déclarée décédée (DCD) par le médecin du SMUR de COGNAC à 7h23. Certificat de décès établi. Aucune manœuvre de réanimation engagée par les moyens sapeurs-pompiers.\n"
              "Le corps est laissé à la responsabilité de la famille, qui ne souhaite pas le déplacement d'un élu.\n"
@@ -202,12 +207,12 @@ with sync_playwright() as pw:
     ecran(page, "arr")
     amb = message(page, "ambiance")
     verifier("Ambiance SAP — ACR sans RCP cochée", amb.split("\n")[1],
-             "Secours à une victime de sexe féminin, âgée de 63 ans, en ACR, UA, bilan et régulation en cours.")
+             "Secours à une victime de sexe féminin, UA, âgée de 63 ans, en ACR, bilan et régulation en cours.")
     verifier("Alerte ACR sans RCP présente", str("ACR annoncé sans RCP" in page.locator("#wC").inner_text()), "True")
     vue(page, "saisie")
     puce(page, "actS", "Procédons à la RCP")
     verifier("Ambiance SAP — ACR avec RCP", message(page, "ambiance").split("\n")[1],
-             "Secours à une victime de sexe féminin, âgée de 63 ans, en ACR, UA, RCP en cours, bilan et régulation en cours.")
+             "Secours à une victime de sexe féminin, UA, âgée de 63 ans, en ACR, RCP en cours, bilan et régulation en cours.")
     verifier("Aucune erreur JavaScript (scénario 2)", json.dumps(err), "[]")
     page.close()
 
@@ -218,13 +223,13 @@ with sync_playwright() as pw:
     page.locator("#etat .chip[data-v=UR]").click()
     retirer(page, "ctxlieu", "Domicile")
     attendus = {
-        "Malaise": "Secours à un malade de sexe masculin, âgé de 82 ans, présentant un malaise, UR, bilan et régulation en cours.",
-        "Signes d'AVC": "Secours à un malade de sexe masculin, âgé de 82 ans, présentant des signes évocateurs d'un AVC, UR, bilan et régulation en cours.",
-        "Chute": "Secours à un blessé de sexe masculin, âgé de 82 ans, à la suite d'une chute, UR, bilan et régulation en cours.",
-        "Hémorragie": "Secours à un malade de sexe masculin, âgé de 82 ans, présentant une hémorragie, UR, bilan et régulation en cours.",
-        "Convulsions": "Secours à un malade de sexe masculin, âgé de 82 ans, présentant une crise convulsive, UR, bilan et régulation en cours.",
-        "Détresse respiratoire": "Secours à un malade de sexe masculin, âgé de 82 ans, présentant une détresse respiratoire, UR, bilan et régulation en cours.",
-        "Traumatisme": "Secours à un blessé de sexe masculin, âgé de 82 ans, présentant un traumatisme, UR, bilan et régulation en cours.",
+        "Malaise": "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, présentant un malaise, bilan et régulation en cours.",
+        "Signes d'AVC": "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, présentant des signes évocateurs d'un AVC, bilan et régulation en cours.",
+        "Chute": "Secours à une victime blessée de sexe masculin, UR, âgée de 82 ans, à la suite d'une chute, bilan et régulation en cours.",
+        "Hémorragie": "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, présentant une hémorragie, bilan et régulation en cours.",
+        "Convulsions": "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, présentant une crise convulsive, bilan et régulation en cours.",
+        "Détresse respiratoire": "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, présentant une détresse respiratoire, bilan et régulation en cours.",
+        "Traumatisme": "Secours à une victime blessée de sexe masculin, UR, âgée de 82 ans, présentant un traumatisme, bilan et régulation en cours.",
     }
     for lib, att in attendus.items():
         nature(page, lib)
@@ -237,7 +242,7 @@ with sync_playwright() as pw:
     puce(page, "aggrav", "Inconsciente")
     puce(page, "aggrav", "Relevage difficile")
     verifier("Motif libre, contexte et constats", message(page, "ambiance").split("\n")[1],
-             "Secours à un malade de sexe masculin, âgé de 82 ans, sur la voie publique, à la suite d'une piqûre de guêpe, inconscient, UR, relevage difficile, bilan et régulation en cours.")
+             "Secours à une victime malade de sexe masculin, UR, âgée de 82 ans, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
     # Nourrisson, autre victime
     vue(page, "saisie")
     page.fill("#age", "8")
@@ -247,7 +252,7 @@ with sync_playwright() as pw:
     page.locator("#xv input[data-xk=nb]").nth(1).fill("2")
     page.locator("#xv select[data-xk=gravite]").nth(1).select_option("IMP")
     amb = message(page, "ambiance").split("\n")
-    verifier("Nourrisson", amb[1], "Secours à un malade de sexe masculin, âgé de 8 mois, sur la voie publique, à la suite d'une piqûre de guêpe, inconscient, UR, relevage difficile, bilan et régulation en cours.")
+    verifier("Nourrisson", amb[1], "Secours à une victime malade de sexe masculin, UR, âgée de 8 mois, sur la voie publique, à la suite d'une piqûre de guêpe, inconsciente, relevage difficile, bilan et régulation en cours.")
     verifier("Autres victimes — catégories", amb[2], "Autres victimes : 1 malade UR, 2 impliqués.")
     verifier("Autres victimes — bouton sous la victime, hors rubrique repliée",
              str(page.evaluate("!document.getElementById('addxv').closest('details') && document.getElementById('age').closest('.sec').contains(document.getElementById('addxv'))")), "True")
@@ -270,7 +275,7 @@ with sync_playwright() as pw:
     puce(page, "aggrav", "Incarcérée")
     puce(page, "adrind", "Adresse indiquée au départ")  # décoche : la localisation est annoncée
     verifier("Ambiance routier — une victime", message(page, "ambiance"),
-             "Opération commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
+             "Opération de secours sur la commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
              "Secours routier pour un accident de la circulation mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd.\n"
              "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures.\n"
              "Bilan provisoire : une victime de sexe masculin, âgée de 40 ans, UA, incarcérée.\n"
@@ -306,7 +311,7 @@ with sync_playwright() as pw:
     puce(page, "actR", "Extraction victime(s)")
     puce(page, "actR", "Nettoyage de chaussée")
     verifier("Compte rendu routier — deux victimes", message(page, "cr"),
-             "830 — Opération commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
+             "GH 830 — Opération de secours sur la commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
              "À notre arrivée, nous sommes confrontés à un accident de la circulation hors agglomération mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée. Victime évacuée du véhicule par des témoins. Véhicule sur le toit.\n"
              "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures.\n"
              "Bilan définitif : 2 victimes : une victime de sexe masculin, âgée de 40 ans, UA, transportée par SMUR sur CH Angoulême ; une victime de sexe féminin, âgée de 35 ans, UR, transportée par VSAV 2 sur CH Cognac.\n"
@@ -319,7 +324,7 @@ with sync_playwright() as pw:
     verifier("Onglet CODIS — groupe horaire masqué en ambiance", str(page.locator("#ghCBox").is_hidden()), "True")
     page.locator("#msgSeg button[data-m=cr]").click()
     page.fill("#ghC", "830")
-    verifier("Onglet CODIS — groupe horaire saisi au-dessus du compte rendu", page.locator("#out").input_value().split("\n")[0][:6], "830 — ")
+    verifier("Onglet CODIS — groupe horaire saisi au-dessus du compte rendu", page.locator("#out").input_value().split("\n")[0][:9], "GH 830 — ")
     verifier("Onglet CODIS — groupe horaire synchronisé avec l'écran Fin", page.evaluate("raw('gh')"), "830")
     page.locator("#ghCNow").click()
     verifier("Onglet CODIS — bouton heure actuelle", str(bool(__import__("re").fullmatch(r"\d{3,4}", page.input_value("#ghC")))), "True")
@@ -352,14 +357,26 @@ with sync_playwright() as pw:
     page.locator("#rst").click()
     page.locator("#rst").click()
     verifier("Nouvelle intervention — message remis à zéro", message(page, "ambiance"),
-             "Opération commune de CHÂTEAUBERNARD.\n"
-             "Secours à un malade, bilan et régulation en cours.")
+             "Opération de secours sur la commune de CHÂTEAUBERNARD.\n"
+             "Secours à une victime malade, bilan et régulation en cours.")
     verifier("SAP — constats : ACR et relevage difficile présents, incarcérée absente",
              json.dumps(page.evaluate("[...document.querySelectorAll('#aggrav .chip')].map(c=>c.textContent)"), ensure_ascii=False),
              '["Inconsciente", "ACR", "Détresse vitale", "Hémorragie active", "Accès difficile", "Relevage difficile"]')
     verifier("SAP — natures : ACR présent, accident de la route absent",
              json.dumps(page.evaluate("[...document.querySelectorAll('#ngrid button')].map(c=>c.textContent)"), ensure_ascii=False),
              '["ACR", "Malaise", "Douleur thoracique", "Détresse respiratoire", "Signes d\'AVC", "Convulsions", "Chute", "Hémorragie", "Traumatisme", "Préciser"]')
+    verifier("Catégorie placée sous la victime, avant les autres victimes",
+             str(page.evaluate("(()=>{const e=document.getElementById('etat'),a=document.getElementById('age'),x=document.getElementById('addxv');return !!(a.compareDocumentPosition(e)&4)&&!!(e.compareDocumentPosition(x)&4)&&!e.closest('details')})()")), "True")
+    vue(page, "saisie")
+    page.fill("#commune", "Javrezac")
+    page.locator("#age").click()
+    page.locator("#commune").click()
+    page.wait_for_timeout(150)
+    verifier("Case déjà remplie — le premier appui sélectionne tout le contenu",
+             page.evaluate("(()=>{const c=document.getElementById('commune');return c.value.substring(c.selectionStart,c.selectionEnd)})()"), "Javrezac")
+    page.keyboard.type("Cognac")
+    verifier("Case déjà remplie — la saisie remplace l'ancien contenu", page.input_value("#commune"), "Cognac")
+    page.fill("#commune", "Châteaubernard")
     verifier("SAP — catégories : impliqué, UR, UA, décédé",
              json.dumps(page.evaluate("[...document.querySelectorAll('#etat .chip')].map(c=>c.dataset.v)")), '["IMP", "UR", "UA", "DCD"]')
     verifier("SAP — rien de présélectionné dans le contexte après remise à zéro", page.evaluate("one('ctxlieu')"), "")
@@ -368,13 +385,13 @@ with sync_playwright() as pw:
     victime(page, 30, "Homme")
     page.locator("#etat .chip[data-v=IMP]").click()
     verifier("SAP écrit — impliqué", message(page, "ambiance").split("\n")[1],
-             "Secours à un impliqué de sexe masculin, âgé de 30 ans, bilan et régulation en cours.")
+             "Secours à une victime impliquée de sexe masculin, âgée de 30 ans, bilan et régulation en cours.")
     verifier("SAP radio — impliqué", message(page, "ambiance", "radio").split("\n")[3][-36:], "bilan humain provisoire : 1 impliqué")
     vue(page, "saisie")
     page.locator("#etat .chip[data-v=IMP]").click()   # retire la catégorie
     puce(page, "aggrav", "ACR")
     verifier("SAP écrit — ACR coché dans « constaté sur place »", message(page, "ambiance").split("\n")[1],
-             "Secours à une victime de sexe masculin, âgée de 30 ans, en ACR, UA, bilan et régulation en cours.")
+             "Secours à une victime de sexe masculin, UA, âgée de 30 ans, en ACR, bilan et régulation en cours.")
     vue(page, "saisie")
     ecran(page, "fin")
     for saisi, attendu in (("830", "830"), ("0830", "830"), ("1415", "1415"), ("14:15", "1415"), ("0005", "0005"), ("2560", ""), ("83", "")):
@@ -475,8 +492,7 @@ with sync_playwright() as pw:
         ecran(page, "fin")
         page.fill("#vect", "VSAV")
         page.fill("#dest", "CH Cognac")
-        R["SAP compte rendu"] = message(page, "cr", "radio")
-        R["SAP compte rendu — contrôles"] = page.locator("#wC").inner_text()
+        R["_cr_sap"] = message(page, "cr", "radio")
         # routier
         vue(page, "saisie")
         page.locator("#rst").click()
@@ -515,7 +531,14 @@ with sync_playwright() as pw:
         return R, err
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)
     for k in r1:
-        verifier("Radio inchangée — " + k, r2[k], r1[k])
+        if not k.startswith("_"):
+            verifier("Radio inchangée — " + k, r2[k], r1[k])
+    verifier("Radio — compte rendu SAP : le devenir remplace l'action en cours", r2["_cr_sap"],
+             "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
+             "Je demande : SMUR\n"
+             "Opération de secours sur la commune de Javrezac à l'adresse : 12 rue des Vignes\n"
+             "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans à son domicile, relevage difficile ; bilan humain définitif : 1 victime en ACR UR, 1 victime indemne\n"
+             "La victime est transportée par VSAV sur CH Cognac")
     print("\n  Exemple, message radio conservé :\n    " + r2["SAP ambiance"].replace("\n", "\n    "))
     verifier("Aucune erreur JavaScript (scénario 6)", json.dumps(e1 + e2), "[]")
 
