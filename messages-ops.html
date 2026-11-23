@@ -403,6 +403,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 
   <div class="f"><span class="gl">1 · Ce que je constate</span>
     <div class="ngrid" id="ngrid"></div>
+    <input type="text" id="natprec" placeholder="Précision : d'une échelle, d'environ 3 mètres" style="margin-top:8px" hidden>
     <div id="natLibBox" hidden>
       <input type="text" id="natlib" placeholder="Ce que vous constatez : piqûre de guêpe…" style="margin-top:8px">
       <div class="seg" id="natType" style="margin-top:8px">
@@ -896,7 +897,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23j";
+const VERSION="2026.11.23k";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1539,7 +1540,8 @@ function titrePropre(){
   if(S.natLibre)return prudence(raw("natlib").toLowerCase());
   const c=one("titrec");
   if(c==="__autre")return prudence(raw("titre").trim().toLowerCase());
-  return c||"";
+  const pr=raw("natprec").trim().replace(/[.\s]+$/,"");
+  return c?c+(pr?" "+pr.charAt(0).toLowerCase()+pr.slice(1):""):"";
 }
 /* Un secouriste constate des signes, il ne pose pas de diagnostic.
    Une nature saisie librement qui nomme une pathologie est reformulée :
@@ -2439,7 +2441,7 @@ function phraseAmbiance(){
     const l=[CTX_NEUTRE[ctx]||ctx,det?lc(det):""].concat(ops).filter(Boolean);
     if(l.length)p+=", "+l.join(", ");
     const dit=vic.map(x=>x==="victime inconsciente"?"inconscient":x==="victime incarcérée"?"incarcéré":x);
-    if(su||dit.length)p+=". "+(S.sapX.length?"La victime principale est ":"La victime est ")+[su].concat(dit).filter(Boolean).join(", ");
+    if(su||dit.length)p+=". "+(S.sapX.length?"La première victime est ":"La victime est ")+[su].concat(dit).filter(Boolean).join(", ");
     return accorder(pt(p));
   }
   // Un signe présenté par une victime seule : « une douleur thoracique chez une femme de 26 ans à son domicile »
@@ -2667,22 +2669,29 @@ function devenirCorps(){
   return pt(non?"La famille "+refus:"[à qui le corps est laissé]");
 }
 // Plusieurs victimes : la victime principale est désignée par sa catégorie (« la victime UA »)
-function parSexe(){return S.sapX.some(b=>b.sexe&&Math.max(1,parseInt(b.nb)||1)===1);}
+// Plusieurs victimes : chacune porte un rang, pour dire laquelle part vers quel hôpital.
+// « la première victime, de sexe masculin, UR, » puis « La deuxième victime, de sexe féminin, UR, ».
+// Un groupe (2 victimes UR) garde son libellé de groupe et compte pour autant de rangs.
+const ORDINAUX=["première","deuxième","troisième","quatrième","cinquième","sixième","septième","huitième","neuvième","dixième"];
+function ordinale(n){return ORDINAUX[n-1]||n+"e";}
+function victimeRang(rang,sexe,cat){
+  const d=[];
+  if(sexe)d.push("de sexe "+sexe);
+  if(cat==="IMP")d.push("impliquée");else if(cat==="DCD")d.push("décédée");else if(cat)d.push(cat);
+  return"la "+ordinale(rang)+" victime"+(d.length?", "+d.join(", ")+",":"");
+}
 function victimeP(){
+  if(!S.sapX.length)return"la victime";
   const et=one("etat"),sx=raw("sexe");
-  if(parSexe()&&sx)return"la victime de sexe "+(sx==="Femme"?"féminin":"masculin")+(et==="UA"||et==="UR"?", "+et+",":"");
-  return"la victime"+(S.sapX.length&&(et==="UA"||et==="UR")?" "+et:"");
+  return victimeRang(1,sx?(sx==="Femme"?"féminin":"masculin"):"",et==="UA"||et==="UR"?et:"");
 }
-function quiGroupe(b){
-  const n=Math.max(1,parseInt(b.nb)||1);
-  if(n===1&&b.sexe)return"La victime de sexe "+b.sexe+(b.gravite==="IMP"?", impliquée,":b.gravite==="DCD"?", décédée,":b.gravite?", "+b.gravite+",":"");
-  return cap(libelleGroupe(b).replace(/^1 /,"une "));
-}
-// « 2 victimes UR sont transportées par le VSAV de Jarnac sur le CH de Cognac »
 function transportsAutres(){
+  let rang=1;
   return S.sapX.map(b=>{
+    const n=Math.max(1,parseInt(b.nb)||1),pl=n>1;
     const v=(b.vecteur||"").trim(),c=(b.ch||"").trim(),d=(b.devenir||"").trim().replace(/[.\s]+$/,"");
-    const qui=quiGroupe(b),pl=Math.max(1,parseInt(b.nb)||1)>1;
+    const qui=pl?cap(libelleGroupe(b)):cap(victimeRang(rang+1,b.sexe||"",b.gravite||""));
+    rang+=n;
     if(v||c)return qui+(pl?" sont transportées":" est transportée")+(v?" par "+v:"")+(c?" sur "+c:"");
     return d?qui+" "+lc(d):"";
   }).filter(Boolean);
@@ -2919,6 +2928,7 @@ function choisirNature(i){
   }
   const n=NATS[+i];if(!n)return;
   S.natLibre=false;$("#natlib").value="";
+  if(one("titrec")!==n[2])$("#natprec").value="";   // la précision d'une chute ne vaut pas pour un malaise
   if(motif!==n[1]){motif=n[1];buildMotif();}
   $$("#titrec .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.v===n[2])));
 }
@@ -2928,6 +2938,7 @@ function syncNats(){
     if(b.dataset.i==="lib"){b.setAttribute("aria-pressed",String(!!S.natLibre));return;}
     const n=NATS[+b.dataset.i];b.setAttribute("aria-pressed",String(!S.natLibre&&motif===n[1]&&t===n[2]));});
   $("#natLibBox").hidden=!S.natLibre;
+  $("#natprec").hidden=!!S.natLibre||!t||t==="__autre";
   $$("#natType button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===motif)));
 }
 
