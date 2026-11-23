@@ -140,6 +140,14 @@ with sync_playwright() as pw:
              "Nous sommes confrontés à une douleur thoracique chez une femme de 26 ans ; bilan humain définitif : 1 malade UR\n"
              "Après régulation CRRA 15, la victime est transportée par VSAV médicalisé sur CH Cognac")
     verifier("Compte rendu radio — en-tête", message(page, "cr", "radio").split("\n")[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 1415")
+    vue(page, "saisie")
+    puce(page, "finInter", "Intervention terminée")
+    verifier("Compte rendu radio SAP — intervention terminée", message(page, "cr", "radio").split("\n")[-1], "Fin d'intervention pour les moyens sapeurs-pompiers")
+    vue(page, "saisie")
+    puce(page, "finInter", "Encore du travail en cours")
+    verifier("Compte rendu écrit SAP — encore en cours", message(page, "cr").split("\n")[-1], "Bilan et régulation en cours.")
+    vue(page, "saisie")
+    page.locator("#finInter .chip", has_text="Encore du travail en cours").click()   # retire le choix
     # Laissée sur place, refus
     vue(page, "saisie")
     puce(page, "devenir", "Laissée sur place")
@@ -179,6 +187,7 @@ with sync_playwright() as pw:
     puce(page, "dcdoc", "Certificat de décès établi")
     puce(page, "corps", "La famille")
     puce(page, "eluNon", "La famille ne souhaite pas")
+    puce(page, "finInter", "Intervention terminée")
     verifier("Compte rendu SAP — décès (votre texte de référence)", message(page, "cr"),
              "Opération de secours sur la commune de GENSAC-LA-PALLUE, au 7 rue des Gascards.\n"
              "À notre arrivée, nous sommes confrontés à une victime de sexe féminin, âgée de 63 ans, en ACR. RCP en cours par un témoin.\n"
@@ -214,6 +223,27 @@ with sync_playwright() as pw:
     verifier("Ambiance SAP — ACR avec RCP", message(page, "ambiance").split("\n")[1],
              "Secours à une victime de sexe féminin, UA, âgée de 63 ans, en ACR, RCP en cours, bilan et régulation en cours.")
     verifier("Aucune erreur JavaScript (scénario 2)", json.dumps(err), "[]")
+    page.close()
+
+    # Cas n° 2 du 23/11 : nature saisie à la main, SMUR déjà sur les lieux
+    page, err = ouvrir(nav, NOUVEAU)
+    nature(page, "Préciser")
+    page.fill("#natlib", "Personne ne répondant pas aux appels")
+    victime(page, 63, "Femme")
+    puce(page, "aggrav", "ACR")
+    puce(page, "surlieux", "SMUR")
+    puce(page, "surlieux", "Forces de l'ordre")
+    page.fill("#surlieuxLib", "Voisin infirmier")
+    amb = message(page, "ambiance", "radio").split("\n")
+    verifier("Nature libre — article accordé (« une personne »)", amb[3][:54], "Nous sommes confrontés à une personne ne répondant pas")
+    verifier("Services sur les lieux — radio", amb[4], "Sur les lieux : SMUR, forces de l'ordre et voisin infirmier")
+    verifier("Services sur les lieux — pas d'alerte « secours suffisants » quand le SMUR est là",
+             str("Gravité élevée" in page.locator("#wC").inner_text()), "False")
+    verifier("Services sur les lieux — écrit", message(page, "ambiance").split("\n")[2], "Sur les lieux : SMUR, forces de l'ordre et voisin infirmier.")
+    vue(page, "saisie")
+    page.locator("#renf .chip", has_text="SMUR").first.click()
+    message(page, "ambiance", "radio")
+    verifier("Services sur les lieux — alerte si le même service est demandé", str("à la fois demandé et déjà sur les lieux" in page.locator("#wC").inner_text()), "True")
     page.close()
 
     # ───── 3. Formulations du motif ─────
@@ -333,6 +363,18 @@ with sync_playwright() as pw:
     verifier("Radio routier — groupe horaire dans le compte rendu", radio_cr[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 830")
     verifier("Radio routier — contexte repris", radio_cr[3],
              "Nous sommes confrontés à un accident de la circulation hors agglomération mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd, véhicule en contrebas de la chaussée")
+    verifier("Radio routier — encore du travail : « Nous procédons à… »", radio_cr[-1][:16], "Nous procédons à")
+    verifier("Contrôle — état de l'intervention à préciser", str("terminée ou encore en cours" in page.locator("#wC").inner_text()), "True")
+    vue(page, "saisie"); ecran(page, "fin")
+    puce(page, "finInter", "Intervention terminée")
+    verifier("Radio routier — intervention terminée", message(page, "cr", "radio").split("\n")[-1], "Fin d'intervention pour les moyens sapeurs-pompiers")
+    vue(page, "saisie")
+    puce(page, "finInter", "Encore du travail en cours")
+    ecrit = message(page, "cr").split("\n")
+    verifier("Écrit routier — encore en cours : actions au présent, pas de fin d'intervention",
+             ecrit[-2][:41] + " | " + ecrit[-1], "Les moyens sapeurs-pompiers procèdent à l | Site laissé à la responsabilité des forces de l'ordre. Circulation rétablie.")
+    vue(page, "saisie")
+    page.locator("#finInter .chip", has_text="Encore du travail en cours").click()   # retire le choix
     verifier("Radio routier — pas de groupe horaire dans l'ambiance", message(page, "ambiance", "radio").split("\n")[0], "CODIS 16 de VSAV 1 Cognac")
     verifier("Aucun contexte présélectionné en routier (après choix manuel, seul celui-ci reste)", page.evaluate("one('ctxlieu')"), "hors agglomération")
     vue(page, "saisie")
@@ -526,7 +568,7 @@ with sync_playwright() as pw:
         page.fill("#vect", "SMUR")
         page.fill("#dest", "CH Angoulême")
         R["Routier compte rendu"] = message(page, "cr", "radio")
-        R["Routier compte rendu — contrôles"] = page.locator("#wC").inner_text()
+        R["_cr_routier_controles"] = page.locator("#wC").inner_text()
         page.close()
         return R, err
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)
