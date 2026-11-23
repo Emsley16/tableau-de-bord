@@ -465,6 +465,10 @@ with sync_playwright() as pw:
     verifier("Anticoagulant : absent des messages CODIS, présent dans l'annonce SAMU",
              ["anticoagulant" in message(page, "cr", "radio").lower(), "anticoagulant" in message(page, "cr").lower(), "anticoagulant" in page.evaluate("bAnnonce()").lower()],
              [False, False, True])
+    annonce = page.evaluate("bAnnonce()")
+    verifier("Annonce SAMU : l'anticoagulant a sa phrase et son sujet",
+             ["Victime sous anticoagulant." in annonce, ". Sous anticoagulant" in annonce, annonce.index("pour chute") < annonce.index("Victime sous anticoagulant.")],
+             [True, False, True])
     page.evaluate("document.querySelector('#h_les').value='douleur au dos et plaie du cuir chevelu avec saignement important';document.querySelector('#en').value='7';rendre()")
     verifier("Annonce SAMU : la cotation suit le mot « douleur », pas toute la description",
              "douleur cotée 7 sur 10 au dos et plaie du cuir chevelu avec saignement important" in page.evaluate("bAnnonce()"), True)

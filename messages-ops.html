@@ -897,7 +897,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23k";
+const VERSION="2026.11.23l";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1782,9 +1782,11 @@ function bAnnonce(){
 
   // 3 — Terrain : deux éléments au maximum, abrégés pour l'oral
   let ter=multi("atcd-c").map(x=>ABREGE[x]!==undefined?ABREGE[x]:x).filter(Boolean).slice(0,2);
-  if(one("acg")==="oui")ter.push("sous anticoagulant");
   if(multi("vie").includes("grossesse")&&!ter.includes("enceinte"))ter.push("enceinte");
   if(ter.length)p.push(pt(cap(liste(ter))));
+  // L'anticoagulant a sa propre phrase, avec son sujet : « pour chute. Sous anticoagulant. » se lisait
+  // trop vite comme « une chute sous anticoagulant ».
+  if(one("acg")==="oui")p.push("Victime sous anticoagulant.");
 
   // 4 — Le saillant : les anomalies d'abord, le normal en une formule
   const sail=[];
