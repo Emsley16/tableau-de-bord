@@ -523,6 +523,10 @@ with sync_playwright() as pw:
     verifier("MHTAA : hospitalisations et facteurs aggravants dans les réponses de réserve",
              json.dumps(page.evaluate("reserve().filter(x=>/Hospitalisations|Facteurs/.test(x.q)).map(x=>x.q+' : '+x.r)"), ensure_ascii=False),
              '["Hospitalisations : Pontage en 2019", "Facteurs aggravants : tabagisme"]')
+    page.evaluate("""() => { document.querySelector('#dem .chip[data-v="un renfort médicalisé"]').click(); rendre(); }""")
+    verifier("Demande au SAMU : plusieurs demandes dans la même phrase",
+             page.evaluate("bAnnonce()").endswith("Je demande un renfort médicalisé et la mise en œuvre du protocole anti-douleur."), True)
+    page.evaluate("""() => { document.querySelector('#dem .chip[data-v="un renfort médicalisé"]').click(); rendre(); }""")
     verifier("Demande au SAMU : protocole anti-douleur",
              page.evaluate("bAnnonce()").endswith("Je demande la mise en œuvre du protocole anti-douleur."), True)
     # 23/11, version m : les victimes suivantes sont décrites comme la première, avant le bilan humain
@@ -794,7 +798,8 @@ with sync_playwright() as pw:
              "GH 830 — Opération de secours sur la commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
              "À notre arrivée, nous sommes confrontés à un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée. Victime évacuée du véhicule par des témoins. Véhicule sur le toit.\n"
              "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures.\n"
-             "Bilan définitif : 2 victimes : une victime de sexe masculin, âgée de 40 ans, UA, transportée par SMUR sur CH Angoulême ; une victime de sexe féminin, âgée de 35 ans, UR, transportée par VSAV 2 sur CH Cognac.\n"
+             "La première victime, de sexe masculin, âgée de 40 ans, UA, est transportée par SMUR sur CH Angoulême. La deuxième victime, de sexe féminin, âgée de 35 ans, UR, est transportée par VSAV 2 sur CH Cognac.\n"
+             "Bilan humain définitif : 1 victime UA, 1 victime UR.\n"
              "Les moyens sapeurs-pompiers ont procédé à la sécurisation du site, à la prise en charge des victimes, à la désincarcération des victimes et à l'extraction des victimes.\n"
              "Site laissé à la responsabilité des forces de l'ordre. Circulation rétablie.\n"
              "Fin d'intervention pour les moyens sapeurs-pompiers.")
@@ -1043,7 +1048,9 @@ with sync_playwright() as pw:
             "Opération de secours sur la commune de Châteaubernard à l'adresse : RN141, sens Cognac-Angoulême, PR 12\n"
             "Nous sommes confrontés à un accident de la circulation à forte cinétique mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd. 1 victime incarcérée\n"
             "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures\n"
-            "Bilan humain définitif : 2 victimes — masculin, 40 ans, UA, transporté par SMUR sur CH Angoulême ; féminin, 35 ans, UR, transportée par VSAV 2 sur CH Cognac\n"
+            "La première victime, de sexe masculin, âgée de 40 ans, UA, est transportée par SMUR sur CH Angoulême\n"
+            "La deuxième victime, de sexe féminin, âgée de 35 ans, UR, est transportée par VSAV 2 sur CH Cognac\n"
+            "Bilan humain définitif : 1 victime UA, 1 victime UR\n"
             "Nous sommes en cours de sécurisation du site et prise en charge des victimes",
     }
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)

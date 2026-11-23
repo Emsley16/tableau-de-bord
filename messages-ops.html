@@ -765,7 +765,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 
 <div class="sec"><div class="sh">7 · Régulation CRRA 15 : je demande</div><div class="bd">
   <div class="f lk" id="lk-d"><span class="gl">Ma demande<span class="tg">verrou</span></span>
-    <div class="chips" id="dem" data-one>
+    <div class="chips" id="dem" data-multi>
       <button class="chip" data-v="un renfort médicalisé" aria-pressed="false">Renfort médicalisé</button>
       <button class="chip" data-v="votre orientation et l'autorisation de transport" aria-pressed="false">Orientation et transport</button>
       <button class="chip" data-v="l'autorisation de laisser sur place" aria-pressed="false">Laisser sur place</button>
@@ -959,7 +959,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23p";
+const VERSION="2026.11.23q";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1931,8 +1931,9 @@ function renderPqX(){
     '<button class="btn2" data-pd="'+i+'">Supprimer cette douleur</button></div>').join("");
 }
 function demandeTxt(){
-  const d=one("dem");if(!d)return"";
-  let q=d==="__"?raw("demlib"):d;if(!q)return"";
+  // plusieurs demandes possibles : « Je demande un renfort médicalisé et la mise en œuvre du protocole anti-douleur »
+  const d=multi("dem").map(x=>x==="__"?raw("demlib"):x).filter(Boolean);if(!d.length)return"";
+  let q=liste(d);
   if(raw("demdet"))q+=" "+raw("demdet");
   const dl=one("delai");
   return pt("Je demande "+q+(dl?", "+dl:""));
@@ -2535,6 +2536,21 @@ function bilanRAmb(){
   if(n===1&&(V[0].sexe||V[0].age))return victimeRTxt(V[0],false);
   return bilanHumainR();
 }
+// « La première victime, de sexe masculin, âgée de 40 ans, UA, est transportée par SMUR sur CH Angoulême »
+function devenirR(){
+  const V=victimesR(),n=V.length;
+  return V.map((v,i)=>{
+    let a=(v.age||"").trim();
+    if(a&&/\d/.test(a)&&!/an|mois/i.test(a))a+=" ans";
+    if(a==="1 ans")a="1 an";
+    const d=[];
+    if(v.sexe)d.push("de sexe "+v.sexe);
+    if(a)d.push("âgée de "+a);
+    if(ETATS_R[v.etat])d.push(ETATS_R[v.etat]);
+    const t=transportTxt(v.vecteur,v.ch,true);
+    return(n>1?"La "+ordinale(i+1)+" victime":"La victime")+(d.length?", "+d.join(", ")+",":"")+(t?" est "+t:" : devenir à préciser");
+  });
+}
 function bilanRList(){
   const V=victimesR(),n=V.length;
   return(n>1?n+" victimes : ":"")+V.map(v=>victimeRTxt(v,true)).join(" ; ");
@@ -2652,7 +2668,8 @@ function buildRadioR(){
     "Nous sommes confrontés à "+accidentTxt(amb)+(sit?". "+sit:"")]);
   if(acrRoutier())L.push(acrRoutier());
   if(ch)L.push(ch);
-  L.push("Bilan humain "+prov+" : "+(S.msg==="cr"?bilanRListRadio():bilanRAmbRadio()));
+  if(S.msg==="cr")devenirR().forEach(x=>L.push(x));
+  L.push("Bilan humain "+prov+" : "+bilanRAmbRadio());
   if(surLieuxTxt())L.push(surLieuxTxt());
   // Encore du travail : ce qui est réalisé, puis ce qui est en cours ; intervention terminée : on l'annonce
   if(S.msg==="cr"&&one("finInter")==="fin")L.push(FIN_RADIO);else actionsRLignes().forEach(x=>L.push(x));
@@ -2960,7 +2977,8 @@ function buildCrR(){
   if(raw("gestes"))arr+=" "+pt(cap(raw("gestes")));
   const fin=FIN_ROUTE.filter(x=>multi("rFin").includes(x[1])).map(x=>x[1]+".").join(" ");
   return[lieuCr(),arr,chargementTxt(),
-    "Bilan définitif : "+bilanRList()+".",
+    devenirR().map(x=>x+".").join(" "),
+    n>1?"Bilan humain définitif : "+bilanHumainR()+".":"",
     surLieuxEcrit(),
     acts.length?"Les moyens sapeurs-pompiers "+(enCours()?"procèdent ":"ont procédé ")+liste(acts)+".":"[actions réalisées]",
     raw("crLib")?pt(cap(raw("crLib"))):"",
@@ -3235,7 +3253,7 @@ function rendre(){
     : '<div class="ri vide">Rien en réserve pour l\'instant.</div>';
 
   // Affichages conditionnels
-  $("#demlibbox").style.display=one("dem")==="__"?"block":"none";
+  $("#demlibbox").style.display=multi("dem").includes("__")?"block":"none";
   $("#heurebox").style.display=one("delaic")==="precise"?"block":"none";
   $("#titre").style.display=one("titrec")==="__autre"?"block":"none";
   const hint=natureReformulee()?"Annoncé : « "+titrePropre()+" ». Le diagnostic relève du médecin, le secouriste rapporte des signes.":"";
@@ -3277,7 +3295,7 @@ function rendre(){
 function acgRequis(){return motif==="trauma"||motif==="neuro"||motif==="circu";}
 function verrous(){
   const dc=one("delaic");
-  const h=!!dc&&(dc!=="precise"||!!raw("heure")),a=acgRequis()?!!one("acg"):true,dv=one("dem"),
+  const h=!!dc&&(dc!=="precise"||!!raw("heure")),a=acgRequis()?!!one("acg"):true,dv=multi("dem")[0]||"",
         d=!!dv&&(dv!=="__"||!!raw("demlib"));
   $("#lk-h").classList.toggle("ok",h);
   $("#lk-a").classList.toggle("ok",!!one("acg"));
@@ -3702,6 +3720,12 @@ function ordonnerBilan(){
   deplacer($("#temp").closest(".cst"),mes.parentNode,mes);
   deplacer($("#gly").closest(".cst"),mes.parentNode,mes);
   deplacer($("#en").closest(".cst"),$("#pqS"),null);
+  // routier : le chargement vient après « Je fais », il pèse moins que la victime et le lieu
+  const ch=document.createElement("div");ch.className="sec";ch.id="secCharg";ch.hidden=true;
+  ch.innerHTML='<div class="sh c">7 · Chargement, si concerné</div><div class="bd cod"></div>';
+  const codis=$("#renf").closest(".sec");
+  codis.parentNode.insertBefore(ch,codis.nextSibling);deplaces.push({el:ch,retirer:true});
+  deplacer($("#charg").closest(".f"),ch.lastChild,null);
 }
 function majEtatsBilan(){
   majRoutier();
@@ -3721,6 +3745,7 @@ function vsrManque(){
 function majRoutier(){
   const r=S.type==="ROUTIER";
   $("#vsitBox").hidden=!r;$("#axeBox").hidden=!r;$("#versRoutier").hidden=r;
+  if($("#secCharg"))$("#secCharg").hidden=!r;
   const cdg=x=>/^chef de groupe$/i.test(x);
   $("#cdgMode").hidden=!(S.msg==="comp"?compList().some(cdg):S.msg==="ambiance"&&renfList().some(cdg));
   const w=$("#wC"),deja=$("#wVsr");

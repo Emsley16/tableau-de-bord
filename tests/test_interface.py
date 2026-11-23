@@ -211,6 +211,8 @@ with sync_playwright() as pw:
     page.locator("#typeSeg button[data-t=ROUTIER]").click()
     page.locator(".carte[data-e=ambiance]").click()
     verifier("Routier : la rubrique accident apparaît dans l'ambiance", [visible(page, "#sR"), visible(page, "#actR")], [True, True])
+    verifier("Routier : le chargement est une rubrique à part, après « Je fais »",
+             page.evaluate("(()=>{const y=q=>document.querySelector(q).getBoundingClientRect().top;return y('#actR')<y('#charg')&&!!document.querySelector('#secCharg #charg');})()"), True)
     verifier("Routier : rien de coché d'office, ni demande ni action",
              [page.locator("#out").input_value().split("\n")[1], page.evaluate("multi('actR').length + multi('actRf').length")], ["Secours suffisants", 0])
     page.locator("#aHome").click()
