@@ -171,6 +171,20 @@ with sync_playwright() as pw:
     verifier("Lexique accessible", visible(page, "#gsearch"), True)
     page.locator("#aHome").click()
 
+    # ── l'accident de la circulation se déclare aussi depuis l'ambiance du secours à personne
+    page.locator(".carte[data-e=ambiance]").click()
+    verifier("Ambiance SAP : bouton vers le routier, rubriques routières masquées", [visible(page, "#versRoutier"), visible(page, "#vsit"), visible(page, "#axeBox")], [True, False, False])
+    page.locator("#versRoutier").click()
+    verifier("Accident de la circulation : l'ambiance routier s'ouvre, avec « Dans le véhicule » et les axes fréquents",
+             [page.evaluate("S.type"), visible(page, "#sR"), visible(page, "#vsit"), visible(page, "#axeBox"), visible(page, "#versRoutier")],
+             ["ROUTIER", True, True, True, False])
+    page.locator("#aHome").click()
+    page.locator("#typeSeg button[data-t=SAP]").click()
+    page.select_option("#engin", "VSR")
+    verifier("Engin VSR : l'accueil passe en routier", page.evaluate("S.type"), "ROUTIER")
+    page.select_option("#engin", "VSAV 1")
+    page.locator("#typeSeg button[data-t=SAP]").click()
+
     # ── routier depuis l'accueil
     page.locator("#typeSeg button[data-t=ROUTIER]").click()
     page.locator(".carte[data-e=ambiance]").click()

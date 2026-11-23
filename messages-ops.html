@@ -408,6 +408,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 
   <div class="f"><span class="gl">1 · Ce que je constate</span>
     <div class="ngrid" id="ngrid"></div>
+    <button class="btn2" id="versRoutier" hidden>Accident de la circulation : ouvrir l'ambiance routier</button>
     <input type="text" id="natprec" placeholder="Précision : d'une échelle, d'environ 3 mètres" style="margin-top:8px" hidden>
     <div id="natLibBox" hidden>
       <input type="text" id="natlib" placeholder="Ce que vous constatez : piqûre de guêpe…" style="margin-top:8px">
@@ -449,12 +450,18 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
     </div>
     <div class="chips cod" id="adrind" data-multi style="margin-top:8px"><button class="chip" data-v="1" aria-pressed="false">Adresse indiquée au départ</button></div>
     <input type="text" id="adresse" placeholder="12 rue des Vignes" style="margin-top:8px">
+    <div id="axeBox" hidden>
+      <div class="pk" data-pour="adresse"><button type="button" data-pv="RN 141, sens Angoulême-Saintes">RN 141, sens Angoulême-Saintes</button><button type="button" data-pv="RN 141, sens Saintes-Angoulême">RN 141, sens Saintes-Angoulême</button></div>
+      <input type="text" id="hautR" placeholder="À la hauteur… du PR 12, de Jarnac" style="margin-top:8px"></div>
     <span class="mini" id="geoinfo">L'adresse saisie est reprise dans le compte rendu écrit. Décocher « adresse indiquée » si la victime n'est pas à l'adresse transmise : elle est alors annoncée dans tous les messages. La géolocalisation donne la position du téléphone : vérifier avant d'énoncer.</span></div>
 
   <div class="f"><span class="gl">Contexte</span>
     <div class="chips" id="ctxlieu" data-one></div>
     <input type="text" id="ctxdet" placeholder="Précision : 2e étage sans ascenseur…" style="margin-top:8px"></div>
 
+  <div class="f" id="vsitBox" hidden><span class="gl">Dans le véhicule</span>
+    <div class="chips" id="vsit" data-one><button class="chip" data-v="incarcérée" aria-pressed="false">Incarcérée</button><button class="chip" data-v="piégée" aria-pressed="false">Piégée</button><button class="chip" data-v="restée à bord" aria-pressed="false">Restée à bord</button><button class="chip" data-v="sortie seule" aria-pressed="false">Sortie seule</button></div>
+    <span class="mini">Incarcérée : coincée par la tôle, à désincarcérer. Piégée : ne peut pas sortir, sans être coincée. Restée à bord : pourrait sortir, mais ne l'a pas fait.</span></div>
   <div class="f"><span class="gl">État de la victime</span>
     <div class="chips" id="aggrav" data-multi></div>
     <input type="text" id="aggravlib" placeholder="Autre constat : une plaie du cuir chevelu…" style="margin-top:8px"></div>
@@ -927,7 +934,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23m";
+const VERSION="2026.11.23n";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -980,7 +987,7 @@ const NAT_ACR="arrêt cardio-respiratoire";
 // Troisième valeur : "S" réservé au secours à personne, "R" au secours routier
 const AGGRAV=[
   ["Inconsciente","victime inconsciente"],["ACR","en ACR"],["Détresse vitale","en détresse vitale"],
-  ["Hémorragie active","avec hémorragie active"],["Incarcérée","victime incarcérée","R"],
+  ["Hémorragie active","avec hémorragie active"],
   ["Accès difficile","accès difficile"],["Relevage difficile","relevage difficile","S"]
 ];
 const CTX_SAP=[["Domicile","à son domicile"],["Voie publique","sur la voie publique"],["Travail","sur son lieu de travail"],
@@ -2218,9 +2225,14 @@ function lieuSamu(){
 // Écrit : « Opération de secours sur la commune de GENSAC-LA-PALLUE, au 7 rue des Gascards. »
 // Ambiance : l'adresse n'est énoncée que si elle diffère de celle du départ.
 // Compte rendu : l'adresse saisie est toujours reprise.
+// L'adresse, complétée en routier par « à la hauteur de… » (un repère ou une commune)
+function adresseTxt(){
+  const a=raw("adresse"),h=S.type==="ROUTIER"?raw("hautR").trim().replace(/^à la hauteur\s*/i,"").replace(/[.\s]+$/,""):"";
+  return a+(a&&h?", à la hauteur "+h:"");
+}
 function lieuCodis(){
   const com=(raw("commune")||"[commune]").toUpperCase();
-  const adr=raw("adresse"),cr=S.msg==="cr";
+  const adr=adresseTxt(),cr=S.msg==="cr";
   let p="Opération de secours sur la commune de "+com;
   if(adr&&(cr||!adrInd()))p+=(/^\d/.test(adr)?", au ":", ")+adr;
   else if(!adrInd())p+=", "+(S.type==="ROUTIER"?"[voie / axe]":"[adresse]");
@@ -2448,7 +2460,7 @@ function bilanEcritSAP(){
 function acrRoutier(){return multi("aggrav").includes("en ACR")?"Une victime en ACR":"";}
 function victimesR(){
   const sx=raw("sexe")==="Femme"?"féminin":raw("sexe")==="Homme"?"masculin":"";
-  const p={sexe:sx,age:val("age")?ageTxt():"",etat:one("etat"),inc:multi("aggrav").includes("victime incarcérée"),
+  const p={sexe:sx,age:val("age")?ageTxt():"",etat:one("etat"),inc:one("vsit")==="incarcérée"||multi("aggrav").includes("victime incarcérée"),
     acr:multi("aggrav").includes("en ACR"),vecteur:raw("vect"),ch:raw("dest"),fem:sx==="féminin"};
   return[p].concat(S.rX.map(b=>({sexe:b.sexe,age:b.age,etat:b.etat,inc:!!b.inc,vecteur:b.vecteur,ch:b.ch,fem:b.sexe==="féminin"})));
 }
@@ -2459,20 +2471,14 @@ function victimeRTxt(v,complet){
   if(a&&/\d/.test(a)&&!/an|mois/i.test(a))a+=" ans";
   if(a==="1 ans")a="1 an";
   let s="une victime de sexe "+(v.sexe||"à préciser")+", "+(a?"âgée de "+a:"âge à préciser")+", "+(ETATS_R[v.etat]||"état à préciser");
-  if(!complet&&v.inc)s+=", incarcérée";
   if(complet){const t=transportTxt(v.vecteur,v.ch,true);if(t)s+=", "+t;}
   return s;
 }
 // Ambiance : une victime est décrite, plusieurs sont dénombrées
 function bilanRAmb(){
-  const V=victimesR(),n=V.length,ua=V.filter(v=>v.etat==="UA").length,inc=V.filter(v=>v.inc).length;
+  const V=victimesR(),n=V.length;
   if(n===1&&(V[0].sexe||V[0].age))return victimeRTxt(V[0],false);
-  let t=n+" victime"+(n>1?"s":"");
-  const dont=[];
-  if(ua)dont.push(ua+" UA");
-  if(inc)dont.push(inc+" incarcérée"+(inc>1?"s":""));
-  if(dont.length)t+=" dont "+dont.join(" et ");
-  return t;
+  return bilanHumainR();
 }
 function bilanRList(){
   const V=victimesR(),n=V.length;
@@ -2485,7 +2491,7 @@ function bilanRList(){
 function lieuRadio(){
   const com=raw("commune")||"[commune]";
   if(adrInd())return"Opération de secours sur la commune de "+com+" à l'adresse indiquée";
-  const adr=raw("adresse")||(S.type==="ROUTIER"?"[voie / axe]":"[adresse]");
+  const adr=adresseTxt()||(S.type==="ROUTIER"?"[voie / axe]":"[adresse]");
   return"Opération de secours sur la commune de "+com+" à l'adresse : "+adr;
 }
 function phraseAmbiance(){
@@ -2535,15 +2541,7 @@ function phraseAmbiance(){
   return accorder(pt(p));
 }
 function bilanSAPRadio(){return bilanHumain();}
-function bilanRAmbRadio(){
-  const V=victimesR(),n=V.length,ua=V.filter(v=>v.etat==="UA").length,inc=V.filter(v=>v.inc).length;
-  let t=n+" victime"+(n>1?"s":"");
-  const dont=[];
-  if(ua)dont.push(ua+" UA");
-  if(inc)dont.push(inc+" incarcérée"+(inc>1?"s":""));
-  if(dont.length)t+=" dont "+dont.join(" et ");
-  return t;
-}
+function bilanRAmbRadio(){return bilanHumainR();}
 function bilanRListRadio(){
   const V=victimesR(),n=V.length;
   return n+" victime"+(n>1?"s":"")+" — "+V.map(v=>{
@@ -2592,8 +2590,9 @@ function buildRadioR(){
   const acts=liste(ACTIONS_R.filter(a=>multi("actR").includes(a.id)).map(a=>a.phrase(n)))||"[action]";
   const prov=S.msg==="cr"?"définitif":"provisoire";
   // accidentTxt() : même formulation, avec le contexte et sa précision lorsqu'ils sont renseignés
-  const L=[codisTete()].concat(S.msg==="cr"?[]:[demandeRadio()],[lieuRadio(),
-    "Nous sommes confrontés à "+accidentTxt()]);
+  const amb=S.msg!=="cr",sit=situationTxt();
+  const L=[codisTete()].concat(amb?[demandeRadio(),cinetiqueLigne()]:[],[lieuRadio(),
+    "Nous sommes confrontés à "+accidentTxt(amb)+(sit?". "+sit:"")]);
   if(acrRoutier())L.push(acrRoutier());
   if(ch)L.push(ch);
   L.push("Bilan humain "+prov+" : "+(S.msg==="cr"?bilanRListRadio():bilanRAmbRadio()));
@@ -2827,15 +2826,34 @@ function buildCrSAP(){
 }
 
 /* Secours routier : véhicule, énergie, collision, cinétique, antagoniste, chargement */
-function accidentTxt(){
+function accidentTxt(sansCin){
   let veh=lc(raw("vehicA"));if(!veh)veh="[véhicule mis en cause]";
   if(one("energ"))veh+=" "+one("energ");
   const col=COLLISIONS.find(c=>c.v===raw("collision"))||COLLISIONS[0];
   const ant=lc(raw("antag")),cin=raw("cinetique")||"forte";
-  const colTxt=col.antag?"dans une collision "+col.v+" à "+cin+" cinétique"+(ant?" contre "+ant:""):
-    col.t?col.t+", à "+cin+" cinétique":col.v+" à "+cin+" cinétique";
+  // La cinétique n'est plus noyée dans la collision : à la radio elle a sa ligne après la demande (sansCin),
+  // partout ailleurs elle suit immédiatement « accident de la circulation ».
+  const colTxt=col.antag?"dans une collision "+col.v+(ant?" contre "+ant:""):col.t?col.t:col.v;
   const ctx=one("ctxlieu"),det=raw("ctxdet");
-  return"un accident de la circulation "+(ctx?ctx+" ":"")+"mettant en cause "+veh+" "+colTxt+(det?", "+lc(det):"");
+  const tete=sansCin?"":" à "+cin+" cinétique";
+  return"un accident de la circulation"+tete+(ctx?(tete?", "+ctx+", ":" "+ctx+" "):" ")+"mettant en cause "+veh+" "+colTxt+(det?", "+lc(det):"");
+}
+function cinetiqueLigne(){return"Accident à "+(raw("cinetique")||"forte")+" cinétique";}
+// ── 2. dans le véhicule : une information à part de la catégorie
+const SITUATIONS={"incarcérée":"incarcérée","piégée":"piégée","restée à bord":"restée à bord, ni incarcérée ni piégée","sortie seule":"sortie seule du véhicule"};
+function situationTxt(){
+  const V=victimesR(),n=V.length,inc=V.filter(v=>v.inc).length,sit=one("vsit");
+  if(n===1)return SITUATIONS[sit]?"La victime est "+SITUATIONS[sit]:inc?"La victime est incarcérée":"";
+  return inc?inc+" victime"+(inc>1?"s":"")+" incarcérée"+(inc>1?"s":""):"";
+}
+// Bilan humain routier : les quatre catégories, comme en secours à personne
+function bilanHumainR(){
+  const G=[];
+  victimesR().forEach(v=>{const g=G.find(x=>x.gravite===v.etat);if(g)g.nb++;else G.push({nb:1,gravite:v.etat});});
+  const rg=g=>({UA:0,UR:1,IMP:2,DCD:3}[g.gravite]??4);
+  G.sort((a,b)=>rg(a)-rg(b));
+  return G.map(g=>{const pl=g.nb>1?"s":"";
+    return g.nb+" victime"+pl+(g.gravite==="IMP"?" impliquée"+pl:g.gravite==="DCD"?" décédée"+pl:g.gravite?" "+g.gravite:"");}).join(", ");
 }
 function chargementTxt(){
   let ch="";
@@ -2855,7 +2873,7 @@ function actionsR(){
 function buildAmbR(){
   const acts=actionsR().map(x=>x.replace(/^(à la |à l'|au )/,""));
   return[lieuCodis(),
-    "Secours routier pour "+accidentTxt()+"."+(acrRoutier()?" "+acrRoutier()+".":""),
+    "Secours routier pour "+accidentTxt()+"."+(situationTxt()?" "+situationTxt()+".":"")+(acrRoutier()?" "+acrRoutier()+".":""),
     chargementTxt(),
     "Bilan provisoire : "+bilanRAmb()+".",
     surLieuxEcrit(),
@@ -2865,7 +2883,7 @@ function buildAmbR(){
 function buildCrR(){
   const V=victimesR(),n=V.length,inc=V.filter(v=>v.inc).length,acts=actionsR();
   let arr="À notre arrivée, nous sommes confrontés à "+accidentTxt()+".";
-  if(inc)arr+=n===1?" Victime incarcérée.":" "+inc+" victime"+(inc>1?"s":"")+" incarcérée"+(inc>1?"s":"")+".";
+  if(situationTxt())arr+=" "+situationTxt()+".";
   if(acrRoutier())arr+=" "+acrRoutier()+".";
   if(raw("gestes"))arr+=" "+pt(cap(raw("gestes")));
   const fin=FIN_ROUTE.filter(x=>multi("rFin").includes(x[1])).map(x=>x[1]+".").join(" ");
@@ -3613,6 +3631,7 @@ function ordonnerBilan(){
   deplacer($("#en").closest(".cst"),$("#pqS"),null);
 }
 function majEtatsBilan(){
+  majRoutier();
   if(!$("#exEtat"))return;
   const n=multi("pup").length+multi("teg").length+multi("abdo").length+(raw("exlibre")?1:0);
   $("#exEtat").textContent=n?n+" constat"+(n>1?"s":"")+" saisi"+(n>1?"s":""):"Rien de saisi : pupilles, peau, ventre";
@@ -3620,6 +3639,18 @@ function majEtatsBilan(){
   $("#mhEtat").textContent=m?m+" rubrique"+(m>1?"s":"")+" sur 5 renseignée"+(m>1?"s":""):"Rien de saisi : maladies, hospitalisations, traitements, allergies, facteurs aggravants";
   $("#pqEtat").textContent=pqrstTxt()||"Rien de saisi : provoquée par, qualité, région, sévérité, temps";
   $("#pqT").textContent=quandTxt()?cap(quandTxt())+", repris de l'étape 1.":"À renseigner à l'étape 1, « Depuis quand ».";
+}
+// Ce qui n'apparaît qu'en routier, ou qu'en secours à personne ; et le contrôle « incarcérée sans VSR »
+function vsrManque(){
+  return S.type==="ROUTIER"&&S.msg==="ambiance"&&victimesR().some(v=>v.inc)&&raw("engin")!=="VSR"
+    &&!renfList().includes("VSR")&&!(S.demFaites||[]).includes("VSR")&&!/vsr/i.test(raw("surlieuxLib"));
+}
+function majRoutier(){
+  const r=S.type==="ROUTIER";
+  $("#vsitBox").hidden=!r;$("#axeBox").hidden=!r;$("#versRoutier").hidden=r;
+  const w=$("#wC"),deja=$("#wVsr");
+  if(deja)deja.remove();
+  if(w&&vsrManque())w.insertAdjacentHTML("afterbegin",'<div class="w am" id="wVsr"><span><b>Victime incarcérée : aucun VSR sur les lieux ni demandé.</b> <button class="btn2" id="ajVsr" style="margin-top:6px">Ajouter le VSR à la demande</button></span></div>');
 }
 function initV2(){
   ordonnerBilan();
@@ -3641,11 +3672,18 @@ function initV2(){
   $("#compPasse").addEventListener("click",()=>{if(S.demFaites.length>avant){if(!S.passe)S.passe={};S.passe.comp=(S.passe.comp||0)+1;
     noter("Complément n° "+S.passe.comp+" · "+supTxt(),texteComp);sauver();majAccueil();}});
   $("#copJ").onclick=()=>copier(journalTxt(S.journal),"Messages copiés");
+  // Routier : l'accident se déclare depuis le secours à personne, le VSR ouvre le routier, le contrôle ajoute le VSR
+  $("#versRoutier").onclick=()=>{applyType("ROUTIER",true);rendre();toast("Ambiance routier");window.scrollTo(0,0);};
+  $("#engin").addEventListener("change",()=>{if(raw("engin")==="VSR"&&S.type!=="ROUTIER"){applyType("ROUTIER",true);rendre();}});
+  document.addEventListener("click",e=>{if(e.target.id!=="ajVsr")return;const c=$('#renf .chip[data-r="VSR"]');if(c&&c.getAttribute("aria-pressed")!=="true")c.click();});
   // Vecteurs et destinations habituels : un appui remplit la case voisine, qui reste modifiable à la main
   $('.pk[data-pour="vect"]').innerHTML=pkHTML(VECTEURS);$('.pk[data-pour="dest"]').innerHTML=pkHTML(DESTINATIONS);
   document.addEventListener("click",e=>{const b=e.target.closest(".pk button");if(!b)return;
     const k=b.parentNode,c=k.dataset.pour?$("#"+k.dataset.pour):$('#trX input[data-xi="'+k.dataset.xi+'"][data-xk="'+k.dataset.xk+'"]');
-    if(!c)return;c.value=b.dataset.pv;c.dispatchEvent(new Event("input",{bubbles:true}));});
+    if(!c)return;
+    // un axe choisi : la victime n'est pas « à l'adresse indiquée »
+    if(k.dataset.pour==="adresse"&&adrInd())$("#adrind .chip").click();
+    c.value=b.dataset.pv;c.dispatchEvent(new Event("input",{bubbles:true}));});
   // L'avertissement « saisie d'une intervention précédente » doit se voir dès l'accueil
   $("#v-accueil").insertBefore($("#bnPrev"),$("#accTop"));
   ecranV2("accueil");

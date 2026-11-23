@@ -37,6 +37,15 @@ def adresse_du_depart(page):
     page.evaluate("(()=>{const c=document.querySelector('#adrind .chip');if(c&&c.getAttribute('aria-pressed')!=='true')c.click();})()")
 
 
+def incarceree(page):
+    """Depuis le 23/11 (version n), « incarcérée » se choisit dans la rubrique « Dans le véhicule » ;
+    dans la référence, c'est encore un constat parmi les autres."""
+    if page.locator("#vsit").count():
+        page.locator("#vsit .chip", has_text="Incarcérée").first.click()
+    else:
+        page.locator("#aggrav .chip", has_text="Incarcérée").first.click()
+
+
 def ouvrir(nav, url):
     # un contexte neuf par scénario : stockage local vierge, comme une première ouverture
     ctx = nav.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
@@ -673,6 +682,48 @@ with sync_playwright() as pw:
     verifier("Aucune erreur JavaScript (scénario 3)", json.dumps(err), "[]")
     page.close()
 
+    # ───── 4 bis. Routier, rédaction du 23/11 au soir : une victime, RN 141, contrôle du VSR ─────
+    page, err = ouvrir(nav, NOUVEAU)
+    page.locator("#typeSeg button[data-t=ROUTIER]").click()
+    victime(page, 40, "Homme")
+    page.fill("#commune", "Châteaubernard")
+    page.locator(".vtile[data-veh=vl]").click()
+    page.fill("#antag", "un poids lourd")
+    page.locator("#etat .chip[data-v=UA]").click()
+    puce(page, "ctxlieu", "Hors agglomération")
+    puce(page, "vsit", "Incarcérée")
+    page.evaluate("document.querySelector('#renf .chip[data-r=\"VSR\"]').click()")   # le VSR n'est pas demandé
+    page.locator('#axeBox .pk button', has_text="sens Angoulême-Saintes").click()
+    page.fill("#hautR", "du PR 12")
+    amb = message(page, "ambiance", "radio").split("\n")
+    verifier("Routier — ambiance radio : cinétique après la demande, lieu sur la RN 141, victime incarcérée, bilan à quatre catégories", "\n".join(amb[:6]),
+             "CODIS 16 de VSAV 1 Cognac\n"
+             "Je demande : SMUR\n"
+             "Accident à forte cinétique\n"
+             "Opération de secours sur la commune de Châteaubernard à l'adresse : RN 141, sens Angoulême-Saintes, à la hauteur du PR 12\n"
+             "Nous sommes confrontés à un accident de la circulation hors agglomération mettant en cause un véhicule léger dans une collision frontale contre un poids lourd. La victime est incarcérée\n"
+             "Bilan humain provisoire : 1 victime UA")
+    verifier("Routier — contrôle : victime incarcérée, VSR ni sur les lieux ni demandé",
+             "Victime incarcérée : aucun VSR sur les lieux ni demandé." in page.locator("#wC").inner_text(), True)
+    page.locator("#ajVsr").click()
+    verifier("Routier — contrôle : un appui ajoute le VSR à la demande, l'alerte disparaît",
+             [message(page, "ambiance", "radio").split("\n")[1], page.locator("#wVsr").count()], ["Je demande : SMUR et VSR", 0])
+    vue(page, "saisie")
+    for choix, attendu in (("Piégée", "La victime est piégée"), ("Restée à bord", "La victime est restée à bord, ni incarcérée ni piégée"), ("Sortie seule", "La victime est sortie seule du véhicule")):
+        puce(page, "vsit", choix)
+        verifier("Routier — dans le véhicule : " + choix.lower(), message(page, "ambiance", "radio").split("\n")[4].split(". ")[-1], attendu)
+        vue(page, "saisie")
+    verifier("Routier — écrit : la cinétique en tête de phrase",
+             message(page, "ambiance").split("\n")[1],
+             "Secours routier pour un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger dans une collision frontale contre un poids lourd. La victime est sortie seule du véhicule.")
+    vue(page, "saisie")
+    page.select_option("#engin", "VSR")
+    puce(page, "vsit", "Incarcérée")
+    page.evaluate("document.querySelector('#renf .chip[data-r=\"VSR\"]').click()")
+    verifier("Routier — au VSR, pas d'alerte sur le VSR", [message(page, "ambiance", "radio").split("\n")[0], page.locator("#wVsr").count()], ["CODIS 16 de VSR Cognac", 0])
+    verifier("Aucune erreur JavaScript (routier, version n)", json.dumps(err), "[]")
+    page.close()
+
     # ───── 4. Accident de circulation ─────
     page, err = ouvrir(nav, NOUVEAU)
     page.locator("#typeSeg button[data-t=ROUTIER]").click()
@@ -686,13 +737,13 @@ with sync_playwright() as pw:
     puce(page, "chargRisk", "Risques particuliers")
     page.fill("#chargPrec", "Fuite d'hydrocarbures")
     page.locator("#etat .chip[data-v=UA]").click()
-    puce(page, "aggrav", "Incarcérée")
+    incarceree(page)
     puce(page, "adrind", "Adresse indiquée au départ")  # décoche : la localisation est annoncée
     verifier("Ambiance routier — une victime", message(page, "ambiance"),
              "Opération de secours sur la commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
-             "Secours routier pour un accident de la circulation mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd.\n"
+             "Secours routier pour un accident de la circulation à forte cinétique mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd. La victime est incarcérée.\n"
              "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures.\n"
-             "Bilan provisoire : une victime de sexe masculin, âgée de 40 ans, UA, incarcérée.\n"
+             "Bilan provisoire : une victime de sexe masculin, âgée de 40 ans, UA.\n"
              "Prise en charge de la victime en cours.\n"
              "Je demande : SMUR et VSR.")
     # Deuxième victime
@@ -708,9 +759,9 @@ with sync_playwright() as pw:
     page.fill("#ctxdet", "Véhicule en contrebas de la chaussée")
     amb = message(page, "ambiance").split("\n")
     verifier("Ambiance routier — contexte routier", amb[1],
-             "Secours routier pour un accident de la circulation hors agglomération mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd, véhicule en contrebas de la chaussée.")
+             "Secours routier pour un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée.")
     verifier("Ambiance routier — deux victimes", amb[3] + "\n" + amb[4],
-             "Bilan provisoire : 2 victimes dont 1 UA et 1 incarcérée.\n"
+             "Bilan provisoire : 1 victime UA, 1 victime UR.\n"
              "Sécurisation du site, prise en charge des victimes et désincarcération des victimes en cours.")
     vue(page, "saisie")
     ecran(page, "fin")
@@ -726,7 +777,7 @@ with sync_playwright() as pw:
     puce(page, "actR", "Nettoyage de chaussée")
     verifier("Compte rendu routier — deux victimes", message(page, "cr"),
              "GH 830 — Opération de secours sur la commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
-             "À notre arrivée, nous sommes confrontés à un accident de la circulation hors agglomération mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée. Victime évacuée du véhicule par des témoins. Véhicule sur le toit.\n"
+             "À notre arrivée, nous sommes confrontés à un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée. Victime évacuée du véhicule par des témoins. Véhicule sur le toit.\n"
              "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures.\n"
              "Bilan définitif : 2 victimes : une victime de sexe masculin, âgée de 40 ans, UA, transportée par SMUR sur CH Angoulême ; une victime de sexe féminin, âgée de 35 ans, UR, transportée par VSAV 2 sur CH Cognac.\n"
              "Les moyens sapeurs-pompiers ont procédé à la sécurisation du site, à la prise en charge des victimes, à la désincarcération des victimes, à l'extraction des victimes et au nettoyage de la chaussée.\n"
@@ -746,7 +797,7 @@ with sync_playwright() as pw:
     radio_cr = message(page, "cr", "radio").split("\n")
     verifier("Radio routier — groupe horaire dans le compte rendu", radio_cr[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 830")
     verifier("Radio routier — contexte repris", radio_cr[2],
-             "Nous sommes confrontés à un accident de la circulation hors agglomération mettant en cause un véhicule léger électrique dans une collision frontale à forte cinétique contre un poids lourd, véhicule en contrebas de la chaussée")
+             "Nous sommes confrontés à un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée")
     verifier("Radio routier — encore du travail : « Nous procédons à… »", radio_cr[-1][:16], "Nous procédons à")
     verifier("Contrôle — état de l'intervention à préciser", str("terminée ou encore en cours" in page.locator("#wC").inner_text()), "True")
     vue(page, "saisie"); ecran(page, "fin")
@@ -765,9 +816,9 @@ with sync_playwright() as pw:
     verifier("Écran Fin routier — champs SAP masqués",
              json.dumps(page.evaluate("['gestesBox','medBox','actFinBox','devBox','dcdBox','devPrecBox','rFinBox','trBox'].map(i=>document.getElementById(i).hidden)")),
              "[false, true, true, true, true, true, false, false]")
-    verifier("Routier — constats : incarcérée et ACR présents, relevage difficile absent",
-             json.dumps(page.evaluate("[...document.querySelectorAll('#aggrav .chip')].map(c=>c.textContent)"), ensure_ascii=False),
-             '["Inconsciente", "ACR", "Détresse vitale", "Hémorragie active", "Incarcérée", "Accès difficile"]')
+    verifier("Routier — constats : ACR présent, relevage difficile absent ; « incarcérée » a sa rubrique « Dans le véhicule »",
+             json.dumps(page.evaluate("[[...document.querySelectorAll('#aggrav .chip')].map(c=>c.textContent), [...document.querySelectorAll('#vsit .chip')].map(c=>c.textContent)]"), ensure_ascii=False),
+             '[["Inconsciente", "ACR", "Détresse vitale", "Hémorragie active", "Accès difficile"], ["Incarcérée", "Piégée", "Restée à bord", "Sortie seule"]]')
     verifier("Routier — contextes adaptés",
              json.dumps(page.evaluate("[...document.querySelectorAll('#ctxlieu .chip')].map(c=>c.textContent)"), ensure_ascii=False),
              '["Voie publique", "En agglomération", "Hors agglomération", "Voie rapide", "Intersection", "Giratoire", "Parking", "Voie privée"]')
@@ -941,7 +992,7 @@ with sync_playwright() as pw:
         puce(page, "chargRisk", "Risques particuliers")
         page.fill("#chargPrec", "Fuite d'hydrocarbures")
         page.locator("#etat .chip[data-v=UA]").click()
-        puce(page, "aggrav", "Incarcérée")
+        incarceree(page)
         page.locator("#codDet summary").click()
         page.locator("#addxv").click()
         page.locator("#xv select[data-xk=sexe]").select_option("féminin")
@@ -959,6 +1010,27 @@ with sync_playwright() as pw:
         R["_cr_routier_controles"] = page.locator("#wC").inner_text()
         page.close()
         return R, err
+    ROUTIER_23N = {
+        "Routier vide":
+            "CODIS 16 de VSAV 1 Cognac\nJe demande : SMUR et VSR\nAccident à forte cinétique\n"
+            "Opération de secours sur la commune de Javrezac à l'adresse indiquée\n"
+            "Nous sommes confrontés à un accident de la circulation mettant en cause [véhicule mis en cause] dans une collision frontale\n"
+            "Bilan humain provisoire : 1 victime\nNous procédons à la prise en charge de la victime",
+        "Routier ambiance":
+            "CODIS 16 de VSAV 1 Cognac\nJe demande : SMUR et VSR\nAccident à forte cinétique\n"
+            "Opération de secours sur la commune de Châteaubernard à l'adresse : RN141, sens Cognac-Angoulême, PR 12\n"
+            "Nous sommes confrontés à un accident de la circulation mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd. 1 victime incarcérée\n"
+            "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures\n"
+            "Bilan humain provisoire : 1 victime UA, 1 victime UR\n"
+            "Nous procédons à la sécurisation du site et à la prise en charge des victimes",
+        "Routier compte rendu":
+            "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
+            "Opération de secours sur la commune de Châteaubernard à l'adresse : RN141, sens Cognac-Angoulême, PR 12\n"
+            "Nous sommes confrontés à un accident de la circulation à forte cinétique mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd. 1 victime incarcérée\n"
+            "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures\n"
+            "Bilan humain définitif : 2 victimes — masculin, 40 ans, UA, transporté par SMUR sur CH Angoulême ; féminin, 35 ans, UR, transportée par VSAV 2 sur CH Cognac\n"
+            "Nous procédons à la sécurisation du site et à la prise en charge des victimes",
+    }
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)
     for k in r1:
         if not k.startswith("_"):
@@ -966,7 +1038,9 @@ with sync_playwright() as pw:
             ref = r1[k].split("\n")
             if "compte rendu" in k and not k.endswith("contrôles"):
                 ref = [ref[0]] + ref[2:]
-            verifier("Radio routier inchangée — " + k, r2[k], "\n".join(ref))
+            # depuis le 23/11 (version n), le routier a sa propre rédaction : cinétique après la demande,
+            # situation dans le véhicule à part, bilan humain limité aux quatre catégories
+            verifier("Radio routier — " + k, r2[k], ROUTIER_23N.get(k, "\n".join(ref)))
     verifier("Radio SAP — message vide", r2["_vide ambiance"],
              "CODIS 16 de VSAV 1 Cognac\n"
              "Secours suffisants\n"
