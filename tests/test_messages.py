@@ -3,7 +3,10 @@
 Lancement, depuis la racine du dépôt :  python3 tests/test_messages.py
 Prérequis : Python 3, le paquet « playwright » et Google Chrome installés.
 
-NOUVEAU : le programme du dépôt, messages-ops.html.
+NOUVEAU : le programme du dépôt, messages-ops.html. Depuis le 23/11/2026 son interface est organisée par
+          message (accueil, puis un écran par message). Ces tests portent sur le moteur de rédaction : ils
+          appellent modeEssai(), qui rend la navigation d'origine (onglets et écrans 1, 2, 3) le temps du test.
+          L'interface elle-même est vérifiée par tests/test_interface.py.
 ANCIEN  : la version du 14/10/2026, gardée comme référence. À saisie égale, les messages
           radio et l'annonce SAMU du programme doivent rester identiques à cette référence,
           sauf changement demandé par Anthony (mettre alors à jour le test concerné).
@@ -37,6 +40,7 @@ def ouvrir(nav, url):
     page.on("console", lambda m: erreurs.append(m.text) if m.type == "error" and "ERR_FILE_NOT_FOUND" not in m.text else None)
     page.goto(url)
     page.wait_for_selector("#ngrid button", state="attached")
+    page.evaluate("typeof modeEssai==='function'&&modeEssai()")
     return page, erreurs
 
 
@@ -175,6 +179,7 @@ with sync_playwright() as pw:
     avant = page.locator("#out").input_value()
     page.reload()
     page.wait_for_selector("#ngrid button", state="attached")
+    page.evaluate("typeof modeEssai==='function'&&modeEssai()")
     vue(page, "codis")
     verifier("Persistance après rechargement", page.locator("#out").input_value(), avant)
     verifier("Aucune erreur JavaScript (scénario 1)", json.dumps(err), "[]")
@@ -399,6 +404,7 @@ with sync_playwright() as pw:
     # persistance du transport des autres victimes
     page.reload()
     page.wait_for_selector("#ngrid button", state="attached")
+    page.evaluate("typeof modeEssai==='function'&&modeEssai()")
     verifier("Transport des autres victimes — conservé au rechargement",
              json.dumps(page.evaluate("[S.sapX[0].vecteur,S.sapX[0].ch,document.querySelector('#trX input[data-xk=vecteur]').value]")),
              '["VSAV de Jarnac", "CH Cognac", "VSAV de Jarnac"]')
@@ -850,6 +856,7 @@ with sync_playwright() as pw:
     verifier("Bascule vers l'écrit", page.locator("#out").input_value().split("\n")[1][:10], "Secours à ")
     page.reload()
     page.wait_for_selector("#ngrid button", state="attached")
+    page.evaluate("typeof modeEssai==='function'&&modeEssai()")
     verifier("Support mémorisé au rechargement", page.evaluate("S.sup"), "ecrit")
     page.locator("#rst").click()
     page.locator("#rst").click()
