@@ -342,6 +342,8 @@ body:not(.essai){padding-bottom:28px}
 body:not(.essai) #phSeg,body:not(.essai) #msgSeg,body:not(.essai) .nav,body:not(.essai) #goSamu,body:not(.essai) .dock .tabs{display:none!important}
 body:not(.essai):not(.e-samu) .dock{display:none!important}
 body:not(.essai) #v-codis.on{border-top:2px solid var(--blu);background:var(--surface);margin-top:10px;padding-bottom:20px}
+.pk{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pk button{min-height:40px;padding:0 11px;border-radius:20px;border:1px solid var(--border);background:var(--s2);color:var(--text);font:500 13.5px var(--sans);cursor:pointer}
 #copJ{margin:0 0 12px}
 #compVict{margin-top:12px}
 body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body.essai #aHome,body.essai #passeV2,body.essai #passeS{display:none!important}
@@ -449,7 +451,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 
   <div class="f"><span class="gl">État de la victime</span>
     <div class="chips" id="aggrav" data-multi></div>
-    <input type="text" id="aggravlib" placeholder="Autre élément constaté" style="margin-top:8px"></div>
+    <input type="text" id="aggravlib" placeholder="Autre constat : une plaie du cuir chevelu…" style="margin-top:8px"></div>
 </div></div>
 
 <details class="sec" id="sR" hidden>
@@ -761,6 +763,8 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 
   <div class="f" id="trBox"><span class="gl">Transport</span>
     <div class="g2"><input type="text" id="vect" placeholder="Vecteur : VSAV, SMUR"><input type="text" id="dest" placeholder="Destination : CH Cognac"></div>
+    <div class="pk" data-pour="vect"></div>
+    <div class="pk" data-pour="dest"></div>
     <span class="mini">Victime principale, repris aussi dans le compte rendu radio. Les autres victimes routières ont leur propre transport dans « Plus » de l'écran Arrivée.</span></div>
 
   <div class="f" id="trXBox"><span class="gl">Transport des autres victimes</span>
@@ -892,7 +896,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23i";
+const VERSION="2026.11.23j";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1794,7 +1798,7 @@ function bAnnonce(){
   if(motif==="trauma"&&raw("h_les")){
     let les=raw("h_les").trim();
     les=les.charAt(0).toLowerCase()+les.slice(1);
-    if(val("en")&&/douleur/i.test(les))les+=", cotée "+val("en")+" sur 10";
+    if(val("en")&&/douleur/i.test(les))les=les.replace(/douleurs?/i,m=>m+" cotée "+val("en")+" sur 10");
     sail.push(les);
   }
   const vf=vittelFort();
@@ -1902,6 +1906,16 @@ function auFeminin(t){
   AU_FEMININ.forEach(([m,f])=>{t=t.replace(new RegExp("(^|[^a-zà-ÿ])"+m+"(?![a-zà-ÿ])","gi"),(x,avant)=>avant+f);});
   return t;
 }
+// Texte libre de l'état de la victime. Un constat qui commence par un article (« une plaie », « des douleurs »)
+// est introduit par « présentant » ; un « présente » ou « présentant » saisi par habitude est retiré.
+// À l'écrit, quand le motif dit déjà « présentant une douleur thoracique », la suite s'enchaîne par « avec ».
+// Un adjectif (« somnolent ») reste tel quel : null est rendu et l'appelant garde l'ancienne rédaction.
+function etatLibre(mot){
+  const t=raw("aggravlib").trim().replace(/^(pr[ée]sent(e|ant)|avec)\s+/i,"").replace(/[.\s]+$/,"");
+  if(!t)return"";
+  if(!/^(une?|des|du|de la|de l'|l'|le|la|les|plusieurs|deux|trois)\b|^(de l'|l')/i.test(t))return null;
+  return(mot||"présentant")+" "+t.charAt(0).toLowerCase()+t.slice(1);
+}
 function constatsTxt(q){
   const ag=multi("aggrav"),vic=[],ops=[];
   const grave=/ACR|mort manifeste/.test(q.c);
@@ -1910,12 +1924,12 @@ function constatsTxt(q){
   if(ag.includes("en détresse vitale")&&!grave)vic.push("en détresse vitale");
   if(ag.includes("avec hémorragie active"))vic.push("avec hémorragie active");
   if(ag.includes("victime incarcérée"))vic.push("incarcérée");
-  if(one("acg")==="oui")vic.push("sous anticoagulant");
   if(multi("vie").includes("vit seul"))vic.push("personne isolée");
   if(multi("vie").includes("grossesse"))vic.push("grossesse en cours");
   if(ag.includes("accès difficile"))ops.push("accès difficile");
   if(ag.includes("relevage difficile"))ops.push("relevage difficile");
-  const libre=raw("aggravlib");if(libre)ops.push(auFeminin(lc(libre)));
+  const libre=etatLibre(/^présentant/.test(motifTxt(q))?"avec":"présentant");
+  if(libre)ops.push(libre);else if(libre===null)ops.push(auFeminin(lc(raw("aggravlib"))));
   return{vic,ops};
 }
 function descSAP(){
@@ -2238,11 +2252,18 @@ function libelleGroupe(b){
   const n=Math.max(1,parseInt(b.nb)||1),pl=n>1?"s":"";
   return n+" victime"+pl+(b.gravite==="IMP"?" impliquée"+pl:b.gravite==="DCD"?" décédée"+pl:b.gravite?" "+b.gravite:"");
 }
+// Choix habituels : le libellé du bouton, puis le texte inscrit dans la case (et donc dans le message)
+const VECTEURS=[["VSAV","VSAV"],["SMUR","SMUR"],["Hélitransport","hélicoptère"]];
+const DESTINATIONS=[["Urgences CH Cognac","les urgences du CH Cognac"],["Urgences CH Angoulême","les urgences du CH Angoulême"],
+  ["Urgences CH Bordeaux","les urgences du CH Bordeaux"],["Urgences CH Poitiers","les urgences du CH Poitiers"],
+  ["Urgences pédiatriques CH Angoulême","les urgences pédiatriques du CH Angoulême"],["Urgences pédiatriques CH Saintes","les urgences pédiatriques du CH Saintes"]];
+function pkHTML(l){return l.map(x=>'<button type="button" data-pv="'+esc(x[1])+'">'+esc(x[0])+'</button>').join("");}
 function renderTrX(){
   $("#trX").innerHTML=S.type!=="SAP"?"":S.sapX.map((b,i)=>
     '<span class="mini" style="margin-top:8px">'+libelleGroupe(b)+'</span>'+
     '<div class="g2"><input type="text" data-xi="'+i+'" data-xk="vecteur" value="'+esc(b.vecteur||"")+'" placeholder="Vecteur : VSAV de Jarnac">'+
     '<input type="text" data-xi="'+i+'" data-xk="ch" value="'+esc(b.ch||"")+'" placeholder="Destination : CH Cognac"></div>'+
+    '<div class="pk" data-xi="'+i+'" data-xk="vecteur">'+pkHTML(VECTEURS)+'</div><div class="pk" data-xi="'+i+'" data-xk="ch">'+pkHTML(DESTINATIONS)+'</div>'+
     '<input type="text" data-xi="'+i+'" data-xk="devenir" value="'+esc(b.devenir||"")+'" placeholder="Sinon : restent sur place, prises en charge par…" style="margin-top:6px">').join("");
 }
 function majXV(e){
@@ -2400,11 +2421,10 @@ function phraseAmbiance(){
   const coche=multi("aggrav").filter(x=>!(x==="en ACR"&&(nat===NAT_ACR||/ACR/.test(etatVic))));
   // Ce qui décrit la victime, puis ce qui pèse sur l'opération
   const vic=coche.filter(x=>!/difficile/.test(x)),ops=coche.filter(x=>/difficile/.test(x));
-  if(one("acg")==="oui"&&!vic.includes("sous anticoagulant"))vic.push("sous anticoagulant");
   if(multi("vie").includes("vit seul"))vic.push("personne isolée");
   if(multi("vie").includes("grossesse"))vic.push("grossesse en cours");
-  const libre=raw("aggravlib");
-  if(libre)vic.push(libre.charAt(0).toLowerCase()+libre.slice(1));
+  const libre=etatLibre(),brut=raw("aggravlib");
+  if(libre)vic.push(libre);else if(libre===null)vic.push(brut.charAt(0).toLowerCase()+brut.slice(1));
   const at=ageTxt();
   let su="";
   if(raw("sexe")||val("age")){
@@ -3331,7 +3351,7 @@ function evenements(){
   // Une case déjà remplie : le premier appui sélectionne tout (la saisie remplace), le second place le curseur
   const SAISIE='input[type=text],input[type=number],input:not([type])';
   document.addEventListener("focusin",e=>{const t=e.target;
-    if(!t.matches||!t.matches(SAISIE)||!t.value)return;
+    if(!t.matches||!t.matches(SAISIE)||!t.value||t.closest("#s10"))return;
     t._toutSel=true;setTimeout(()=>{try{if(document.activeElement===t)t.select();}catch(_){}},0);});
   document.addEventListener("mouseup",e=>{const t=e.target;
     if(t&&t._toutSel){t._toutSel=false;e.preventDefault();}});
@@ -3463,6 +3483,11 @@ function initV2(){
   $("#compPasse").addEventListener("click",()=>{if(S.demFaites.length>avant){if(!S.passe)S.passe={};S.passe.comp=(S.passe.comp||0)+1;
     noter("Complément n° "+S.passe.comp+" · "+supTxt(),texteComp);sauver();majAccueil();}});
   $("#copJ").onclick=()=>copier(journalTxt(S.journal),"Messages copiés");
+  // Vecteurs et destinations habituels : un appui remplit la case voisine, qui reste modifiable à la main
+  $('.pk[data-pour="vect"]').innerHTML=pkHTML(VECTEURS);$('.pk[data-pour="dest"]').innerHTML=pkHTML(DESTINATIONS);
+  document.addEventListener("click",e=>{const b=e.target.closest(".pk button");if(!b)return;
+    const k=b.parentNode,c=k.dataset.pour?$("#"+k.dataset.pour):$('#trX input[data-xi="'+k.dataset.xi+'"][data-xk="'+k.dataset.xk+'"]');
+    if(!c)return;c.value=b.dataset.pv;c.dispatchEvent(new Event("input",{bubbles:true}));});
   // L'avertissement « saisie d'une intervention précédente » doit se voir dès l'accueil
   $("#v-accueil").insertBefore($("#bnPrev"),$("#accTop"));
   ecranV2("accueil");

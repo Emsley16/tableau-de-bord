@@ -443,6 +443,41 @@ with sync_playwright() as pw:
     verifier("Cas n° 5 — compte rendu écrit : même précision", cr[-2],
              "La victime de sexe masculin, UR, est transportée par SMUR sur CH Angoulême. La victime de sexe féminin, UR, est transportée par VSAV 2 sur CH Cognac.")
     verifier("Cas n° 5 — bilan humain inchangé : deux victimes UR", [l for l in cr if l.startswith("Bilan humain")][0], "Bilan humain définitif : 2 victimes UR.")
+    # 23/11, version j : état de la victime en texte libre, anticoagulant, vecteurs et destinations en un appui
+    vue(page, "saisie")
+    ecran(page, "arr")
+    page.fill("#aggravlib", "Une plaie du cuir chevelu avec saignement important")
+    verifier("État libre commençant par un article : introduit par « présentant » (radio)",
+             "La victime principale est un homme de 58 ans, présentant une plaie du cuir chevelu avec saignement important ;" in message(page, "ambiance", "radio"), True)
+    verifier("État libre commençant par un article : « présentant » (écrit, après une chute)",
+             "à la suite d'une chute, présentant une plaie du cuir chevelu avec saignement important" in message(page, "ambiance"), True)
+    vue(page, "saisie")
+    page.fill("#aggravlib", "présente une plaie")
+    verifier("État libre : un « présente » saisi par habitude n'est pas doublé",
+             "58 ans, présentant une plaie ;" in message(page, "ambiance", "radio"), True)
+    vue(page, "saisie")
+    page.fill("#aggravlib", "Agité")
+    verifier("État libre sans article (adjectif) : laissé tel quel", "58 ans, agité ;" in message(page, "ambiance", "radio"), True)
+    vue(page, "saisie")
+    page.fill("#aggravlib", "")
+    ecran(page, "bil")
+    page.evaluate("(()=>{const c=document.querySelector('#acg .chip[data-v=oui]');if(c.getAttribute('aria-pressed')!=='true')c.click();})()")
+    verifier("Anticoagulant : absent des messages CODIS, présent dans l'annonce SAMU",
+             ["anticoagulant" in message(page, "cr", "radio").lower(), "anticoagulant" in message(page, "cr").lower(), "anticoagulant" in page.evaluate("bAnnonce()").lower()],
+             [False, False, True])
+    page.evaluate("document.querySelector('#h_les').value='douleur au dos et plaie du cuir chevelu avec saignement important';document.querySelector('#en').value='7';rendre()")
+    verifier("Annonce SAMU : la cotation suit le mot « douleur », pas toute la description",
+             "douleur cotée 7 sur 10 au dos et plaie du cuir chevelu avec saignement important" in page.evaluate("bAnnonce()"), True)
+    vue(page, "saisie")
+    ecran(page, "fin")
+    page.locator('.pk[data-pour=vect] button', has_text="Hélitransport").click()
+    page.locator('.pk[data-pour=dest] button', has_text="Urgences CH Bordeaux").click()
+    page.locator('#trX .pk[data-xk=vecteur] button', has_text="VSAV").click()
+    page.locator('#trX .pk[data-xk=ch] button', has_text="Urgences pédiatriques CH Saintes").click()
+    cr = message(page, "cr", "radio").split("\n")
+    verifier("Vecteurs et destinations en un appui", "\n".join(cr[-3:-1]),
+             "La victime de sexe masculin, UR, est transportée par hélicoptère sur les urgences du CH Bordeaux\n"
+             "La victime de sexe féminin, UR, est transportée par VSAV sur les urgences pédiatriques du CH Saintes")
     verifier("Aucune erreur JavaScript (cas n° 5)", json.dumps(err), "[]")
     page.close()
 
