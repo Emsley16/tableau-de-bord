@@ -155,6 +155,12 @@ with sync_playwright() as pw:
     verifier("Bilan SAMU : une flèche déplie le PQRST (avec l'échelle de la douleur) et le MHTAA",
              [visible(page, "#pq_p"), visible(page, "#pq_q"), visible(page, "#en"), visible(page, "#hospit"), visible(page, "#fagg"), visible(page, "#allerg")],
              [True, True, True, True, True, True])
+    page.locator("#addpq").click()
+    page.locator('#pqX input[data-pk=r]').fill("au bras gauche")
+    page.locator('#pqX input[data-pk=s]').fill("4")
+    verifier("PQRST : une autre douleur s'ajoute avec sa région et sa cotation", page.locator("#pqEtat").inner_text(), "Douleur au bras gauche, cotée 4 sur 10.")
+    page.locator('#pqX [data-pd]').click()
+    verifier("PQRST : une douleur ajoutée se supprime", [page.locator('#pqX input').count(), page.evaluate("S.pqX.length")], [0, 0])
     page.fill("#en", "6")
     verifier("Bilan SAMU : la ligne repliée résume ce qui est saisi", page.locator("#pqEtat").inner_text(), "Douleur cotée 6 sur 10.")
     page.locator("#passeS").click()

@@ -516,6 +516,10 @@ with sync_playwright() as pw:
              '["hypoglycémie à 0,6 gramme par litre", "hypoglycémie à 60 milligrammes par décilitre", "hypoglycémie à 3,3 millimoles par litre", "glycémie normale", "hypoglycémie sévère à 45 milligrammes par décilitre"]')
     page.evaluate("""() => { $('#gly').value=''; $('#glyu').value='g'; $('#hospit').value='Pontage en 2019';
         document.querySelector('#fagg .chip[data-v="tabagisme"]').click(); document.querySelector('#dem .chip[data-v="la mise en œuvre du protocole anti-douleur"]').click(); rendre(); }""")
+    page.evaluate("""() => { $('#pq_r').value='Dans la poitrine'; S.pqX=[{r:'Au bras gauche',q:'pulsatile',s:'4',p:''},{r:'',q:'',s:'',p:''}]; renderPqX(); rendre(); }""")
+    verifier("PQRST : plusieurs douleurs, une phrase par localisation",
+             "Douleur dans la poitrine, cotée 8 sur 10. Autre douleur pulsatile au bras gauche, cotée 4 sur 10." in page.evaluate("bAnnonce()"), True)
+    page.evaluate("""() => { $('#pq_r').value=''; S.pqX=[]; renderPqX(); rendre(); }""")
     verifier("MHTAA : hospitalisations et facteurs aggravants dans les réponses de réserve",
              json.dumps(page.evaluate("reserve().filter(x=>/Hospitalisations|Facteurs/.test(x.q)).map(x=>x.q+' : '+x.r)"), ensure_ascii=False),
              '["Hospitalisations : Pontage en 2019", "Facteurs aggravants : tabagisme"]')
@@ -716,6 +720,18 @@ with sync_playwright() as pw:
     verifier("Routier — écrit : la cinétique en tête de phrase",
              message(page, "ambiance").split("\n")[1],
              "Secours routier pour un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger dans une collision frontale contre un poids lourd. La victime est sortie seule du véhicule.")
+    # version o : ce qui est réalisé, la reconnaissance, ce qui est en cours
+    vue(page, "saisie")
+    puce(page, "actRf", "Sécurisation du site")
+    puce(page, "actRf", "Sécurisation du véhicule")
+    puce(page, "recoR", "Poursuivons reconnaissance")
+    verifier("Routier — actions réalisées, reconnaissance, action en cours (radio)", "\n".join(message(page, "ambiance", "radio").split("\n")[-3:]),
+             "Sécurisation du site et sécurisation du véhicule réalisées\nPoursuivons reconnaissance\nNous sommes en cours de prise en charge de la victime")
+    verifier("Routier — actions réalisées, reconnaissance, action en cours (écrit)", message(page, "ambiance").split("\n")[-2],
+             "Sécurisation du site et sécurisation du véhicule réalisées. Reconnaissance en cours. Prise en charge de la victime en cours.")
+    verifier("Routier — le nettoyage de la chaussée n'est plus une action",
+             json.dumps(page.evaluate("[...document.querySelectorAll('#actR .chip')].map(c=>c.textContent)"), ensure_ascii=False),
+             '["Sécurisation du site", "Sécurisation du véhicule", "Protection incendie", "Prise en charge victime(s)", "Désincarcération", "Extraction victime(s)"]')
     vue(page, "saisie")
     page.select_option("#engin", "VSR")
     puce(page, "vsit", "Incarcérée")
@@ -774,13 +790,12 @@ with sync_playwright() as pw:
     page.fill("#gh", "8h30")
     ecran(page, "arr")
     puce(page, "actR", "Extraction victime(s)")
-    puce(page, "actR", "Nettoyage de chaussée")
     verifier("Compte rendu routier — deux victimes", message(page, "cr"),
              "GH 830 — Opération de secours sur la commune de CHÂTEAUBERNARD, RN141, sens Cognac-Angoulême, PR 12.\n"
              "À notre arrivée, nous sommes confrontés à un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée. Victime évacuée du véhicule par des témoins. Véhicule sur le toit.\n"
              "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures.\n"
              "Bilan définitif : 2 victimes : une victime de sexe masculin, âgée de 40 ans, UA, transportée par SMUR sur CH Angoulême ; une victime de sexe féminin, âgée de 35 ans, UR, transportée par VSAV 2 sur CH Cognac.\n"
-             "Les moyens sapeurs-pompiers ont procédé à la sécurisation du site, à la prise en charge des victimes, à la désincarcération des victimes, à l'extraction des victimes et au nettoyage de la chaussée.\n"
+             "Les moyens sapeurs-pompiers ont procédé à la sécurisation du site, à la prise en charge des victimes, à la désincarcération des victimes et à l'extraction des victimes.\n"
              "Site laissé à la responsabilité des forces de l'ordre. Circulation rétablie.\n"
              "Fin d'intervention pour les moyens sapeurs-pompiers.")
     page.evaluate("document.getElementById('gh').value='';rendre()")
@@ -798,7 +813,7 @@ with sync_playwright() as pw:
     verifier("Radio routier — groupe horaire dans le compte rendu", radio_cr[0], "CODIS 16 de VSAV 1 Cognac — compte rendu, groupe horaire 830")
     verifier("Radio routier — contexte repris", radio_cr[2],
              "Nous sommes confrontés à un accident de la circulation à forte cinétique, hors agglomération, mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd, véhicule en contrebas de la chaussée. 1 victime incarcérée")
-    verifier("Radio routier — encore du travail : « Nous procédons à… »", radio_cr[-1][:16], "Nous procédons à")
+    verifier("Radio routier — encore du travail : « Nous procédons à… »", radio_cr[-1][:26], "Nous sommes en cours de sé")
     verifier("Contrôle — état de l'intervention à préciser", str("terminée ou encore en cours" in page.locator("#wC").inner_text()), "True")
     vue(page, "saisie"); ecran(page, "fin")
     puce(page, "finInter", "Intervention terminée")
@@ -1015,21 +1030,21 @@ with sync_playwright() as pw:
             "CODIS 16 de VSAV 1 Cognac\nJe demande : SMUR et VSR\nAccident à forte cinétique\n"
             "Opération de secours sur la commune de Javrezac à l'adresse indiquée\n"
             "Nous sommes confrontés à un accident de la circulation mettant en cause [véhicule mis en cause] dans une collision frontale\n"
-            "Bilan humain provisoire : 1 victime\nNous procédons à la prise en charge de la victime",
+            "Bilan humain provisoire : 1 victime\nNous sommes en cours de prise en charge de la victime",
         "Routier ambiance":
             "CODIS 16 de VSAV 1 Cognac\nJe demande : SMUR et VSR\nAccident à forte cinétique\n"
             "Opération de secours sur la commune de Châteaubernard à l'adresse : RN141, sens Cognac-Angoulême, PR 12\n"
             "Nous sommes confrontés à un accident de la circulation mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd. 1 victime incarcérée\n"
             "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures\n"
             "Bilan humain provisoire : 1 victime UA, 1 victime UR\n"
-            "Nous procédons à la sécurisation du site et à la prise en charge des victimes",
+            "Nous sommes en cours de sécurisation du site et prise en charge des victimes",
         "Routier compte rendu":
             "CODIS 16 de VSAV 1 Cognac — compte rendu\n"
             "Opération de secours sur la commune de Châteaubernard à l'adresse : RN141, sens Cognac-Angoulême, PR 12\n"
             "Nous sommes confrontés à un accident de la circulation à forte cinétique mettant en cause un véhicule léger électrique dans une collision frontale contre un poids lourd. 1 victime incarcérée\n"
             "Chargement endommagé — risques particuliers liés au chargement : fuite d'hydrocarbures\n"
             "Bilan humain définitif : 2 victimes — masculin, 40 ans, UA, transporté par SMUR sur CH Angoulême ; féminin, 35 ans, UR, transportée par VSAV 2 sur CH Cognac\n"
-            "Nous procédons à la sécurisation du site et à la prise en charge des victimes",
+            "Nous sommes en cours de sécurisation du site et prise en charge des victimes",
     }
     (r1, e1), (r2, e2) = radio(ANCIEN), radio(NOUVEAU)
     for k in r1:

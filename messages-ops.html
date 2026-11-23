@@ -498,7 +498,12 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
     <div class="chips" id="renf"></div></div>
   <div class="f"><span class="gl">6 · Je fais</span>
     <div class="chips" id="actS" data-multi></div>
-    <div class="chips" id="actR" data-multi hidden></div></div>
+    <div id="actRBox" hidden>
+      <div class="chips" id="recoR" data-multi><button class="chip" data-v="reco" aria-pressed="false">Poursuivons reconnaissance</button></div>
+      <span class="mini" style="display:block;margin-top:10px">En cours</span>
+      <div class="chips" id="actR" data-multi></div>
+      <span class="mini" style="display:block;margin-top:10px">Déjà réalisé</span>
+      <div class="chips" id="actRf" data-multi></div></div></div>
   <details class="sub" id="codDet"><summary>Plus : qualification, saisie libre</summary>
     <div class="f" id="qualBox"><span class="gl">Qualification</span>
       <div class="chips" id="qual" data-one></div>
@@ -612,6 +617,8 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
       <div id="pqS"></div></div>
     <div class="f"><span class="gl">T · Temps : depuis combien de temps</span>
       <span class="mini" id="pqT"></span></div>
+    <div id="pqX"></div>
+    <button class="addp" id="addpq">+ Ajouter une autre douleur, à un autre endroit</button>
   </div>
 </details>
 
@@ -934,7 +941,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.23n";
+const VERSION="2026.11.23o";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -1057,8 +1064,7 @@ const ACTIONS_R=[
   {id:"incendie",l:"Protection incendie",     phrase:()=>"à la protection incendie"},
   {id:"pec",   l:"Prise en charge victime(s)",phrase:n=>"à la prise en charge "+(n>1?"des victimes":"de la victime")},
   {id:"desinc",l:"Désincarcération",          phrase:n=>"à la désincarcération "+(n>1?"des victimes":"de la victime")},
-  {id:"extract",l:"Extraction victime(s)",    phrase:n=>"à l'extraction "+(n>1?"des victimes":"de la victime")},
-  {id:"nettoy",l:"Nettoyage de chaussée",     phrase:()=>"au nettoyage de la chaussée"}
+  {id:"extract",l:"Extraction victime(s)",    phrase:n=>"à l'extraction "+(n>1?"des victimes":"de la victime")}
 ];
 const ENGIN_DEFAULTS={
   VSAV:{actions:["pec"],renfort:["SMUR","VSR"]},
@@ -1870,12 +1876,34 @@ function pqrstTxt(){
   const q=multi("pq_q"),ql=raw("pq_qlib").trim(),r=raw("pq_r").trim().replace(/[.\s]+$/,""),
         pr=raw("pq_p").trim().replace(/^(provoqu[ée]e? )?par\s+/i,"").replace(/[.\s]+$/,""),s=val("en");
   const cote=s!==""&&s!==null&&!isNaN(s)&&+s>0;
-  if(!q.length&&!ql&&!r&&!pr&&!cote)return"";
+  // la première rubrique vide : la première douleur ajoutée est simplement « Douleur… »
+  if(!q.length&&!ql&&!r&&!pr&&!cote)return autresDouleurs().trim().replace(/^Autre douleur/,"Douleur");
   let t="Douleur"+(q.length?" "+liste(q):"")+(ql?(q.length?", ":" ")+"décrite ainsi : "+ql.charAt(0).toLowerCase()+ql.slice(1):"");
   if(r)t+=(ql?", ":" ")+r.charAt(0).toLowerCase()+r.slice(1);
   if(cote)t+=(q.length||ql||r?", ":" ")+"cotée "+(+s)+" sur 10";
   if(pr)t+=", provoquée par "+pr.charAt(0).toLowerCase()+pr.slice(1);
-  return t+".";
+  return t+"."+autresDouleurs();
+}
+// Les autres douleurs, une par localisation : « Autre douleur pulsatile au poignet gauche, cotée 4 sur 10. »
+function autresDouleurs(){
+  return(S.pqX||[]).map(b=>{
+    const net=x=>(x||"").trim().replace(/[.\s]+$/,""),r=net(b.r),q=net(b.q),pr=net(b.p).replace(/^(provoqu[ée]e? )?par\s+/i,""),s=parseInt(b.s);
+    if(!r&&!q&&!pr&&!(s>0))return"";
+    let t="Autre douleur"+(q?" "+q:"")+(r?" "+r.charAt(0).toLowerCase()+r.slice(1):"");
+    if(s>0)t+=", cotée "+s+" sur 10";
+    if(pr)t+=", provoquée par "+pr.charAt(0).toLowerCase()+pr.slice(1);
+    return" "+t+".";
+  }).join("");
+}
+const QUALITES=["constrictive","oppressive","à type de brûlure","à type de piqûre","en coup de poignard","à type de déchirement","pulsatile","à type de décharge électrique","à type de crampe, par spasmes","diffuse"];
+function renderPqX(){
+  $("#pqX").innerHTML=(S.pqX||[]).map((b,i)=>
+    '<div class="f" style="border-top:1px dashed var(--border);padding-top:12px"><span class="gl">Autre douleur n° '+(i+2)+'</span>'+
+    '<input type="text" data-pi="'+i+'" data-pk="r" value="'+esc(b.r||"")+'" placeholder="R · Région : au bras gauche, dans le dos…">'+
+    '<select data-pi="'+i+'" data-pk="q" style="margin-top:6px" aria-label="Qualité"><option value="">Q · Qualité</option>'+QUALITES.map(q=>'<option'+(q===b.q?" selected":"")+'>'+q+'</option>').join("")+'</select>'+
+    '<div class="row" style="margin-top:6px"><input type="number" inputmode="numeric" data-pi="'+i+'" data-pk="s" value="'+esc(b.s||"")+'" placeholder="S · sur 10" style="flex:1">'+
+    '<input type="text" data-pi="'+i+'" data-pk="p" value="'+esc(b.p||"")+'" placeholder="P · Provoquée par" style="flex:2"></div>'+
+    '<button class="btn2" data-pd="'+i+'">Supprimer cette douleur</button></div>').join("");
 }
 function demandeTxt(){
   const d=one("dem");if(!d)return"";
@@ -2208,7 +2236,7 @@ $("#phgo").onclick=async()=>{
 function etatInitial(){
   return{type:"SAP",msg:"ambiance",sup:"radio",
     renf:{SAP:[NO_NEED],ROUTIER:ENGIN_DEFAULTS.VSAV.renfort.slice()},
-    sapX:[],rX:[],comp:[],demFaites:[],passe:{},journal:[],acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
+    sapX:[],rX:[],pqX:[],comp:[],demFaites:[],passe:{},journal:[],acrVu:false,manual:false,manualTxt:"",t0:Date.now(),last:Date.now(),phase:"arr"};
 }
 let S=etatInitial();
 
@@ -2245,6 +2273,7 @@ function buildCodisForms(){
   $("#qual").outerHTML=chipsHTML("qual",QUALIF.map(q=>[q.l,q.v]),"one");
   $("#actS").outerHTML=chipsHTML("actS",ACTIONS.map(a=>[a.l,a.v]),"multi");
   $("#actR").outerHTML=chipsHTML("actR",ACTIONS_R.map(a=>[a.l,a.id]),"multi");
+  $("#actRf").outerHTML=chipsHTML("actRf",ACTIONS_R.map(a=>[a.l,a.id]),"multi");
   $("#energ").outerHTML=chipsHTML("energ",[["Électrique","électrique"],["Hybride","hybride"]],"one");
   $("#charg").outerHTML=chipsHTML("charg",[["Chargement intact","intact"],["Chargement endommagé","endommage"]],"one");
   $("#chargRisk").outerHTML=chipsHTML("chargRisk",[["Risques particuliers liés au chargement","1"]],"multi");
@@ -2365,7 +2394,7 @@ function applyType(t,defauts){
   const r=t==="ROUTIER";
   $("#sR").hidden=!r;
   $("#qualBox").hidden=r;
-  $("#actS").hidden=r;$("#actR").hidden=!r;
+  $("#actS").hidden=r;$("#actRBox").hidden=!r;
   $("#faisMan").hidden=r;
   $("#adrLbl").textContent=r?"3 · Où : voie, sens, point de repère":"3 · Où";
   $("#adresse").placeholder=r?"RN141, sens Cognac-Angoulême, PR 12":"12 rue des Vignes";
@@ -2597,8 +2626,8 @@ function buildRadioR(){
   if(ch)L.push(ch);
   L.push("Bilan humain "+prov+" : "+(S.msg==="cr"?bilanRListRadio():bilanRAmbRadio()));
   if(surLieuxTxt())L.push(surLieuxTxt());
-  // Encore du travail : « Nous procédons à… » ; intervention terminée : on l'annonce
-  L.push(S.msg==="cr"&&one("finInter")==="fin"?FIN_RADIO:"Nous procédons "+acts);
+  // Encore du travail : ce qui est réalisé, puis ce qui est en cours ; intervention terminée : on l'annonce
+  if(S.msg==="cr"&&one("finInter")==="fin")L.push(FIN_RADIO);else actionsRLignes().forEach(x=>L.push(x));
   return L.join("\n");
 }
 function analyseRadio(){
@@ -2867,17 +2896,32 @@ function chargementTxt(){
 }
 // « à la sécurisation du site », dans l'ordre de la liste
 function actionsR(){
-  const n=victimesR().length;
-  return ACTIONS_R.filter(a=>multi("actR").includes(a.id)).map(a=>a.phrase(n));
+  const n=victimesR().length,sel=multi("actR").concat(multi("actRf"));
+  return ACTIONS_R.filter(a=>sel.includes(a.id)).map(a=>a.phrase(n));
+}
+// Une action cochée « déjà réalisé » n'est plus dite en cours. Les noms sans préposition servent aux deux tournures :
+// « Sécurisation du site et sécurisation du véhicule réalisées » / « Nous sommes en cours de prise en charge de la victime ».
+function actionsRDetail(){
+  const n=victimesR().length,fait=multi("actRf"),enc=multi("actR").filter(x=>!fait.includes(x));
+  const nom=a=>a.phrase(n).replace(/^(à la |à l'|au )/,"");
+  return{fait:ACTIONS_R.filter(a=>fait.includes(a.id)).map(nom),enc:ACTIONS_R.filter(a=>enc.includes(a.id)).map(nom),reco:multi("recoR").includes("reco")};
+}
+function actionsRLignes(){
+  const d=actionsRDetail(),L=[];
+  if(d.fait.length)L.push(cap(liste(d.fait))+" réalisée"+(d.fait.length>1?"s":""));
+  if(d.reco)L.push("Poursuivons reconnaissance");
+  if(d.enc.length)L.push("Nous sommes en cours de "+liste(d.enc));
+  return L.length?L:["[action]"];
 }
 function buildAmbR(){
-  const acts=actionsR().map(x=>x.replace(/^(à la |à l'|au )/,""));
+  const d=actionsRDetail(),acts=d.enc;
+  const faits=d.fait.length?cap(liste(d.fait))+" réalisée"+(d.fait.length>1?"s":"")+".":"";
   return[lieuCodis(),
     "Secours routier pour "+accidentTxt()+"."+(situationTxt()?" "+situationTxt()+".":"")+(acrRoutier()?" "+acrRoutier()+".":""),
     chargementTxt(),
     "Bilan provisoire : "+bilanRAmb()+".",
     surLieuxEcrit(),
-    acts.length?cap(liste(acts))+" en cours.":"[action en cours]",
+    [faits,d.reco?"Reconnaissance en cours.":"",acts.length?cap(liste(acts))+" en cours.":""].filter(Boolean).join(" ")||"[action en cours]",
     demandeLine()].filter(Boolean).join("\n");
 }
 function buildCrR(){
@@ -3342,6 +3386,7 @@ function reinitialiser(){
 function nouvelleIntervention(){
   archiver();reinitialiser();afficherHist();
   $("#bnPrev").hidden=true;
+  renderPqX();
   rendre();vue("saisie");ecranV2("accueil");tickChrono();toast("Nouvelle intervention");
 }
 
@@ -3654,6 +3699,13 @@ function majRoutier(){
 }
 function initV2(){
   ordonnerBilan();
+  // PQRST : d'autres douleurs, chacune avec sa région, sa qualité, sa cotation et ce qui la provoque
+  if(!S.pqX)S.pqX=[];
+  renderPqX();
+  $("#addpq").onclick=()=>{S.pqX.push({r:"",q:"",s:"",p:""});renderPqX();rendre();sauver();};
+  const majPq=e=>{const t=e.target;if(t.dataset.pi===undefined||!S.pqX[+t.dataset.pi])return;S.pqX[+t.dataset.pi][t.dataset.pk]=t.value;rendre();sauver();};
+  $("#pqX").addEventListener("input",majPq);$("#pqX").addEventListener("change",majPq);
+  $("#pqX").addEventListener("click",e=>{const b=e.target.closest("[data-pd]");if(!b)return;S.pqX.splice(+b.dataset.pd,1);renderPqX();rendre();sauver();});
   { const base=rendre; rendre=function(){base.apply(this,arguments);majEtatsBilan();}; }
   // Le choix de l'engin et du type d'intervention se fait à l'accueil ; les réglages ont leur écran
   $("#accTop").appendChild($("#typeSeg").closest(".f"));
