@@ -94,6 +94,27 @@ with sync_playwright() as pw:
              page.evaluate("[multi('adrind').length, multi('surlieux').length, multi('actS').length]"), [0, 0, 0])
     verifier("Sans adresse ni case cochée, le message la réclame",
              ["à l'adresse : [adresse]" in page.locator("#out").input_value(), "Adresse manquante" in page.locator("#wC").inner_text()], [True, True])
+    # ── l'âge calculé depuis une date de naissance
+    from datetime import date
+    auj = date.today()
+    def age_attendu(j, m, a):
+        mois = (auj.year - a) * 12 + (auj.month - m) - (1 if auj.day < j else 0)
+        return [str(mois), "mois"] if mois < 24 else [str(mois // 12), "ans"]
+    page.locator(".ddn").fill("12031968")
+    verifier("Date de naissance : huit chiffres suffisent, l'âge est calculé et la date effacée",
+             [page.input_value("#age"), page.input_value("#ageu"), page.input_value(".ddn"), "calculé depuis le 12/03/1968" in page.locator("#ddnInfo").inner_text()],
+             age_attendu(12, 3, 1968) + ["", True])
+    verifier("Date de naissance : l'âge calculé passe dans le message", ("de " + age_attendu(12, 3, 1968)[0] + " ans") in page.locator("#out").input_value(), True)
+    page.locator(".ddn").fill("15/06/25")
+    page.locator(".ddn").blur()
+    verifier("Date de naissance : année sur deux chiffres, nourrisson compté en mois", [page.input_value("#age"), page.input_value("#ageu")], age_attendu(15, 6, 2025))
+    page.locator(".ddn").fill("32131990")
+    verifier("Date de naissance : une date impossible est signalée, l'âge ne bouge pas",
+             ["Date non reconnue" in page.locator("#ddnInfo").inner_text(), page.input_value("#age")], [True, age_attendu(15, 6, 2025)[0]])
+    page.locator(".ddn").fill("")
+    verifier("Date de naissance : rien n'en est enregistré", "1968" in page.evaluate("localStorage.getItem('msgops.v1')||''"), False)
+    page.fill("#age", "")
+    page.select_option("#ageu", "ans")
     saisir_arrivee(page)
     page.evaluate("document.querySelector('#renf .chip[data-r=\"Chef de Groupe\"]').click()")
     verifier("Chef de groupe demandé : le choix « pour action » ou « pour information » apparaît, juste sous les demandes",
