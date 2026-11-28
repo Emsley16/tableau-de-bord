@@ -967,7 +967,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.28b";
+const VERSION="2026.11.28c";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2209,22 +2209,23 @@ function majHint(){
 let phData=null;
 // Consignes données à Claude avec la photo : une synthèse courte, lisible sur un téléphone
 const CONSIGNES={
-ordo:"Tu aides un sapeur-pompier en intervention de secours à personne. Il photographie une ordonnance pour renseigner le médecin régulateur du SAMU. Il n'est pas médecin : il rapporte des faits, il ne pose pas de diagnostic.\n\n"+
+ordo:"Tu aides un sapeur-pompier en intervention de secours à personne, chef d'agrès d'une ambulance (VSAV). Il photographie une ordonnance pour renseigner le médecin régulateur du SAMU et pour adapter sa prise en charge. Il n'est pas médecin : il rapporte des faits, il ne pose pas de diagnostic.\n\n"+
 "Lis l'ordonnance et réponds en français, en texte brut, sans Markdown, sous cette forme exacte et rien d'autre :\n\n"+
-"TRAITEMENT : les molécules en dénomination commune avec leur dosage, séparées par des virgules, sur une seule ligne prête à être dite au médecin régulateur\n\n"+
+"TRAITEMENT : les molécules en dénomination commune avec leur dosage, séparées par des virgules, sur une seule ligne prête à être dite telle quelle au médecin régulateur\n\n"+
 "LIGNE PAR LIGNE\n"+
-"— nom lu (molécule) dosage, rythme des prises : classe en mots simples, à quoi il sert le plus souvent\n"+
-"(une ligne par médicament, dans l'ordre de l'ordonnance)\n\n"+
+"— nom lu (molécule) dosage, rythme des prises : classe en mots simples, puis à quoi il sert le plus souvent\n"+
+"(une ligne par médicament, dans l'ordre de l'ordonnance, avec ce niveau de précision)\n\n"+
 "CE QUE CE TRAITEMENT ÉVOQUE\n"+
 "Une ou deux phrases : la ou les maladies que cet ensemble de médicaments évoque, sous la forme « Traitement évocateur de… », à faire confirmer par la victime ou son entourage. Si rien de précis ne s'en dégage, écris « Rien de précis ».\n\n"+
-"À SURVEILLER\n"+
-"— trois points au plus, concrets pour l'équipage d'une ambulance : ce qu'il faut regarder ou rechercher chez cette victime du fait de ce traitement ou de la maladie évoquée\n\n"+
+"CONSÉQUENCES POUR L'INTERVENTION\n"+
+"— cinq points au plus, du plus important au moins important. Chaque point dit ce que ce traitement ou la maladie évoquée change pour l'équipage sapeur-pompier, puis ce qu'il en fait : ce qu'il surveille, la position et les précautions de manipulation de la victime, le matériel à tenir prêt, ce qu'il recherche sur place ou demande à l'entourage, ce qu'il signale au médecin régulateur.\n\n"+
 "ANTICOAGULANT OU ANTIAGRÉGANT : « oui : nom du médicament » ou « aucun repéré »\n\n"+
 "Règles :\n"+
-"- C'est une synthèse : l'ensemble tient sur un écran de téléphone, sans introduction ni conclusion.\n"+
-"- Une ligne que tu ne lis pas avec certitude : écris « ligne illisible, à faire préciser » et ne la mets pas dans TRAITEMENT. Ne propose jamais un nom au hasard ; si tu hésites entre deux lectures plausibles, donne les deux en disant que tu hésites.\n"+
+"- C'est une synthèse précise, sans introduction ni conclusion, sans délayage.\n"+
+"- La ligne TRAITEMENT ne contient que ce qui se dit au médecin régulateur : aucune parenthèse, aucun renvoi, aucun commentaire.\n"+
+"- Une ligne que tu ne lis pas avec certitude : dans LIGNE PAR LIGNE, écris « ligne illisible, à faire préciser », avec ce que tu en lis (rythme des prises, lettres reconnues) ; dans TRAITEMENT, ne mets pas de nom et termine la ligne par « et un médicament non lu » (ou « et deux médicaments non lus », selon le nombre). Ne propose jamais un nom au hasard ; si tu hésites entre deux lectures plausibles, donne les deux en disant que tu hésites.\n"+
+"- Les conséquences restent dans le champ du secours à personne des sapeurs-pompiers : surveillance, position, précautions, matériel, recherche d'informations, signalement au médecin régulateur. Aucun acte médical, aucun médicament à donner, aucune posologie.\n"+
 "- Ne recopie aucun nom de personne ni aucun numéro.\n"+
-"- Ne donne aucune conduite à tenir médicale.\n"+
 "- Si l'image n'est pas une ordonnance ou n'est pas lisible, dis-le en une phrase, sans rien d'autre.",
 lesion:"Tu aides un sapeur-pompier en intervention de secours à personne. Il photographie une lésion pour la décrire au médecin régulateur du SAMU. Il n'est pas médecin : il décrit, il ne conclut pas.\n\n"+
 "Décris la lésion en français, en texte brut, sans Markdown, en six lignes courtes au plus : siège et latéralité s'ils se voient, type (plaie franche, contuse, délabrante, punctiforme, abrasion, brûlure…), dimensions estimées en centimètres, aspect des berges, profondeur apparente, souillure ou corps étranger visible, saignement visible.\n\n"+
@@ -2238,7 +2239,8 @@ const PH_API="https://api.anthropic.com/v1/messages",PH_MODELE="claude-sonnet-5-
 // La ligne « TRAITEMENT : … » de la synthèse, seule partie reportée dans le bilan
 function phTraitement(txt){
   const m=(txt||"").match(/^\s*TRAITEMENT\s*:\s*(.+)$/m);
-  return m?m[1].trim().replace(/[.\s]+$/,""):"";
+  // un renvoi entre parenthèses en fin de ligne (« voir plus bas ») ne se dit pas au régulateur
+  return m?m[1].trim().replace(/\s*\((?=[^)]*(ligne|voir|illisible|inclus))[^)]*\)[.\s]*$/i,"").replace(/[.\s]+$/,""):"";
 }
 function phOut(txt,err){
   const d=$("#phout"),a=$("#phact");

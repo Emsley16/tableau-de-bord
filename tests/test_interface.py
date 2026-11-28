@@ -406,6 +406,20 @@ with sync_playwright() as pw:
     verifier("Photo d'une lésion : consigne de description, sans avis sur la conduite à tenir",
              ["Décris la lésion" in appels[-1]["corps"]["system"], "aucune conduite à tenir" in appels[-1]["corps"]["system"], pc.locator("#phins").inner_text().lower()],
              [True, True, "insérer dans l'examen"])
+    # consigne : conséquences pour l'intervention, médicament non lu annoncé, ligne des traitements sans renvoi
+    consigne = pc.evaluate("CONSIGNES.ordo")
+    verifier("Consigne d'ordonnance : conséquences pour l'intervention des sapeurs-pompiers, sans acte médical ; médicament non lu annoncé",
+             ["CONSÉQUENCES POUR L'INTERVENTION" in consigne, "À SURVEILLER" in consigne, "et un médicament non lu" in consigne,
+              "Aucun acte médical" in consigne, "écran de téléphone" in consigne, "avec ce niveau de précision" in consigne],
+             [True, False, True, True, False, True])
+    verifier("Ligne des traitements : le renvoi entre parenthèses est retiré, « et un médicament non lu » est gardé",
+             pc.evaluate("""[
+               "TRAITEMENT : riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg (4e ligne non incluse, voir plus bas)\\n\\nLIGNE PAR LIGNE",
+               "TRAITEMENT : riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg, et un médicament non lu.\\n\\nLIGNE PAR LIGNE",
+               "TRAITEMENT : morphine (LP) 30 mg, paracétamol 1 g\\nLIGNE PAR LIGNE",
+               "L'image n'est pas lisible."].map(phTraitement)"""),
+             ["riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg", "riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg, et un médicament non lu",
+              "morphine (LP) 30 mg, paracétamol 1 g", ""])
     # photothèque : une deuxième entrée pour la même image, sans passer par l'appareil photo
     verifier("Photo : deux boutons, appareil photo et photothèque ; les champs de fichier ne se voient plus",
              [pc.locator("#phcam").inner_text(), pc.locator("#phpick").inner_text(), pc.get_attribute("#phfile", "capture"),
