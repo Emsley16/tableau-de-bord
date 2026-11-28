@@ -685,9 +685,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
     <button class="btn" id="phgo">Analyser l'image</button>
     <button class="btn2" id="phman">Afficher la trame de description manuelle</button>
     <div id="phout"></div>
-    <div class="f"><label for="phurl">Point d'accès d'analyse</label>
-      <input type="text" id="phurl" data-keep placeholder="https://…workers.dev">
-      <span class="mini">Adresse de votre relais. Sans elle, seule la trame manuelle est disponible.</span></div>
+    <div id="phact"></div>
   </div>
 </details>
 
@@ -868,6 +866,9 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
       <input type="text" id="cis" data-keep value="Cognac"></div>
     <div class="f"><label for="destCodis">Destinataire du message CODIS</label>
       <input type="text" id="destCodis" data-keep value="CODIS 16"></div>
+    <div class="f"><label for="phcle">Clé d'accès à Claude (lecture des ordonnances)</label>
+      <input type="password" id="phcle" data-keep placeholder="sk-ant-…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <span class="mini">Clé de votre compte Claude Console. Elle reste sur ce téléphone et n'est envoyée qu'à Anthropic, avec la photo à lire.</span></div>
     <div class="f"><span class="gl">Interventions archivées</span>
       <div id="hist"></div>
       <button class="btn2" id="histvider">Vider l'historique</button>
@@ -961,7 +962,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.24a";
+const VERSION="2026.11.28a";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2200,23 +2201,78 @@ function majHint(){
     ? "Cadrer uniquement le bloc de prescription. Masquer l'en-tête nominatif."
     : "L'analyse produit une description, jamais un avis sur la conduite à tenir.";
 }
+let phData=null;
+// Consignes données à Claude avec la photo : une synthèse courte, lisible sur un téléphone
+const CONSIGNES={
+ordo:"Tu aides un sapeur-pompier en intervention de secours à personne. Il photographie une ordonnance pour renseigner le médecin régulateur du SAMU. Il n'est pas médecin : il rapporte des faits, il ne pose pas de diagnostic.\n\n"+
+"Lis l'ordonnance et réponds en français, en texte brut, sans Markdown, sous cette forme exacte et rien d'autre :\n\n"+
+"TRAITEMENT : les molécules en dénomination commune avec leur dosage, séparées par des virgules, sur une seule ligne prête à être dite au médecin régulateur\n\n"+
+"LIGNE PAR LIGNE\n"+
+"— nom lu (molécule) dosage, rythme des prises : classe en mots simples, à quoi il sert le plus souvent\n"+
+"(une ligne par médicament, dans l'ordre de l'ordonnance)\n\n"+
+"CE QUE CE TRAITEMENT ÉVOQUE\n"+
+"Une ou deux phrases : la ou les maladies que cet ensemble de médicaments évoque, sous la forme « Traitement évocateur de… », à faire confirmer par la victime ou son entourage. Si rien de précis ne s'en dégage, écris « Rien de précis ».\n\n"+
+"À SURVEILLER\n"+
+"— trois points au plus, concrets pour l'équipage d'une ambulance : ce qu'il faut regarder ou rechercher chez cette victime du fait de ce traitement ou de la maladie évoquée\n\n"+
+"ANTICOAGULANT OU ANTIAGRÉGANT : « oui : nom du médicament » ou « aucun repéré »\n\n"+
+"Règles :\n"+
+"- C'est une synthèse : l'ensemble tient sur un écran de téléphone, sans introduction ni conclusion.\n"+
+"- Une ligne que tu ne lis pas avec certitude : écris « ligne illisible, à faire préciser » et ne la mets pas dans TRAITEMENT. Ne propose jamais un nom au hasard ; si tu hésites entre deux lectures plausibles, donne les deux en disant que tu hésites.\n"+
+"- Ne recopie aucun nom de personne ni aucun numéro.\n"+
+"- Ne donne aucune conduite à tenir médicale.\n"+
+"- Si l'image n'est pas une ordonnance ou n'est pas lisible, dis-le en une phrase, sans rien d'autre.",
+lesion:"Tu aides un sapeur-pompier en intervention de secours à personne. Il photographie une lésion pour la décrire au médecin régulateur du SAMU. Il n'est pas médecin : il décrit, il ne conclut pas.\n\n"+
+"Décris la lésion en français, en texte brut, sans Markdown, en six lignes courtes au plus : siège et latéralité s'ils se voient, type (plaie franche, contuse, délabrante, punctiforme, abrasion, brûlure…), dimensions estimées en centimètres, aspect des berges, profondeur apparente, souillure ou corps étranger visible, saignement visible.\n\n"+
+"Règles :\n"+
+"- Seulement ce qui se voit sur l'image ; pour le reste, « non visible sur l'image ».\n"+
+"- Aucun diagnostic, aucune conduite à tenir, aucun avis sur la suture.\n"+
+"- Ne décris pas la personne : ni visage, ni tatouage, ni signe distinctif.\n"+
+"- Si l'image ne montre pas de lésion ou n'est pas exploitable, dis-le en une phrase, sans rien d'autre."
+};
+const PH_API="https://api.anthropic.com/v1/messages",PH_MODELE="claude-sonnet-5-5";
+// La ligne « TRAITEMENT : … » de la synthèse, seule partie reportée dans le bilan
+function phTraitement(txt){
+  const m=(txt||"").match(/^\s*TRAITEMENT\s*:\s*(.+)$/m);
+  return m?m[1].trim().replace(/[.\s]+$/,""):"";
+}
 function phOut(txt,err){
-  const d=$("#phout");
-  d.className="phout"+(err?" err":"");
-  d.textContent=txt;
-  if(!err&&txt&&!txt.startsWith("TRAME")){
-    const b=document.createElement("button");
-    b.className="btn2";
-    b.textContent = phm()==="ordo" ? "Insérer dans « Traitement en cours »" : "Insérer dans l'examen";
-    b.onclick=()=>{
-      const cible = phm()==="ordo" ? "ttt" : (motif==="trauma"?"h_les":"exlibre");
-      const e=$("#"+cible);
-      if(!e){toast("Champ indisponible pour ce motif");return;}
-      e.value=(e.value?e.value+" — ":"")+txt.replace(/\s+/g," ").trim();
-      rendre();toast("Inséré");
-    };
-    d.after(b);
-  }
+  const d=$("#phout"),a=$("#phact");
+  d.className=txt?"phout"+(err?" err":""):"";
+  d.textContent=txt;a.innerHTML="";
+  if(err||!txt||txt.startsWith("TRAME"))return;
+  const ordo=phm()==="ordo",t=ordo?phTraitement(txt):txt.replace(/\s+/g," ").trim();
+  if(!t)return;
+  const b=document.createElement("button");
+  b.className="btn2";b.id="phins";
+  b.textContent = ordo ? "Reporter les traitements dans le bilan" : "Insérer dans l'examen";
+  b.onclick=()=>{
+    const cible = ordo ? "ttt" : (motif==="trauma"?"h_les":"exlibre");
+    const e=$("#"+cible);
+    if(!e){toast("Champ indisponible pour ce motif");return;}
+    const deja=e.value.trim();
+    if(ordo)e.value=(deja&&deja!=="Aucun traitement"&&!deja.includes(t)?deja+", ":"")+t;
+    else e.value=(deja?deja+" — ":"")+t;
+    rendre();toast(ordo?"Traitements reportés":"Inséré");
+  };
+  a.appendChild(b);
+}
+// Sans clé, le programme ne peut pas lire la photo : il prépare la consigne à coller dans l'application Claude
+function phSansCle(){
+  phOut("Aucune clé d'accès à Claude dans les réglages : le programme ne peut pas lire la photo lui-même. En attendant, la consigne ci-dessous se colle dans l'application Claude, avec la photo.",true);
+  const a=$("#phact"),b=document.createElement("button"),l=document.createElement("a");
+  b.className="btn2";b.id="phcons";b.textContent="Copier la consigne pour l'application Claude";
+  b.onclick=()=>copier(CONSIGNES[phm()]+"\n\nLa photo est jointe à ce message.","Consigne copiée : à coller dans Claude avec la photo");
+  l.className="btn2";l.id="phouvre";l.href="https://claude.ai/new";l.target="_blank";l.rel="noopener";l.textContent="Ouvrir Claude";
+  l.style.cssText="display:block;text-align:center;text-decoration:none;box-sizing:border-box";
+  a.appendChild(b);a.appendChild(l);
+}
+function phErreur(st,j){
+  const m=j&&j.error&&j.error.message?String(j.error.message):"";
+  if(st===401)return"clé d'accès refusée. La vérifier dans les réglages";
+  if(/credit/i.test(m))return"crédit épuisé sur le compte de la clé";
+  if(st===429)return"trop de demandes à la fois, réessayer dans une minute";
+  if(st>=500)return"service de Claude surchargé ou indisponible, réessayer";
+  return"réponse "+st+(m?" — "+m:"");
 }
 $("#phman").onclick=()=>{phOut(TRAMES[phm()],false);};
 
@@ -2228,11 +2284,11 @@ $("#phfile").addEventListener("change",e=>{
   r.onload=()=>{
     const img=new Image();
     img.onload=()=>{
-      const max=1400,sc=Math.min(1,max/Math.max(img.width,img.height));
+      const max=1600,sc=Math.min(1,max/Math.max(img.width,img.height));
       const cv=document.createElement("canvas");
       cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
       cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
-      const url=cv.toDataURL("image/jpeg",.8);
+      const url=cv.toDataURL("image/jpeg",.85);
       phData=url.split(",")[1];
       $("#phprev").innerHTML='<img class="phimg" src="'+url+'" alt="Aperçu">';
     };
@@ -2242,21 +2298,34 @@ $("#phfile").addEventListener("change",e=>{
 });
 
 $("#phgo").onclick=async()=>{
-  const url=raw("phurl");
-  if(!url){phOut("Aucun point d'accès configuré. La trame de description manuelle reste disponible ci-dessous.",true);return;}
+  const cle=raw("phcle").trim(),mode=phm();
+  if(!cle){phSansCle();return;}
   if(!phData){phOut("Aucune image sélectionnée.",true);return;}
   if(!$("#phrgpd").checked){phOut("Confirmation de non-identification requise avant tout envoi.",true);return;}
   const b=$("#phgo");b.disabled=true;b.textContent="Analyse en cours…";
   phOut("",false);
+  const ctl=new AbortController(),delai=setTimeout(()=>ctl.abort(),90000);
   try{
-    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({mode:phm(),media_type:"image/jpeg",image:phData})});
-    if(!r.ok)throw new Error("Réponse "+r.status);
-    const j=await r.json();
-    phOut((j.text||"Réponse vide.").trim(),false);
+    const r=await fetch(PH_API,{method:"POST",signal:ctl.signal,
+      headers:{"content-type":"application/json","x-api-key":cle,"anthropic-version":"2023-06-01",
+               "anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:PH_MODELE,max_tokens:8000,system:CONSIGNES[mode],
+        messages:[{role:"user",content:[
+          {type:"image",source:{type:"base64",media_type:"image/jpeg",data:phData}},
+          {type:"text",text:mode==="ordo"?"Voici l'ordonnance.":"Voici la lésion."}]}]})});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok)throw new Error(phErreur(r.status,j));
+    // la réponse peut contenir des blocs de réflexion : seul le texte est gardé
+    const txt=((j&&j.content)||[]).filter(x=>x.type==="text").map(x=>x.text).join("\n")
+      .replace(/\*\*/g,"").replace(/^#+\s*/gm,"").trim();
+    if(!txt)throw new Error("réponse vide");
+    phOut(txt,false);
   }catch(err){
-    phOut("Analyse impossible : "+err.message+". Vérifier le point d'accès et la connexion. La trame manuelle reste disponible.",true);
+    const m=err.name==="AbortError"?"pas de réponse après 90 secondes"
+      :err instanceof TypeError?"service injoignable, vérifier la connexion":err.message;
+    phOut("Analyse impossible : "+m+". La trame manuelle reste disponible.",true);
   }
+  clearTimeout(delai);
   b.disabled=false;b.textContent="Analyser l'image";
 };
 
@@ -3416,7 +3485,7 @@ function reinitialiser(){
   champs().forEach(e=>{if(e.hasAttribute("data-keep"))return;
     if(e.tagName==="SELECT")e.selectedIndex=0;else e.value="";});
   $$(".chips .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
-  $("#phrgpd").checked=false;$("#phprev").innerHTML="";$("#phout").innerHTML="";
+  $("#phrgpd").checked=false;$("#phprev").innerHTML="";phOut("",false);phData=null;$("#phfile").value="";
   pbs=[{p:"",a:""}];
   const keepType=raw("engin")==="VSR"?"ROUTIER":"SAP";
   S=etatInitial();

@@ -288,6 +288,136 @@ with sync_playwright() as pw:
              [pb.input_value("#commune"), pb.input_value("#age"), pb.input_value("#cis"), visible(pb, "#v-accueil"), json.dumps(eb)],
              ["Cherves-Richemont", "63", "Jarnac", True, "[]"])
     pb.close()
+
+    # ── photo d'ordonnance : le programme interroge Claude lui-même (le service est simulé, aucun appel réel)
+    import base64, struct, zlib, tempfile
+    def png(larg, haut):
+        ligne = b"\x00" + b"\xff\xff\xff" * larg
+        def bloc(t, d):
+            return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+        return (b"\x89PNG\r\n\x1a\n" + bloc(b"IHDR", struct.pack(">IIBBBBB", larg, haut, 8, 2, 0, 0, 0))
+                + bloc(b"IDAT", zlib.compress(ligne * haut)) + bloc(b"IEND", b""))
+    photo = Path(tempfile.mkdtemp()) / "ordonnance.png"
+    photo.write_bytes(png(2400, 1200))
+    SYNTHESE = ("TRAITEMENT : riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg.\n\n"
+                "LIGNE PAR LIGNE\n— Rilutek (riluzole) 50 mg, matin et soir : neuroprotecteur\n— ligne illisible, à faire préciser\n\n"
+                "CE QUE CE TRAITEMENT ÉVOQUE\nTraitement évocateur d'une sclérose latérale amyotrophique, à faire confirmer.\n\n"
+                "ANTICOAGULANT OU ANTIAGRÉGANT : aucun repéré")
+    ctx3 = nav.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=1)
+    pc = ctx3.new_page()
+    ec, appels, reponse = [], [], {"mode": "ok"}
+    pc.on("pageerror", lambda e: ec.append(str(e)))
+    CORS = {"access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "POST, OPTIONS"}
+    def service(route):
+        rq = route.request
+        if rq.method == "OPTIONS":
+            return route.fulfill(status=204, headers=CORS)
+        appels.append({"url": rq.url, "methode": rq.method, "entetes": rq.headers, "corps": json.loads(rq.post_data)})
+        m = reponse["mode"]
+        if m == "coupure":
+            return route.abort()
+        if m == "refus":
+            return route.fulfill(status=401, headers=CORS, content_type="application/json",
+                                 body=json.dumps({"type": "error", "error": {"type": "authentication_error", "message": "invalid x-api-key"}}))
+        texte = "L'image n'est pas lisible." if m == "illisible" else "**" + SYNTHESE
+        route.fulfill(status=200, headers=CORS, content_type="application/json",
+                      body=json.dumps({"type": "message", "role": "assistant", "stop_reason": "end_turn",
+                                       "content": [{"type": "thinking", "thinking": "réflexion à ne pas afficher", "signature": "x"},
+                                                   {"type": "text", "text": texte}]}))
+    pc.route("https://api.anthropic.com/**", service)
+    pc.add_init_script("window.__copie=null;try{navigator.clipboard.writeText=t=>{window.__copie=t;return Promise.resolve();};}catch(e){}")
+    pc.goto(V2)
+    pc.wait_for_selector("#ngrid button", state="attached")
+    pc.locator(".carte[data-e=samu]").click()
+    ouvrir_photo = "(()=>{const e=document.getElementById('s9');e.open=true;for(let p=e.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;})()"
+    pc.evaluate(ouvrir_photo)
+    verifier("Photo : plus de point d'accès à saisir, la clé est dans les réglages",
+             [pc.locator("#phurl").count(), pc.locator("#s10 #phcle").count(), pc.get_attribute("#phcle", "type")], [0, 1, "password"])
+    pc.locator("#phgo").click()
+    verifier("Photo sans clé : le programme le dit et propose la consigne pour l'application Claude",
+             [pc.locator("#phout").inner_text()[:36], "err" in pc.get_attribute("#phout", "class"), visible(pc, "#phcons"),
+              pc.get_attribute("#phouvre", "href"), len(appels)],
+             ["Aucune clé d'accès à Claude dans les", True, True, "https://claude.ai/new", 0])
+    pc.locator("#phcons").click()
+    copie = pc.evaluate("window.__copie") or ""
+    verifier("Photo sans clé : la consigne copiée demande une synthèse et la ligne des traitements",
+             [copie[:28], "TRAITEMENT :" in copie, "synthèse" in copie, copie.endswith("La photo est jointe à ce message.")],
+             ["Tu aides un sapeur-pompier e", True, True, True])
+    # la clé se saisit dans les réglages
+    pc.locator("#aHome").click()
+    pc.locator(".acc-outils button[data-e=reglages]").click()
+    pc.locator("#s10 summary").click()
+    pc.fill("#phcle", "sk-ant-essai-123")
+    pc.locator("#aHome").click()
+    pc.locator(".carte[data-e=samu]").click()
+    pc.evaluate(ouvrir_photo)
+    pc.locator("#phgo").click()
+    verifier("Photo avec clé, sans image : rien n'est envoyé", [pc.locator("#phout").inner_text(), len(appels)], ["Aucune image sélectionnée.", 0])
+    pc.set_input_files("#phfile", str(photo))
+    pc.wait_for_selector("#phprev img")
+    pc.locator("#phgo").click()
+    verifier("Photo sans la confirmation : rien n'est envoyé",
+             [pc.locator("#phout").inner_text(), len(appels)], ["Confirmation de non-identification requise avant tout envoi.", 0])
+    pc.check("#phrgpd")
+    pc.locator("#phgo").click()
+    pc.wait_for_selector("#phins")
+    a = appels[-1] if appels else {"url": "", "methode": "", "entetes": {}, "corps": {"messages": [{"content": [{}, {}]}]}}
+    c = a["corps"]
+    img = c["messages"][0]["content"][0]
+    verifier("Photo : l'appel part chez Claude avec la clé et les en-têtes attendus",
+             [a["url"], a["methode"], a["entetes"].get("x-api-key"), a["entetes"].get("anthropic-version"),
+              a["entetes"].get("anthropic-dangerous-direct-browser-access"), len(appels)],
+             ["https://api.anthropic.com/v1/messages", "POST", "sk-ant-essai-123", "2023-06-01", "true", 1])
+    verifier("Photo : modèle, consigne de synthèse et image en JPEG, sans réglage que le modèle refuse",
+             [c.get("model"), c.get("max_tokens"), "synthèse" in c.get("system", ""), sorted(k for k in c if k in ("temperature", "top_p", "top_k", "thinking")),
+              img.get("type"), img.get("source", {}).get("type"), img.get("source", {}).get("media_type"),
+              base64.b64decode(img.get("source", {}).get("data", "")[:8])[:3] == b"\xff\xd8\xff", c["messages"][0]["content"][1].get("type")],
+             ["claude-sonnet-5-5", 8000, True, [], "image", "base64", "image/jpeg", True, "text"])
+    verifier("Photo : l'image est réduite à 1600 points de large avant l'envoi",
+             pc.evaluate("(()=>{const i=document.querySelector('#phprev img');return [i.naturalWidth,i.naturalHeight];})()"), [1600, 800])
+    verifier("Photo : la synthèse s'affiche, sans la réflexion ni les astérisques",
+             [pc.locator("#phout").inner_text(), "err" in pc.get_attribute("#phout", "class")], [SYNTHESE, False])
+    pc.locator("#phins").click()
+    pc.locator("#phins").click()
+    verifier("Photo : seule la ligne des traitements est reportée dans les réponses prêtes pour le régulateur, une seule fois",
+             [pc.input_value("#ttt"), pc.evaluate("reserve().filter(x=>x.q==='Traitement').map(x=>x.r)"), pc.locator("#phact button").count()],
+             ["riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg", ["riluzole 50 mg, fluoxétine 20 mg, dantrolène 100 mg"], 1])
+    reponse["mode"] = "illisible"
+    pc.locator("#phgo").click()
+    pc.wait_for_function("document.querySelector('#phout').textContent.startsWith(\"L'image\")")
+    verifier("Photo illisible : la phrase s'affiche, rien à reporter", [pc.locator("#phout").inner_text(), pc.locator("#phins").count()], ["L'image n'est pas lisible.", 0])
+    reponse["mode"] = "refus"
+    pc.locator("#phgo").click()
+    pc.wait_for_selector("#phout.err")
+    verifier("Photo : clé refusée, le message le dit",
+             [pc.locator("#phout").inner_text(), pc.locator("#phins").count(), pc.locator("#phgo").inner_text().lower(), pc.locator("#phgo").is_enabled()],
+             ["Analyse impossible : clé d'accès refusée. La vérifier dans les réglages. La trame manuelle reste disponible.", 0, "analyser l'image", True])
+    reponse["mode"] = "coupure"
+    pc.evaluate("phOut('',false)")
+    pc.locator("#phgo").click()
+    pc.wait_for_selector("#phout.err")
+    verifier("Photo : sans réseau, le message le dit", pc.locator("#phout").inner_text(),
+             "Analyse impossible : service injoignable, vérifier la connexion. La trame manuelle reste disponible.")
+    # lésion : une autre consigne, la description va dans l'examen
+    reponse["mode"] = "ok"
+    pc.locator("#phmode .chip[data-v=lesion]").click()
+    pc.locator("#phgo").click()
+    pc.wait_for_selector("#phins")
+    verifier("Photo d'une lésion : consigne de description, sans avis sur la conduite à tenir",
+             ["Décris la lésion" in appels[-1]["corps"]["system"], "aucune conduite à tenir" in appels[-1]["corps"]["system"], pc.locator("#phins").inner_text().lower()],
+             [True, True, "insérer dans l'examen"])
+    # la clé reste un réglage : gardée d'une intervention à l'autre, jamais dans les messages ni l'historique
+    pc.evaluate("document.querySelector('#age').value='60';sauver()")
+    pc.locator("#aHome").click()
+    pc.evaluate("archiver();reinitialiser();afficherHist();sauver()")
+    pc.reload()
+    pc.wait_for_selector("#ngrid button", state="attached")
+    verifier("Clé : gardée après une nouvelle intervention et un rechargement ; la photo et la synthèse sont effacées",
+             [pc.input_value("#phcle"), pc.input_value("#ttt"), pc.locator("#phout").inner_text(), pc.locator("#phprev img").count(),
+              "sk-ant" in pc.evaluate("localStorage.getItem('msgops.v1.hist')||''")],
+             ["sk-ant-essai-123", "", "", 0, False])
+    verifier("Photo : aucune erreur JavaScript", json.dumps(ec), "[]")
+    pc.close()
     nav.close()
 
 print()
