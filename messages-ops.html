@@ -222,6 +222,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.6}
 .btn{width:100%;background:var(--acc);border:1px solid var(--acc);color:var(--bg);border-radius:8px;
   padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:11px}
 .btn[disabled]{opacity:.4}
+.phcache{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 .btn2{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:8px;
   padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:8px}
 .btn2.dgr{color:var(--red)}
@@ -644,7 +645,8 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
   <div class="f"><span class="gl">T · Traitements</span>
     <div class="row"><input type="text" id="ttt" placeholder="Ramipril, atorvastatine" style="flex:2">
       <button class="chip" data-fill="ttt" data-v="Aucun traitement" style="flex:1">Aucun</button></div>
-    <button class="btn2" id="phOrdo">Photographier l'ordonnance</button></div>
+    <div class="row"><button class="btn2" id="phOrdo" style="flex:2">Photographier l'ordonnance</button>
+      <button class="btn2" id="phOrdoLib">Photothèque</button></div></div>
   <div class="f"><span class="gl">A · Allergies</span>
     <div class="row"><input type="text" id="allerg" placeholder="Allergies" style="flex:2">
       <button class="chip" data-fill="allerg" data-v="Aucune connue" style="flex:1">Aucune connue</button></div></div>
@@ -678,7 +680,10 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
       </div>
       <span class="mini" id="phhint"></span></div>
     <div class="f"><span class="gl">Image</span>
-      <input type="file" id="phfile" accept="image/*" capture="environment">
+      <div class="row"><button class="btn2" id="phcam">Prendre une photo</button>
+        <button class="btn2" id="phpick">Photothèque</button></div>
+      <input type="file" id="phfile" class="phcache" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+      <input type="file" id="phlib" class="phcache" accept="image/*" tabindex="-1" aria-hidden="true">
       <div id="phprev"></div></div>
     <div class="f"><label class="ck"><input type="checkbox" id="phrgpd">
       Je confirme qu'aucune donnée nominative n'est visible sur l'image — nom, numéro de sécurité sociale, visage, tatouage ou signe distinctif.</label></div>
@@ -962,7 +967,7 @@ body.essai #copJ,body.essai .carte,body.essai .acc-q,body.essai .acc-outils,body
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const VERSION="2026.11.28a";
+const VERSION="2026.11.28b";
 const CLE="msgops.v1";
 let motif="malaise", pbs=[{p:"",a:""}];
 
@@ -2276,13 +2281,18 @@ function phErreur(st,j){
 }
 $("#phman").onclick=()=>{phOut(TRAMES[phm()],false);};
 
-$("#phfile").addEventListener("change",e=>{
+// Deux entrées pour la même image : l'appareil photo (#phfile) ou la photothèque (#phlib)
+function phLire(e){
   const f=e.target.files&&e.target.files[0];
-  $("#phprev").innerHTML="";phData=null;
+  e.target.value="";
   if(!f)return;
+  $("#phprev").innerHTML="";phData=null;phOut("",false);$("#phrgpd").checked=false;
+  const illisible=()=>phOut("Image illisible par le téléphone. En choisir une autre ou la reprendre en photo.",true);
   const r=new FileReader();
+  r.onerror=illisible;
   r.onload=()=>{
     const img=new Image();
+    img.onerror=illisible;
     img.onload=()=>{
       const max=1600,sc=Math.min(1,max/Math.max(img.width,img.height));
       const cv=document.createElement("canvas");
@@ -2295,7 +2305,11 @@ $("#phfile").addEventListener("change",e=>{
     img.src=r.result;
   };
   r.readAsDataURL(f);
-});
+}
+$("#phfile").addEventListener("change",phLire);
+$("#phlib").addEventListener("change",phLire);
+$("#phcam").onclick=()=>$("#phfile").click();
+$("#phpick").onclick=()=>$("#phlib").click();
 
 $("#phgo").onclick=async()=>{
   const cle=raw("phcle").trim(),mode=phm();
@@ -3485,7 +3499,7 @@ function reinitialiser(){
   champs().forEach(e=>{if(e.hasAttribute("data-keep"))return;
     if(e.tagName==="SELECT")e.selectedIndex=0;else e.value="";});
   $$(".chips .chip").forEach(c=>c.setAttribute("aria-pressed","false"));
-  $("#phrgpd").checked=false;$("#phprev").innerHTML="";phOut("",false);phData=null;$("#phfile").value="";
+  $("#phrgpd").checked=false;$("#phprev").innerHTML="";phOut("",false);phData=null;$("#phfile").value="";$("#phlib").value="";
   pbs=[{p:"",a:""}];
   const keepType=raw("engin")==="VSR"?"ROUTIER":"SAP";
   S=etatInitial();
@@ -3667,9 +3681,11 @@ function evenements(){
     if(!raw("ttt"))$("#ttt").value="Aucun traitement";
     if(!raw("allerg"))$("#allerg").value="Aucune connue";
     rendre();toast("Terrain : rien à signaler");};
-  $("#phOrdo").onclick=()=>{const d=$("#s9");d.open=true;
+  const ordonnance=source=>()=>{const d=$("#s9");d.open=true;
     $$("#phmode .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.v==="ordo")));
-    rendre();d.scrollIntoView({block:"start"});$("#phfile").click();};
+    rendre();d.scrollIntoView({block:"start"});$(source).click();};
+  $("#phOrdo").onclick=ordonnance("#phfile");
+  $("#phOrdoLib").onclick=ordonnance("#phlib");
   $("#hdcNow").onclick=()=>{const n=new Date();
     $("#hdc").value=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");rendre();};
   QK.forEach((id,i)=>{const el=$("#"+id);

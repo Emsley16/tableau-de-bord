@@ -406,6 +406,55 @@ with sync_playwright() as pw:
     verifier("Photo d'une lésion : consigne de description, sans avis sur la conduite à tenir",
              ["Décris la lésion" in appels[-1]["corps"]["system"], "aucune conduite à tenir" in appels[-1]["corps"]["system"], pc.locator("#phins").inner_text().lower()],
              [True, True, "insérer dans l'examen"])
+    # photothèque : une deuxième entrée pour la même image, sans passer par l'appareil photo
+    verifier("Photo : deux boutons, appareil photo et photothèque ; les champs de fichier ne se voient plus",
+             [pc.locator("#phcam").inner_text(), pc.locator("#phpick").inner_text(), pc.get_attribute("#phfile", "capture"),
+              pc.get_attribute("#phlib", "capture"), pc.get_attribute("#phlib", "accept"),
+              pc.evaluate("['phfile','phlib'].map(i=>getComputedStyle(document.getElementById(i)).opacity)")],
+             ["Prendre une photo", "Photothèque", "environment", None, "image/*", ["0", "0"]])
+    with pc.expect_file_chooser() as choix:
+        pc.locator("#phpick").click()
+    verifier("Photo : « Photothèque » ouvre le choix d'image sans imposer l'appareil photo",
+             pc.evaluate("e=>e.id", choix.value.element), "phlib")
+    with pc.expect_file_chooser() as choix:
+        pc.locator("#phcam").click()
+    verifier("Photo : « Prendre une photo » ouvre l'appareil photo", pc.evaluate("e=>e.id", choix.value.element), "phfile")
+    photo2 = photo.parent / "phototheque.png"
+    photo2.write_bytes(png(900, 1300))
+    pc.locator("#phmode .chip[data-v=ordo]").click()
+    avant = len(appels)
+    pc.set_input_files("#phlib", str(photo2))
+    pc.wait_for_function("(()=>{const i=document.querySelector('#phprev img');return i&&i.naturalWidth===900;})()")
+    verifier("Photothèque : l'image choisie remplace la précédente, la synthèse et la confirmation repartent de zéro",
+             [pc.evaluate("(()=>{const i=document.querySelector('#phprev img');return [i.naturalWidth,i.naturalHeight];})()"),
+              pc.locator("#phout").inner_text(), pc.locator("#phins").count(), pc.is_checked("#phrgpd")],
+             [[900, 1300], "", 0, False])
+    pc.check("#phrgpd")
+    pc.locator("#phgo").click()
+    pc.wait_for_selector("#phins")
+    verifier("Photothèque : l'image choisie est analysée comme une photo prise",
+             [len(appels) - avant, appels[-1]["corps"]["messages"][0]["content"][0]["source"]["media_type"], pc.locator("#phout").inner_text()[:24]],
+             [1, "image/jpeg", "TRAITEMENT : riluzole 50"])
+    pc.set_input_files("#phlib", str(photo2))
+    pc.wait_for_function("document.querySelector('#phout').textContent===''")
+    verifier("Photothèque : la même image peut être choisie une deuxième fois",
+             [pc.locator("#phprev img").count(), pc.is_checked("#phrgpd")], [1, False])
+    mauvais = photo.parent / "abimee.png"
+    mauvais.write_bytes(b"ceci n'est pas une image")
+    pc.set_input_files("#phlib", str(mauvais))
+    pc.wait_for_selector("#phout.err")
+    verifier("Photothèque : une image illisible est signalée, rien à envoyer",
+             [pc.locator("#phout").inner_text(), pc.locator("#phprev img").count(), pc.evaluate("phData")],
+             ["Image illisible par le téléphone. En choisir une autre ou la reprendre en photo.", 0, None])
+    # depuis les traitements du bilan : photographier ou prendre dans la photothèque
+    pc.evaluate("document.getElementById('s9').open=false;document.querySelector('#phmode .chip[data-v=lesion]').click()")
+    pc.evaluate("(()=>{for(let p=document.getElementById('phOrdoLib').parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;})()")
+    with pc.expect_file_chooser() as choix:
+        pc.locator("#phOrdoLib").click()
+    verifier("Traitements : le bouton « Photothèque » ouvre la rubrique Photo en mode ordonnance et le choix d'image",
+             [pc.evaluate("e=>e.id", choix.value.element), pc.evaluate("document.getElementById('s9').open"), pc.evaluate("phm()"),
+              pc.locator("#phOrdo").inner_text(), pc.locator("#phOrdoLib").inner_text()],
+             ["phlib", True, "ordo", "Photographier l'ordonnance", "Photothèque"])
     # la clé reste un réglage : gardée d'une intervention à l'autre, jamais dans les messages ni l'historique
     pc.evaluate("document.querySelector('#age').value='60';sauver()")
     pc.locator("#aHome").click()
